@@ -1,0 +1,88 @@
+# Opens a pull request when Frappe or one of the apps has a newer release on its pinned major version.
+#
+# Two things a maintainer has to know:
+# - The repository setting "Allow GitHub Actions to create and approve pull requests" (Settings > Actions >
+#   General > Workflow permissions) must be on; without it, `gh pr create` is refused.
+# - A pull request opened with the GITHUB_TOKEN does not start its checks on its own: they wait until a
+#   maintainer selects "Approve workflows to run" in the pull request, or closes and reopens it.
+name: App versions
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: versions
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump the pinned versions
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # push the update branch
+      pull-requests: write # open the pull request
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      - name: Compare the pins with the latest releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m germanized check-versions > "$RUNNER_TEMP/versions.md"
+          tee -a "$GITHUB_STEP_SUMMARY" < "$RUNNER_TEMP/versions.md"
+
+      - name: Move the pins to the latest releases
+        id: bump
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m germanized bump --write
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            python -m germanized readme --write
+            git diff --stat
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open the pull request
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="update/apps-$(date -u +%Y%m%d)"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "::notice::The branch $branch exists already; merge or close its pull request first."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch --create "$branch"
+          git add apps.json Containerfile README.md
+          git commit --message 'update the pinned app versions'
+          git push origin "$branch"
+          {
+            cat <<'BODY'
+          Für Frappe oder eine der Apps gibt es ein neueres Release auf der gepinnten Hauptversion. Dieser Pull Request setzt die Tags in `apps.json`, `FRAPPE_BRANCH` im `Containerfile` und die Versionen in der App-Tabelle des README auf diese Releases.
+
+          Vor dem Merge die Release Notes der geänderten Apps lesen und den Site-Test abwarten. Die Checks dieses Pull Requests starten erst, wenn ein Maintainer sie mit „Approve workflows to run“ freigibt.
+
+          BODY
+            cat "$RUNNER_TEMP/versions.md"
+          } > "$RUNNER_TEMP/body.md"
+          gh pr create --base main --head "$branch" --title 'Gepinnte App-Versionen aktualisieren' \
+            --body-file "$RUNNER_TEMP/body.md"

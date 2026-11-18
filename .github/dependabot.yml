@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # A week gives a compromised release time to be noticed and pulled before it lands here.
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']
+    labels: []
+
+  # The first FROM of the Containerfile. Its ARGs PYTHON_VERSION and DEBIAN_BASE follow by hand; the tests
+  # fail until they agree with it.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    labels: []
+
+  # The database and Redis images of the site test and of the example.
+  - package-ecosystem: docker-compose
+    directories:
+      - /tests/site
+      - /examples
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    labels: []
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      python:
+        patterns: ['*']
+    labels: []
