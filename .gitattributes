@@ -1,3 +1,1 @@
 * text=auto eol=lf
-# DATEV and ELSTER fixtures keep their original line endings and encoding
-steuerbote/**/fixtures/* -text
