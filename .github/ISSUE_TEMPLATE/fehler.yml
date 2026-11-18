@@ -1,0 +1,78 @@
+name: Fehler melden
+description: Das Image, das Beispiel oder die Werkzeuge verhalten sich falsch.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bitte keine Passwörter, Schlüssel, Tokens, Inhalte von `site_config.json`, Sicherungen oder echten Geschäftsdaten einfügen. Logs vorher durchsehen.
+
+        Fehler in Frappe, ERPNext oder einer der Apps gehören zum jeweiligen Projekt, die Links stehen im README unter „Community-Support“. Hierher gehören Fehler im Image, im Rezept, im Beispiel, in den Werkzeugen und in der Dokumentation.
+  - type: textarea
+    id: beobachtet
+    attributes:
+      label: Was passiert?
+      description: Beobachtetes Verhalten oder Fehlermeldung.
+    validations:
+      required: true
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Was sollte passieren?
+      description: Erwartetes Verhalten, möglichst mit Quelle (Dokumentation dieses Repositories oder einer App).
+    validations:
+      required: true
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zum Nachstellen
+      description: Befehle, Einstellungen oder Belege, mit denen der Fehler auftritt.
+  - type: input
+    id: tag
+    attributes:
+      label: Image-Tag
+      description: Das volle Tag oder der Digest, etwa 16.60.0-1 oder sha256:…
+    validations:
+      required: true
+  - type: dropdown
+    id: betrieb
+    attributes:
+      label: Betrieb
+      options:
+        - docker compose mit examples/compose.yaml
+        - docker compose mit eigener Datei
+        - Kubernetes mit dem Helm-Chart von Frappe
+        - Kubernetes auf anderem Weg
+        - Eigener Build mit build.sh
+        - Sonstiges
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host-System
+      description: Betriebssystem, Architektur und Version von Docker oder Kubernetes.
+  - type: dropdown
+    id: app
+    attributes:
+      label: Betroffener Teil
+      options:
+        - Image oder Rezept
+        - frappe
+        - erpnext
+        - hrms
+        - erpnext_germany
+        - erpnext_datev
+        - eu_einvoice
+        - erpnext_pdf-on-submit
+        - banking
+        - steuerbote
+        - Werkzeuge oder CI
+        - Dokumentation
+        - Weiß nicht
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Ausgabe von docker compose logs oder kubectl logs, ohne Geheimnisse.
+      render: shell

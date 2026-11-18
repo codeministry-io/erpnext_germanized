@@ -1,0 +1,28 @@
+name: Funktion vorschlagen
+description: Eine App, eine Einstellung oder etwas am Image fehlt.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem soll gelöst werden?
+    validations:
+      required: true
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Vorschlag
+      description: Wie könnte die Lösung aussehen? Für eine neue App bitte Repository, Lizenz und Zweck nennen.
+  - type: dropdown
+    id: bereich
+    attributes:
+      label: Bereich
+      options:
+        - Neue App
+        - Image und Rezept
+        - Betrieb mit docker compose
+        - Betrieb auf Kubernetes
+        - Versionen und Updates
+        - Werkzeuge und CI
+        - Dokumentation
+        - Sonstiges
