@@ -2,11 +2,12 @@
 
 A release is tagged v<erpnext>-<revision>: the ERPNext version the image ships and a counter for changes of
 the recipe on that version, starting at 1. The image of a release gets the full tag and the moving tags
-<erpnext>, <major> and latest; main gets main and main-<commit>; every other ref is built and not pushed.
+<erpnext>, <major> and latest, each only when no newer release holds it; main gets main and main-<commit>;
+every other ref is built and not pushed.
 """
 
 import re
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from germanized.apps import ERPNEXT_URL, App
@@ -26,6 +27,15 @@ class Release:
 	erpnext: str
 	revision: int
 
+	@property
+	def version(self) -> tuple[int, ...]:
+		"""The ERPNext version as numbers, so that versions compare by number and not as text."""
+		return tuple(int(number) for number in self.erpnext.split("."))
+
+	def is_newer_than(self, other: Release) -> bool:
+		"""Whether this release comes after another: a newer ERPNext version, or a later revision of it."""
+		return (self.version, self.revision) > (other.version, other.revision)
+
 
 def parse_release(tag: str) -> Release:
 	"""The release a tag such as v16.60.0-1 names."""
@@ -35,8 +45,17 @@ def parse_release(tag: str) -> Release:
 	return Release(match["erpnext"], int(match["revision"]))
 
 
-def image_tags(ref: str, sha: str, image: str = IMAGE) -> tuple[str, ...]:
-	"""The tags to push for a git ref and its commit; none for refs that are only built."""
+def releases(tags: Iterable[str]) -> tuple[Release, ...]:
+	"""The releases among git tags, in their order; tags of another form are no releases."""
+	return tuple(parse_release(tag) for tag in tags if _RELEASE.fullmatch(tag))
+
+
+def image_tags(ref: str, sha: str, existing: Iterable[str] = (), image: str = IMAGE) -> tuple[str, ...]:
+	"""The tags to push for a git ref and its commit; none for refs that are only built.
+
+	`existing` are the release tags of the repository. A moving tag goes to a release only when no newer
+	release holds it, so a late revision of an older version cannot take a moving tag back.
+	"""
 	if ref == MAIN:
 		if _SHA.fullmatch(sha) is None:
 			raise ValueError(f"{sha!r} is not a commit SHA")
@@ -47,13 +66,15 @@ def image_tags(ref: str, sha: str, image: str = IMAGE) -> tuple[str, ...]:
 		release = parse_release(ref.removeprefix(TAG_PREFIX))
 	except ValueError:
 		return ()
-	major = release.erpnext.partition(".")[0]
-	return (
-		f"{image}:{release.erpnext}-{release.revision}",
-		f"{image}:{release.erpnext}",
-		f"{image}:{major}",
-		f"{image}:latest",
-	)
+	newer = [other for other in releases(existing) if other.is_newer_than(release)]
+	names = [f"{release.erpnext}-{release.revision}"]
+	if not any(other.version == release.version for other in newer):
+		names.append(release.erpnext)
+	if not any(other.version[0] == release.version[0] for other in newer):
+		names.append(release.erpnext.partition(".")[0])
+	if not newer:
+		names.append("latest")
+	return tuple(f"{image}:{name}" for name in names)
 
 
 def release_check(tag: str, apps: Sequence[App]) -> list[str]:

@@ -63,9 +63,11 @@ jobs:
           path: ${{ runner.temp }}/sbom
 
       - name: Write the release notes
+        env:
+          # The tags the image was pushed with; a newer release keeps the moving tags it holds.
+          TAGS: ${{ needs.image.outputs.tags }}
         run: |
-          tags=$(python -m germanized tags --ref "$GITHUB_REF" --sha "$GITHUB_SHA")
-          python -m germanized summary --tags "${tags//$'\n'/,}" > "$RUNNER_TEMP/notes.md"
+          python -m germanized summary --tags "$TAGS" > "$RUNNER_TEMP/notes.md"
           if [[ -f CHANGELOG.md ]]; then
             # The section whose heading starts with this version, such as "## [16.60.0-1] - 2026-11-20".
             awk -v version="${GITHUB_REF_NAME#v}" '

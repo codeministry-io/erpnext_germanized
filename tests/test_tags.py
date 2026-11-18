@@ -1,7 +1,7 @@
 import pytest
 
 from germanized.apps import App
-from germanized.tags import IMAGE, Release, image_tags, parse_release, release_check
+from germanized.tags import IMAGE, Release, image_tags, parse_release, release_check, releases
 
 SHA = "0123456789abcdef0123456789abcdef01234567"
 APPS = (
@@ -27,6 +27,60 @@ def test_a_release_gets_its_full_version_and_the_moving_tags():
 		"ghcr.io/encircle360-oss/erpnext_germanized:16.60.0",
 		"ghcr.io/encircle360-oss/erpnext_germanized:16",
 		"ghcr.io/encircle360-oss/erpnext_germanized:latest",
+	)
+
+
+def tags_of(tag: str, existing: tuple[str, ...]) -> tuple[str, ...]:
+	return tuple(image.removeprefix(f"{IMAGE}:") for image in image_tags(f"refs/tags/{tag}", SHA, existing))
+
+
+def test_the_newest_release_gets_every_moving_tag():
+	existing = ("v16.59.0-1", "v16.59.0-2", "v16.60.0-1", "v16.60.0-2")
+	assert tags_of("v16.60.0-2", existing) == ("16.60.0-2", "16.60.0", "16", "latest")
+
+
+def test_a_release_gets_every_moving_tag_when_there_are_no_other_releases():
+	assert tags_of("v16.60.0-1", ()) == ("16.60.0-1", "16.60.0", "16", "latest")
+
+
+def test_an_older_revision_gets_no_moving_tag():
+	existing = ("v16.60.0-1", "v16.60.0-2")
+	assert tags_of("v16.60.0-1", existing) == ("16.60.0-1",)
+
+
+def test_a_late_revision_of_an_older_erpnext_version_gets_only_the_tag_of_that_version():
+	existing = ("v16.59.0-1", "v16.59.0-2", "v16.60.0-1")
+	assert tags_of("v16.59.0-2", existing) == ("16.59.0-2", "16.59.0")
+
+
+def test_the_newest_release_of_an_older_major_version_gets_its_major_tag_but_not_latest():
+	existing = ("v16.60.0-1", "v16.61.0-1", "v17.0.0-1")
+	assert tags_of("v16.61.0-1", existing) == ("16.61.0-1", "16.61.0", "16")
+
+
+def test_releases_compare_by_number_not_by_text():
+	assert tags_of("v16.10.0-1", ("v16.9.0-5",)) == ("16.10.0-1", "16.10.0", "16", "latest")
+	assert tags_of("v16.9.0-6", ("v16.10.0-1",)) == ("16.9.0-6", "16.9.0")
+	assert tags_of("v16.60.0-10", ("v16.60.0-9",)) == ("16.60.0-10", "16.60.0", "16", "latest")
+	assert tags_of("v16.60.0-9", ("v16.60.0-10",)) == ("16.60.0-9",)
+
+
+def test_existing_tags_that_are_no_releases_hold_no_moving_tag():
+	existing = ("v16.61.0", "v17.0.0-0", "latest", "17", "nightly")
+	assert tags_of("v16.60.0-1", existing) == ("16.60.0-1", "16.60.0", "16", "latest")
+
+
+def test_main_does_not_depend_on_the_releases():
+	assert image_tags("refs/heads/main", SHA, ("v99.0.0-1",)) == (
+		"ghcr.io/encircle360-oss/erpnext_germanized:main",
+		"ghcr.io/encircle360-oss/erpnext_germanized:main-0123456",
+	)
+
+
+def test_releases_are_the_git_tags_of_the_release_scheme_in_their_order():
+	assert releases(["v16.60.0-2", "v16.60.0", "v16.59.0-1", "main"]) == (
+		Release(erpnext="16.60.0", revision=2),
+		Release(erpnext="16.59.0", revision=1),
 	)
 
 

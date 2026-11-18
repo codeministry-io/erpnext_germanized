@@ -1,0 +1,129 @@
+name: Build and test the image
+description: >-
+  Builds the image once into the local Docker engine, installs every app on a fresh site with it and scans
+  it for vulnerabilities. Both jobs of the workflow Image run it after the checkout with tags and Python 3.14;
+  only the publishing job writes the build cache and pushes the tested image afterwards.
+
+inputs:
+  local-tag:
+    description: The tag of the image in the local Docker engine, which the site test and the scan use
+    required: true
+  build-cache:
+    description: The registry reference of the build cache, which the build reads
+    required: true
+  cache-to:
+    description: Where the build writes its cache; empty writes none
+    required: false
+    default: ''
+
+outputs:
+  version:
+    description: The version label of the image, the release tag or the output of git describe
+    value: ${{ steps.plan.outputs.version }}
+  cache-bust:
+    description: The checksum of apps.json the build takes as CACHE_BUST
+    value: ${{ steps.plan.outputs.cache-bust }}
+  public:
+    description: Whether the repository is public, which code scanning and attestations need
+    value: ${{ steps.visibility.outputs.public }}
+
+runs:
+  using: composite
+  steps:
+    - name: Free disk space
+      # The bench, the build cache and the loaded image need more space than the runner has free; these
+      # toolchains are not used here.
+      shell: bash
+      run: |
+        df -h /
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        df -h /
+
+    - name: Validate apps.json
+      shell: bash
+      run: python -m germanized validate
+
+    - name: Plan the build
+      id: plan
+      shell: bash
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          version=$GITHUB_REF_NAME
+        else
+          version=$(git describe --tags --always --dirty)
+        fi
+        {
+          # The apps.json secret is not part of the build cache key, its checksum is.
+          echo "cache-bust=$(sha256sum apps.json | cut -c1-16)"
+          echo "version=$version"
+        } >> "$GITHUB_OUTPUT"
+        echo "version $version"
+
+    - name: Check whether code scanning and attestations are available
+      # Both are free for public repositories only, and pull requests from forks cannot upload scans.
+      id: visibility
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      run: |
+        public=false
+        code_scanning=false
+        if [[ $(gh api "repos/$GITHUB_REPOSITORY" --jq .private) == false ]]; then
+          public=true
+          if [[ $GITHUB_EVENT_NAME != pull_request || $HEAD_REPOSITORY == "$GITHUB_REPOSITORY" ]]; then
+            code_scanning=true
+          fi
+        fi
+        echo "public=$public" >> "$GITHUB_OUTPUT"
+        echo "code-scanning=$code_scanning" >> "$GITHUB_OUTPUT"
+
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+    - name: Build the image
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      with:
+        context: .
+        file: Containerfile
+        platforms: linux/amd64
+        secret-files: apps_json=./apps.json
+        build-args: |
+          CACHE_BUST=${{ steps.plan.outputs.cache-bust }}
+          VERSION=${{ steps.plan.outputs.version }}
+        cache-from: type=registry,ref=${{ inputs.build-cache }}
+        cache-to: ${{ inputs.cache-to }}
+        # The provenance comes from the attestation of the pushed image.
+        provenance: false
+        load: true
+        tags: ${{ inputs.local-tag }}
+
+    - name: Install every app on a fresh site
+      # Composite steps have no timeout-minutes; the site test stops itself after 20 minutes.
+      shell: bash
+      env:
+        LOCAL_TAG: ${{ inputs.local-tag }}
+      run: ./tests/site/run.sh "$LOCAL_TAG"
+
+    - name: Scan the image for vulnerabilities
+      # A report, not a gate: the findings come from Debian and the upstream apps and are fixed by a rebuild
+      # or an update, so neither they nor a failing scanner stop the image.
+      id: scan
+      continue-on-error: true
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      with:
+        image-ref: ${{ inputs.local-tag }}
+        scanners: vuln
+        ignore-unfixed: true
+        severity: HIGH,CRITICAL
+        exit-code: '0'
+        timeout: 15m
+        format: ${{ steps.visibility.outputs.code-scanning == 'true' && 'sarif' || 'table' }}
+        output: ${{ steps.visibility.outputs.code-scanning == 'true' && 'trivy-image.sarif' || '' }}
+        limit-severities-for-sarif: true
+
+    - name: Upload the findings to code scanning
+      if: steps.scan.outcome == 'success' && steps.visibility.outputs.code-scanning == 'true'
+      uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+      with:
+        sarif_file: trivy-image.sarif
+        category: trivy-image

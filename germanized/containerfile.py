@@ -15,6 +15,7 @@ PIN_ARGS = (
 	"WKHTMLTOPDF_DISTRO",
 	"INSTALL_CHROMIUM",
 )
+_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 
 
 def _default(text: str, name: str) -> re.Match[str]:
@@ -57,6 +58,16 @@ def base_image(text: str) -> str:
 				raise ValueError("the first FROM names no image")
 			return images[0]
 	raise ValueError("the Containerfile has no FROM")
+
+
+def split_digest(reference: str) -> tuple[str, str | None]:
+	"""An image reference split into the image with its tag and the digest after the @, None without one."""
+	image, at, digest = reference.partition("@")
+	if not at:
+		return image, None
+	if _DIGEST.fullmatch(digest) is None:
+		raise ValueError(f"{reference}: {digest!r} is not a sha256 digest with 64 hex digits")
+	return image, digest
 
 
 def pins(text: str) -> dict[str, str]:

@@ -1,6 +1,16 @@
 import pytest
 
-from germanized.containerfile import PIN_ARGS, arg_default, base_image, frappe_tag, pins, set_arg_default
+from germanized.containerfile import (
+	PIN_ARGS,
+	arg_default,
+	base_image,
+	frappe_tag,
+	pins,
+	set_arg_default,
+	split_digest,
+)
+
+DIGEST = "sha256:" + "0123456789abcdef" * 4
 
 TEXT = """\
 # syntax=docker/dockerfile:1
@@ -79,6 +89,27 @@ def test_base_image_skips_flags_and_ignores_case():
 		== "python:3.14-slim-trixie"
 	)
 	assert base_image("  from debian:trixie\n") == "debian:trixie"
+
+
+def test_base_image_keeps_the_digest_that_pins_it():
+	text = f"FROM python:3.14-slim-trixie@{DIGEST} AS base\n"
+	assert base_image(text) == f"python:3.14-slim-trixie@{DIGEST}"
+
+
+def test_split_digest_separates_the_image_and_its_tag_from_the_digest():
+	assert split_digest(f"python:3.14-slim-trixie@{DIGEST}") == ("python:3.14-slim-trixie", DIGEST)
+
+
+def test_an_image_without_digest_has_none():
+	assert split_digest("python:3.14-slim-trixie") == ("python:3.14-slim-trixie", None)
+
+
+@pytest.mark.parametrize(
+	"digest", ["", "sha256:", "sha256:0123abcd", "sha512:" + "0" * 128, "sha256:" + "A" * 64, "latest"]
+)
+def test_a_digest_is_sha256_with_64_hex_digits(digest):
+	with pytest.raises(ValueError, match="is not a sha256 digest with 64 hex digits"):
+		split_digest(f"python:3.14-slim-trixie@{digest}")
 
 
 def test_base_image_needs_a_from_with_an_image():

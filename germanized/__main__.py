@@ -17,6 +17,11 @@ from germanized.tags import TAG_PREFIX, image_tags, parse_release, release_check
 type Command = Callable[[argparse.Namespace], int]
 
 
+def _words(text: str) -> list[str]:
+	# Lists come separated by commas, as build-push-action takes tags, or by lines, as git prints tags.
+	return [word for word in re.split(r"[\s,]+", text) if word]
+
+
 def _report(headline: str, problems: Sequence[str]) -> int:
 	print(headline, file=sys.stderr)
 	for problem in problems:
@@ -40,7 +45,7 @@ def _validate(args: argparse.Namespace) -> int:
 
 
 def _tags(args: argparse.Namespace) -> int:
-	print(",".join(image_tags(args.ref, args.sha)))
+	print(",".join(image_tags(args.ref, args.sha, _words(args.existing))))
 	return 0
 
 
@@ -55,8 +60,7 @@ def _release_check(args: argparse.Namespace) -> int:
 
 
 def _summary(args: argparse.Namespace) -> int:
-	tags = [tag for tag in re.split(r"[\s,]+", args.tags) if tag]
-	print(markdown(load_apps(), pins(CONTAINERFILE.read_text(encoding="utf-8")), tags), end="")
+	print(markdown(load_apps(), pins(CONTAINERFILE.read_text(encoding="utf-8")), _words(args.tags)), end="")
 	return 0
 
 
@@ -125,6 +129,11 @@ def _parser() -> argparse.ArgumentParser:
 		"--ref", required=True, help="the git ref, such as refs/heads/main or refs/tags/v16.60.0-1"
 	)
 	tags.add_argument("--sha", required=True, help="the commit of the ref")
+	tags.add_argument(
+		"--existing",
+		default="",
+		help="the release tags of the repository as git tag -l 'v*' lists them, separated by whitespace or commas",
+	)
 	release = command("release-check", _release_check, "check that a release tag names the pinned ERPNext")
 	release.add_argument("--ref", required=True, help="the tag ref, such as refs/tags/v16.60.0-1")
 	summary = command("summary", _summary, "print the apps, pins and tags of a build as Markdown")
