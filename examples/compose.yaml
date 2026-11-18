@@ -45,8 +45,8 @@ services:
     entrypoint:
       - bash
       - -c
-    # chromium_path points Frappe at the Chromium of the image; without it, print formats with the PDF
-    # generator "chrome" make Frappe download Chromium into the bench at runtime.
+    # chromium_path points Frappe at the Chromium of the image; without it, the first PDF made with the
+    # generator "chrome", the default of the print settings, makes Frappe download Chromium into the bench.
     command:
       - >
         ls -1 apps > sites/apps.txt;

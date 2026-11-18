@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## Unveröffentlicht
+
+### Geändert
+
+- Das erste `FROM` pinnt das Basis-Image `python:3.14-slim-trixie` zusätzlich per Digest, damit Dependabot auch neue Builds desselben Tags vorschlägt.
+- Das Label `org.opencontainers.image.licenses` verbindet als SPDX-Ausdruck die Lizenz des Rezepts mit denen der Apps im Image, `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`; das Rezept selbst bleibt unter Apache-2.0.
+- Ein Image veröffentlichen nur noch Pushes auf `main` und von Release-Tags, im Job „Build, test and publish“ des Workflows Image. Pull Requests, Läufe von Hand und Forks bauen und testen im Job „Build and test“, dessen Token nur den Scan hochladen darf; beide Jobs teilen die Composite Action `.github/actions/build-and-test`.
+- Bewegliche Tags gehen nur vorwärts: Eine spätere Revision einer älteren ERPNext-Version bekommt ihr volles Tag und das Tag ihrer ERPNext-Version, nimmt aber `16` und `latest` keinem neueren Release weg.
+- Dependabot aktualisiert auch die Actions der Composite Action und die Hooks von pre-commit, diese im selben Pull Request wie `requirements-dev.txt`; ein Test hält ruff und zizmor an beiden Stellen auf derselben Version.
+- Dokumentation nach einem Review berichtigt: Das Beispiel für das Helm-Chart von Frappe setzt Storage Class und Datenbank und ist gegen das Chart 8.0.93 geprüft, dazu Hinweise auf `chromium_path` und darauf, dass `jobs.migrate` den Wartungsmodus auch nach einem Fehler ausschaltet. Die Apps nennen die Oberfläche wie die deutsche Übersetzung der gepinnten Versionen, etwa „Spesenabrechnung“ und „Anhänge anfügen“, und banking v16.6.4 erstellt SEPA-Zahlungsaufträge nur als XML-Datei. Steuerbote veröffentlicht Releases, die der Workflow App versions vorschlägt, und die Version von Frappe steht nur noch in `FRAPPE_BRANCH` und im README. Berichtigt sind außerdem Rundungsmethoden, Dienstreise-Regionen, PDF-Generatoren, der Scan der Konfiguration mit trivy und die Queue der Prüfung der USt-IdNr.
+
 ## [16.60.0-1] - 2026-11-18
 
 ### Hinzugefügt

@@ -11,8 +11,8 @@ erpnext_germanized/            Repository
 ├── build.sh                   lokaler Build mit denselben Eingaben wie in der CI
 ├── germanized/                Werkzeuge in Python, nur Standardbibliothek, python -m germanized
 │   ├── apps.py                apps.json lesen und gegen die Regeln des Images prüfen
-│   ├── containerfile.py       Pins aus den Vorgaben der ARGs und das erste FROM des Containerfile lesen
-│   ├── tags.py                Image-Tags aus Git-Ref und Commit, Prüfung der Release-Tags
+│   ├── containerfile.py       Pins aus den Vorgaben der ARGs und das erste FROM des Containerfile mit Digest lesen
+│   ├── tags.py                Image-Tags aus Git-Ref, Commit und vorhandenen Releases, Prüfung der Release-Tags
 │   ├── versions.py            neueste Releases auf GitHub nachsehen, Pins anheben und schreiben
 │   ├── readme.py              Tabelle „Enthaltene Apps“ im README prüfen und ihre Versionen setzen
 │   ├── summary.py             Zusammenfassung eines Builds für Workflow-Läufe und Release-Notes
@@ -23,7 +23,8 @@ erpnext_germanized/            Repository
 ├── docs/                      Dokumentation
 ├── LICENSES/                  Lizenztext von frappe_docker (MIT) für das Containerfile
 ├── .github/workflows/         CI: Tests, Linters, Security, Image, Release, App versions
-├── .github/dependabot.yml     wöchentliche Updates für GitHub Actions, Basis-Image, Compose-Dateien und pip
+├── .github/actions/           Composite Action build-and-test, die beide Jobs des Workflows Image teilen
+├── .github/dependabot.yml     wöchentliche Updates für GitHub Actions, Basis-Image, Compose-Dateien, pip und pre-commit
 ├── .github/ISSUE_TEMPLATE/    Vorlagen für Fehler und Wünsche, Verweise auf Discussions, Matrix und SECURITY.md
 ├── .github/PULL_REQUEST_TEMPLATE.md
 │                              Vorlage für Pull Requests
@@ -56,7 +57,7 @@ Alle Befehle laufen im Wurzelverzeichnis des Repositories und lesen `apps.json`,
 | Befehl | Was er tut |
 |---|---|
 | `python -m germanized validate` | prüft `apps.json` gegen die Regeln unten |
-| `python -m germanized tags --ref REF --sha SHA` | gibt die Image-Tags eines Git-Refs aus, durch Kommas getrennt, siehe [Versionierung](versionierung.md#image-tags) |
+| `python -m germanized tags --ref REF --sha SHA [--existing TAGS]` | gibt die Image-Tags eines Git-Refs aus, durch Kommas getrennt; `--existing` nimmt die Release-Tags des Repositories, wie `git tag -l 'v*'` sie ausgibt, damit bewegliche Tags nur vorwärts gehen, siehe [Versionierung](versionierung.md#image-tags) |
 | `python -m germanized release-check --ref REF` | prüft ein Release-Tag wie `refs/tags/v16.60.0-1` gegen das Tag von ERPNext in `apps.json` |
 | `python -m germanized summary [--tags a,b]` | gibt Pins, Apps und Tags eines Builds als Markdown aus, für die Zusammenfassung eines Workflow-Laufs und die Release-Notes |
 | `python -m germanized check-versions` | stellt jedem Pin das neueste Release auf seiner Hauptversion gegenüber |
@@ -83,7 +84,7 @@ Die Tabelle im README hat die Spalten `| App | Version | Zweck | Lizenz |`, zuer
 pytest
 ```
 
-`pytest` führt die Tests unter `tests/` aus und misst dabei die Abdeckung von `germanized`, Zeilen und Zweige. Unter 100 % schlägt der Lauf fehl (`--cov-fail-under=100` in `pyproject.toml`). Die Tests brauchen kein Netz: Wo ein Werkzeug GitHub fragt, bekommt es im Test eine Funktion, die feste Antworten liefert. Weitere Tests prüfen das Repository selbst, etwa dass `apps.json` gültig ist und dass das erste `FROM` des `Containerfile` zu `PYTHON_VERSION` und `DEBIAN_BASE` passt.
+`pytest` führt die Tests unter `tests/` aus und misst dabei die Abdeckung von `germanized`, Zeilen und Zweige. Unter 100 % schlägt der Lauf fehl (`--cov-fail-under=100` in `pyproject.toml`). Die Tests brauchen kein Netz: Wo ein Werkzeug GitHub fragt, bekommt es im Test eine Funktion, die feste Antworten liefert. Weitere Tests prüfen das Repository selbst, etwa dass `apps.json` gültig ist, dass das erste `FROM` des `Containerfile` das Basis-Image per Digest pinnt und zu `PYTHON_VERSION` und `DEBIAN_BASE` passt und dass die Hooks in `.pre-commit-config.yaml` dieselben Versionen von ruff und zizmor nennen wie `requirements-dev.txt`.
 
 ## Testgetrieben arbeiten
 
@@ -125,22 +126,22 @@ Zum Schluss entfernt das Skript alle Container und Volumes. Nach 20 Minuten bric
 
 ## CI
 
-Ein Pull Request wird erst gemergt, wenn alle Jobs grün sind. Jeder Workflow liest den Inhalt des Repositories nur (`contents: read`); Rechte zum Schreiben bekommen einzelne Jobs, die sie brauchen. Alle Actions sind über den vollen Commit-SHA gepinnt, mit der Version als Kommentar.
+Ein Pull Request wird erst gemergt, wenn alle Jobs grün sind. Jeder Workflow liest den Inhalt des Repositories nur (`contents: read`); Rechte zum Schreiben bekommen einzelne Jobs, die sie brauchen. Alle Actions sind über den vollen Commit-SHA gepinnt, mit der Version als Kommentar, auch in der Composite Action unter `.github/actions/`.
 
 | Workflow | Wann | Was er tut |
 |---|---|---|
 | Tests (`tests.yml`) | Pull Requests, Pushes auf `main`, von Hand | `ruff check`, `ruff format --check`, `pytest` mit 100 % Abdeckung, `python -m germanized validate` und `python -m germanized readme --check` |
 | Linters (`linters.yml`) | Pull Requests, Pushes auf `main`, von Hand | pre-commit auf allen Dateien, darin shellcheck für `build.sh` und `tests/site/run.sh`; hadolint auf dem `Containerfile`; zizmor auf den Workflows und den Konfigurationen von Dependabot und pre-commit |
-| Security (`security.yml`) | Pull Requests, Pushes auf `main`, montags 04:17 UTC, von Hand | gitleaks über die ganze Git-Historie, trivy über die Konfiguration im Repository, etwa `Containerfile` und Compose-Dateien; wöchentlich und von Hand zusätzlich trivy über das veröffentlichte Image `latest` |
-| Image (`build.yml`) | Pull Requests und Pushes auf `main`, die `Containerfile`, `apps.json`, `build.sh`, `tests/site/`, `LICENSES/` oder den Workflow selbst ändern; von Hand; als Teil von Release | baut das Image, führt den Site-Test aus und scannt das Image mit trivy; auf `main` veröffentlicht es danach die Tags `main` und `main-<sha7>` mit Herkunftsangabe und SBOM |
+| Security (`security.yml`) | Pull Requests, Pushes auf `main`, montags 04:17 UTC, von Hand | gitleaks über die ganze Git-Historie; `trivy config` über das Repository, wobei trivy nur das `Containerfile` erkennt und mit seinen Regeln für Dockerfiles prüft, Compose-Dateien und Workflows nicht (die Workflows prüft zizmor im Workflow Linters); wöchentlich und von Hand zusätzlich trivy über das veröffentlichte Image `latest` |
+| Image (`build.yml`) | Pull Requests und Pushes auf `main`, die `Containerfile`, `apps.json`, `build.sh`, `germanized/`, `tests/site/`, `LICENSES/`, `.github/actions/` oder den Workflow selbst ändern; von Hand; als Teil von Release | zwei Jobs mit derselben Composite Action `.github/actions/build-and-test`, die das Image baut, den Site-Test ausführt und das Image mit trivy scannt: „Build and test“ für Pull Requests, Läufe von Hand und Forks, mit Rechten nur zum Hochladen des Scans; „Build, test and publish“ für Pushes auf `main` und von Release-Tags, der danach Image, Cache, Herkunftsangabe und SBOM schreibt, auf `main` mit den Tags `main` und `main-<sha7>` |
 | Release (`release.yml`) | Push eines Tags `v*` | `release-check`, dann Image wie oben mit den Tags des Releases, danach das GitHub-Release mit Release-Notes und SBOM |
 | App versions (`versions.yml`) | montags 06:00 UTC, von Hand | hebt die Pins mit `bump --write` an und öffnet bei Änderungen einen Pull Request, siehe [Versionierung](versionierung.md#release-prozess-für-maintainer) |
 
-**Was einen Pull Request anhält und was nur berichtet.** Tests, Linters, gitleaks, der Scan der Konfiguration und im Workflow Image Build und Site-Test halten einen Pull Request an, wenn sie fehlschlagen. Die Scans der Images auf Schwachstellen, im Workflow Image vor jeder Veröffentlichung und wöchentlich für `latest`, sind Berichte: Ihre Befunde kommen aus Debian und den Apps und verschwinden mit einem neuen Build oder einem Update, deshalb halten sie kein Image an. Ihre Befunde landen in Code Scanning; bei Pull Requests aus Forks, die nichts hochladen dürfen, stehen sie im Log des Laufs.
+**Was einen Pull Request anhält und was nur berichtet.** Tests, Linters, gitleaks, der Scan der Konfiguration und im Workflow Image Build und Site-Test halten einen Pull Request an, wenn sie fehlschlagen. Die Scans der Images auf Schwachstellen, im Workflow Image bei jedem Build und wöchentlich für `latest`, sind Berichte: Ihre Befunde kommen aus Debian und den Apps und verschwinden mit einem neuen Build oder einem Update, deshalb halten sie kein Image an. Ihre Befunde landen in Code Scanning; bei Pull Requests aus Forks, die nichts hochladen dürfen, stehen sie im Log des Laufs.
 
-**Veröffentlichen.** Nur Pushes auf `main` und Release-Tags in `encircle360-oss/erpnext_germanized` veröffentlichen ein Image, mit dem `GITHUB_TOKEN` des Laufs. Pull Requests und Forks bauen und testen nur. Der Workflow Image baut zuerst ein lokales Image, testet es und schiebt danach dasselbe Image aus dem Cache in die Registry; ein Schritt prüft, dass die veröffentlichten Schichten die getesteten sind. Der Cache des Builds liegt als `ghcr.io/encircle360-oss/erpnext_germanized:buildcache` in der Registry. Herkunftsangabe und Code Scanning nutzt die CI nur in einem öffentlichen Repository; das prüft der Workflow bei jedem Lauf.
+**Veröffentlichen.** Nur Pushes veröffentlichen ein Image: Pushes auf `main` und Pushes von Release-Tags in `encircle360-oss/erpnext_germanized`, mit dem `GITHUB_TOKEN` des Laufs. Pull Requests, Läufe von Hand und Forks bauen und testen nur, im Job „Build and test“, dessen Token außer dem Scan nichts schreiben darf. Der Job „Build, test and publish“ baut zuerst ein lokales Image, testet es und schiebt danach dasselbe Image aus dem Cache in die Registry; ein Schritt prüft, dass die veröffentlichten Schichten die getesteten sind. Den Cache des Builds, `ghcr.io/encircle360-oss/erpnext_germanized:buildcache` in der Registry, lesen beide Jobs, schreiben darf ihn nur dieser. Herkunftsangabe und Code Scanning nutzt die CI nur in einem öffentlichen Repository; das prüft die Composite Action bei jedem Lauf.
 
-**Dependabot** schlägt jede Woche Updates vor (`.github/dependabot.yml`): für die GitHub Actions, für das Basis-Image im ersten `FROM` des `Containerfile`, für die Images in `tests/site/compose.yaml` und `examples/compose.yaml` und für die pip-Pakete aus `requirements-dev.txt`. Schlägt Dependabot ein Basis-Image mit anderer Python-Version oder anderem Debian vor, gehören `PYTHON_VERSION` und `DEBIAN_BASE` von Hand dazu; bis beide passen, schlagen die Tests fehl.
+**Dependabot** schlägt jede Woche Updates vor (`.github/dependabot.yml`), jeweils frühestens sieben Tage nach ihrem Erscheinen: für die GitHub Actions der Workflows und der Composite Action unter `.github/actions/`, für das Basis-Image im ersten `FROM` des `Containerfile`, für die Images in `tests/site/compose.yaml` und `examples/compose.yaml` und für die Entwicklungswerkzeuge in `requirements-dev.txt` und `.pre-commit-config.yaml`. Weil das `FROM` das Basis-Image per Digest pinnt, kommen auch neue Builds desselben Tags als Update. Eine neue Minor- oder Hauptversion von Python schlägt Dependabot nicht vor, neue Hauptversionen von MariaDB und Redis ebenso wenig, und das Image dieses Repositories bleibt im Beispiel auf dem Tag `16`. Wechselt das Basis-Image auf eine andere Python-Version oder ein anderes Debian, gehören `PYTHON_VERSION` und `DEBIAN_BASE` von Hand dazu; bis beide passen, schlagen die Tests fehl. pip und pre-commit kommen in einem gemeinsamen Pull Request, damit ruff und zizmor an beiden Stellen gleichzeitig steigen.
 
 ## Pins und wo sie stehen
 
@@ -148,14 +149,14 @@ Ein Pull Request wird erst gemergt, wenn alle Jobs grün sind. Jeder Workflow li
 |---|---|
 | Apps | `apps.json`, Release-Tags |
 | Frappe | `FRAPPE_BRANCH` im `Containerfile` |
-| Basis-Image, Python, Debian | erstes `FROM` des `Containerfile`, dazu `PYTHON_VERSION` und `DEBIAN_BASE` |
+| Basis-Image, Python, Debian | erstes `FROM` des `Containerfile` per Tag und Digest, dazu `PYTHON_VERSION` und `DEBIAN_BASE` |
 | Node.js, wkhtmltopdf | `NODE_VERSION`, `WKHTMLTOPDF_VERSION` und `WKHTMLTOPDF_DISTRO` im `Containerfile` |
 | Dateien aus frappe_docker | Adressen mit `v4.2.0` und SHA-256-Summen im `Containerfile` |
 | MariaDB, Redis | `tests/site/compose.yaml` und `examples/compose.yaml`, per Tag |
-| GitHub Actions | in den Workflows, per Commit-SHA mit Version als Kommentar |
+| GitHub Actions | in den Workflows und in `.github/actions/`, per Commit-SHA mit Version als Kommentar |
 | Entwicklungswerkzeuge | `requirements-dev.txt` (`==`), Hooks in `.pre-commit-config.yaml` über `rev`, gitleaks mit Version und SHA-256 in `security.yml` |
 
-Eine Version, die an mehreren Stellen steht, etwa ruff in `requirements-dev.txt` und `.pre-commit-config.yaml`, wird an allen Stellen gleichzeitig angehoben.
+Eine Version, die an mehreren Stellen steht, etwa ruff in `requirements-dev.txt` und `.pre-commit-config.yaml`, wird an allen Stellen gleichzeitig angehoben. Für ruff und zizmor prüft das ein Test, der fehlschlägt, solange die beiden Dateien verschiedene Versionen nennen.
 
 ## Eine App hinzufügen oder entfernen
 

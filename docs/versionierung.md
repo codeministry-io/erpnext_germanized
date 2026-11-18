@@ -13,15 +13,17 @@ Ein Release ist ein Git-Tag der Form `v<ERPNext-Version>-<Revision>`, etwa `v16.
 
 ## Image-Tags
 
-`python -m germanized tags` leitet die Image-Tags aus Git-Ref und Commit ab:
+`python -m germanized tags` leitet die Image-Tags aus Git-Ref, Commit und den vorhandenen Release-Tags ab:
 
 | Ereignis | Image-Tags |
 |---|---|
 | Push auf `main` | `main`, `main-<sha7>` |
-| Git-Tag `v16.60.0-1` | `16.60.0-1`, `16.60.0`, `16`, `latest` |
-| Pull Request oder anderer Branch | keine; das Image wird gebaut und getestet, aber nicht veröffentlicht |
+| Push des Git-Tags `v16.60.0-1` | `16.60.0-1`, dazu `16.60.0`, `16` und `latest`, soweit kein neueres Release sie trägt |
+| Pull Request, Lauf von Hand oder anderer Branch | keine; das Image wird gebaut und getestet, aber nicht veröffentlicht |
 
-`<sha7>` sind die ersten sieben Zeichen des Commits. Alle Tags gehören zu `ghcr.io/encircle360-oss/erpnext_germanized`.
+`<sha7>` sind die ersten sieben Zeichen des Commits. Alle Tags gehören zu `ghcr.io/encircle360-oss/erpnext_germanized`. Veröffentlicht wird nur aus Pushes, auf `main` oder eines Release-Tags; ein Lauf von Hand baut und testet nur.
+
+Bewegliche Tags gehen nur vorwärts. Neuer als ein Release ist eines mit höherer ERPNext-Version oder eine spätere Revision derselben Version. Ein Release bekommt `16.60.0`, `16` und `latest` nur, solange kein neueres Release das jeweilige Tag trägt: Eine spätere Revision einer älteren ERPNext-Version, etwa `v16.60.0-2` nach `v16.61.0-1`, bekommt ihr volles Tag und `16.60.0`, aber weder `16` noch `latest`. Die CI übergibt dafür die Release-Tags des Repositories mit `--existing "$(git tag -l 'v*')"`.
 
 ## Was die Tags bedeuten
 
@@ -29,8 +31,8 @@ Ein Release ist ein Git-Tag der Form `v<ERPNext-Version>-<Revision>`, etwa `v16.
 |---|---|---|
 | `16.60.0-1` | nein | genau dieses Release |
 | `16.60.0` | mit jeder neuen Revision zu ERPNext 16.60.0 | die neueste Revision dieser ERPNext-Version |
-| `16` | mit jedem Release auf ERPNext 16 | das neueste Release der Hauptversion |
-| `latest` | mit jedem Release, auch beim Wechsel auf eine neue Hauptversion | das neueste Release |
+| `16` | mit jedem neueren Release auf ERPNext 16 | das neueste Release der Hauptversion |
+| `latest` | mit jedem neueren Release, auch beim Wechsel auf eine neue Hauptversion | das neueste Release |
 | `main` | mit jedem Push auf `main` | den letzten Build von `main`, kein Release |
 | `main-<sha7>` | nein | den Build eines Commits auf `main`, kein Release |
 
@@ -86,7 +88,7 @@ Es gibt Images nur für die aktuelle Hauptversion von Frappe und ERPNext, derzei
    python -m germanized readme --write    # sets the Version cells of the README table
    ```
 
-   `bump` hebt jede App nur innerhalb ihrer Hauptversion an. `check-versions` und `bump` lesen die Releases auf GitHub. Steuerbote hat bisher nur Tags und keine Releases, neue Versionen von Steuerbote kommen deshalb vorerst von Hand in `apps.json`.
+   `bump` hebt jede App nur innerhalb ihrer Hauptversion an, Steuerbote mit seinen eigenen Versionsnummern also innerhalb der Hauptversion 0: Ein neueres Release `v0.x.y` schlägt der Workflow vor wie bei jeder anderen App, den Wechsel auf Version 1 entscheidet ein Maintainer. `check-versions` und `bump` lesen dafür die Releases auf GitHub; Entwürfe und Vorabversionen zählen nicht.
 
 2. **Prüfen.** Vor dem Merge die Release-Notes von ERPNext und jeder geänderten App lesen, besonders auf Patches der Datenbank und geänderte Abhängigkeiten. Die CI baut das Image und installiert alle Apps auf einer frischen Site. Die Checks eines Pull Requests, den der Workflow geöffnet hat, starten erst, wenn ein Maintainer sie mit „Approve workflows to run“ freigibt oder den Pull Request schließt und wieder öffnet.
 
@@ -101,6 +103,6 @@ Es gibt Images nur für die aktuelle Hauptversion von Frappe und ERPNext, derzei
    git push origin v16.60.0-1
    ```
 
-5. **Veröffentlichen.** Der Push des Tags startet den Workflow Release (`release.yml`). Er prüft das Tag mit `release-check`, baut das Image, führt den Site-Test und den Scan auf Schwachstellen aus, veröffentlicht die vier Tags, legt Herkunftsangabe und SBOM ab und erstellt das GitHub-Release mit der Zusammenfassung von `python -m germanized summary` und dem Abschnitt aus dem Changelog. Schlagen Prüfung, Build oder Site-Test fehl, wird nichts veröffentlicht.
+5. **Veröffentlichen.** Der Push des Tags startet den Workflow Release (`release.yml`). Er prüft das Tag mit `release-check`, baut das Image, führt den Site-Test und den Scan auf Schwachstellen aus, veröffentlicht das volle Tag und die beweglichen Tags, die ihm zustehen (siehe [Image-Tags](#image-tags)), legt Herkunftsangabe und SBOM ab und erstellt das GitHub-Release mit der Zusammenfassung von `python -m germanized summary` und dem Abschnitt aus dem Changelog. Schlagen Prüfung, Build oder Site-Test fehl, wird nichts veröffentlicht.
 
 Ein Release, das schon veröffentlicht ist, wird nicht neu getaggt. Eine Korrektur ist eine neue Revision.
