@@ -176,7 +176,7 @@ Das Image enthält Software unter eigenen Lizenzen. Frappe steht unter MIT, ERPN
 
 Eine Ausnahme ist das Python-Paket [fintech](https://www.joonis.de/fintech/), das die App banking voraussetzt. Es steht unter keiner Open-Source-Lizenz, PyPI führt es als „Free To Use But Restricted“. Für EBICS erwirbt ALYF mit dem Abonnement eine Lizenz dafür, siehe die [EBICS-Dokumentation von banking](https://github.com/alyf-de/banking/blob/v16.6.4/banking/docs/en/banking/ebics-integration.md).
 
-Das Label `org.opencontainers.image.licenses` des Images nennt Apache-2.0, die Lizenz des Rezepts. Für den Inhalt gelten die Lizenzen oben.
+Das Label `org.opencontainers.image.licenses` des Images verbindet als SPDX-Ausdruck die Lizenz des Rezepts mit denen der Apps im Image: `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`. Das Rezept selbst bleibt unter Apache-2.0, das `Containerfile` unter MIT. Die Python-, Node- und Debian-Pakete darunter behalten ihre eigenen Lizenzen, siehe oben.
 
 ## Maintainer
 

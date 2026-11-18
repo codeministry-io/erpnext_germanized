@@ -8,7 +8,7 @@ Das `Containerfile` ist `images/custom/Containerfile` aus [frappe_docker](https:
 
 - **Ghostscript** wird in der Stufe `base` installiert, siehe [Ghostscript](#ghostscript).
 - **Die Vorgaben der ARGs sind die Pins:** `FRAPPE_BRANCH` nennt statt des Branches `version-16` ein Release-Tag von Frappe; welches, zeigt die Tabelle im [README](../README.md#enthaltene-apps). Dazu kommen `FRAPPE_PATH=https://github.com/frappe/frappe`, `PYTHON_VERSION=3.14`, `DEBIAN_BASE=trixie`, `NODE_VERSION=24`, `WKHTMLTOPDF_VERSION=0.12.6.1-3` und `WKHTMLTOPDF_DISTRO=bookworm`. `INSTALL_CHROMIUM` bleibt wie im Original auf `true`.
-- **Das erste `FROM` nennt das Basis-Image wörtlich**, `python:3.14-slim-trixie`, damit Dependabot es aktualisieren kann. Ein Test in `tests/` vergleicht es mit `PYTHON_VERSION` und `DEBIAN_BASE`, damit beide nicht auseinanderlaufen.
+- **Das erste `FROM` nennt das Basis-Image wörtlich und pinnt es per Digest**, `python:3.14-slim-trixie@sha256:…`, damit Dependabot es aktualisieren kann: Der Digest ändert sich mit jedem neuen Build des Tags, etwa mit einer neuen Patch-Version von Python oder Korrekturen aus Debian. Tests in `tests/` prüfen, dass der Digest dasteht und dass das Image zu `PYTHON_VERSION` und `DEBIAN_BASE` passt.
 - **OCI-Labels** beschreiben das Image, siehe [Labels](#labels).
 
 Die Startskripte und die nginx-Vorlage, die das Original aus seinem Verzeichnis `resources/core` kopiert, kommen unverändert aus derselben Version von frappe_docker. Das `Containerfile` lädt sie beim Build und prüft dabei ihre SHA-256-Summe. Der Kopf des `Containerfile` nennt jede Abweichung vom Original, damit sich die nächste Version von frappe_docker Zeile für Zeile vergleichen lässt.
@@ -43,7 +43,7 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 | `org.opencontainers.image.source` | `https://github.com/encircle360-oss/erpnext_germanized` |
 | `org.opencontainers.image.title` | `erpnext_germanized` |
 | `org.opencontainers.image.description` | eine Zeile auf Englisch |
-| `org.opencontainers.image.licenses` | `Apache-2.0`, die Lizenz des Rezepts; die Lizenzen des Inhalts nennt das [README](../README.md#lizenz) |
+| `org.opencontainers.image.licenses` | `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`: das Rezept (Apache-2.0, das `Containerfile` MIT) und die Apps im Image; Einzelheiten nennt das [README](../README.md#lizenz) |
 | `org.opencontainers.image.version` | aus dem Build-Argument `VERSION`, Vorgabe `dev`; `build.sh` setzt es auf die Ausgabe von `git describe --tags --always --dirty`, die CI bei einem Release auf das Tag und sonst ebenfalls auf `git describe` |
 | `org.opencontainers.image.base.name` | das Basis-Image, `docker.io/library/python:3.14-slim-trixie` |
 
