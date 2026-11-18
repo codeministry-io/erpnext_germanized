@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Das Beispiel für das Helm-Chart von Frappe in `docs/betrieb.md` setzt jetzt Storage Class und Datenbank und ist gegen das Chart 8.0.93 geprüft; bisher brach `helm` ab. Dazu kommen Hinweise auf `chromium_path` und darauf, dass `jobs.migrate` den Wartungsmodus auch nach einer fehlgeschlagenen Migration ausschaltet.
+- Die Dokumentation nennt die Oberfläche wie die deutsche Übersetzung der gepinnten Versionen, etwa „Spesenabrechnung“ und „Anhänge anfügen“, beschreibt SEPA-Zahlungsaufträge von banking v16.6.4 als XML-Datei ohne Senden per EBICS und berichtigt Rundungsmethoden, Dienstreise-Regionen, PDF-Generatoren, den Scan der Konfiguration mit trivy und die Queue der Prüfung der USt-IdNr.
+- Versionierung und Roadmap: Steuerbote veröffentlicht Releases, neuere Versionen auf der Hauptversion 0 schlägt der Workflow App versions vor. Die Version von Frappe steht nur noch in `FRAPPE_BRANCH` und in der Tabelle im README.
+
 ## [16.60.0-1] - 2026-11-18
 
 ### Hinzugefügt
