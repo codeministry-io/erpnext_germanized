@@ -2,10 +2,12 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
-## Unveröffentlicht
+## [16.60.0-2] - 2026-11-18
 
 ### Geändert
 
+- Steuerbote v0.1.2: stornierte Belege erscheinen im Bericht „UStVA Kennzahlen“ mit „Storniert“ statt eines Drucklinks, Hinweise enden nach Namen mit Punkt mit genau einem Punkt.
+- `python -m germanized` startet auch mit Python 3.12 und 3.13, weil `tags.py` seine Annotationen verzögert auswertet; unterstützt bleibt Python 3.14.
 - Das erste `FROM` pinnt das Basis-Image `python:3.14-slim-trixie` zusätzlich per Digest, damit Dependabot auch neue Builds desselben Tags vorschlägt.
 - Das Label `org.opencontainers.image.licenses` verbindet als SPDX-Ausdruck die Lizenz des Rezepts mit denen der Apps im Image, `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`; das Rezept selbst bleibt unter Apache-2.0.
 - Ein Image veröffentlichen nur noch Pushes auf `main` und von Release-Tags, im Job „Build, test and publish“ des Workflows Image. Pull Requests, Läufe von Hand und Forks bauen und testen im Job „Build and test“, dessen Token nur den Scan hochladen darf; beide Jobs teilen die Composite Action `.github/actions/build-and-test`.
