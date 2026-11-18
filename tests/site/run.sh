@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# Prove an image: create a site with every app of apps.json and serve it through gunicorn and nginx.
+#
+#   tests/site/run.sh IMAGE        for example tests/site/run.sh erpnext_germanized:local
+#
+# MariaDB, Redis and the containers of IMAGE come from compose.yaml next to this script. Every container and
+# volume of the test is removed when it ends, and it fails after 20 minutes.
+set -euo pipefail
+
+readonly TIME_LIMIT=20m
+readonly SITE=test.localhost
+
+if [[ $# -ne 1 || -z "$1" ]]; then
+	echo "usage: tests/site/run.sh IMAGE" >&2
+	exit 1
+fi
+for tool in docker jq timeout; do
+	if ! command -v "$tool" >/dev/null; then
+		echo "tests/site/run.sh needs $tool" >&2
+		exit 1
+	fi
+done
+
+if [[ -z "${SITE_TEST_UNDER_TIME_LIMIT:-}" ]]; then
+	export SITE_TEST_UNDER_TIME_LIMIT=1
+	exec timeout --kill-after=1m "$TIME_LIMIT" "$BASH" "$0" "$@"
+fi
+
+image=$1
+here=$(cd "$(dirname "$0")" && pwd)
+apps_json="$here/../../apps.json"
+export SITE_TEST_IMAGE="$image"
+compose=(docker compose --file "$here/compose.yaml" --ansi never --progress plain)
+
+step() {
+	printf '\n==> %s\n' "$*"
+}
+
+fail() {
+	printf '\nsite test failed: %s\n' "$*" >&2
+	exit 1
+}
+
+# A command in a one-off container of the image, after its entrypoint has linked the assets.
+in_bench() {
+	"${compose[@]}" run --rm --no-deps --quiet-pull -T bench "$@"
+}
+
+# The entrypoint prints a line of its own, so commands whose output is parsed skip it.
+bench_output() {
+	"${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint bench bench "$@"
+}
+
+# Ask a url from inside a running service until it answers, for up to two minutes.
+wait_for() {
+	local service=$1 url=$2 answer
+	shift 2
+	for _ in {1..60}; do
+		if answer=$("${compose[@]}" exec -T "$service" curl -fsS "$@" "$url" 2>/dev/null); then
+			printf '%s\n' "$answer"
+			return 0
+		fi
+		sleep 2
+	done
+	fail "$service did not answer $url within two minutes"
+}
+
+cleanup() {
+	local status=$?
+	trap - EXIT
+	if [[ $status -ne 0 ]]; then
+		step "last logs of the services"
+		"${compose[@]}" logs --no-color --tail 100 || true
+	fi
+	step "removing the containers and volumes"
+	"${compose[@]}" down --volumes --remove-orphans || true
+	if [[ $status -eq 0 ]]; then
+		printf '\nsite test passed: %s\n' "$image"
+	fi
+	exit "$status"
+}
+
+trap cleanup EXIT
+trap 'echo "site test interrupted" >&2; exit 130' INT
+trap 'echo "site test stopped, the time limit is $TIME_LIMIT" >&2; exit 143' TERM
+
+step "apps of $image against apps.json"
+mapfile -t pinned < <(jq -r '.[] | "\(.url) \(.branch)"' "$apps_json")
+# bench lists the apps in the order it fetched them from apps.json; the module names it installs are not
+# always the repository names, so they come from the image.
+mapfile -t names < <(docker run --rm --quiet --entrypoint cat "$image" sites/apps.txt)
+manifest=$(docker run --rm --quiet --entrypoint cat "$image" sites/apps.json)
+if [[ ${#names[@]} -ne $((${#pinned[@]} + 1)) || "${names[0]}" != frappe ]]; then
+	fail "the image has the apps ${names[*]}, apps.json lists ${#pinned[@]} apps besides frappe"
+fi
+for index in "${!pinned[@]}"; do
+	read -r url tag <<<"${pinned[index]}"
+	name=${names[index + 1]}
+	branch=$(jq -r --arg app "$name" '.[$app].resolution.branch // "unknown"' <<<"$manifest")
+	printf '  %-16s %-10s %s\n' "$name" "$branch" "$url"
+	if [[ "$branch" != "$tag" ]]; then
+		fail "$name in the image was built from $branch, apps.json pins $tag of $url"
+	fi
+done
+
+step "Ghostscript for the PDF/A-3 invoices of eu_einvoice"
+docker run --rm --quiet --entrypoint gs "$image" --version
+profiles=$(docker run --rm --quiet --entrypoint find "$image" -L /usr/share/ghostscript -name srgb.icc)
+if [[ -z "$profiles" ]]; then
+	fail "Ghostscript has no srgb.icc profile, which eu_einvoice needs for PDF/A-3"
+fi
+
+step "starting MariaDB and Redis"
+"${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true
+"${compose[@]}" up --detach --quiet-pull --wait --wait-timeout 180 db redis
+
+step "configuring common_site_config.json"
+in_bench bench set-config -g db_host db
+in_bench bench set-config -g redis_cache redis://redis:6379
+in_bench bench set-config -g redis_queue redis://redis:6379
+in_bench bench set-config -g redis_socketio redis://redis:6379
+
+step "creating $SITE with ${names[*]:1}"
+install=()
+for name in "${names[@]:1}"; do
+	install+=(--install-app "$name")
+done
+# The passwords are set in compose.yaml and expanded inside the container.
+# shellcheck disable=SC2016
+new_site='exec bench new-site "$@" --db-root-password "$DB_ROOT_PASSWORD" --admin-password "$ADMIN_PASSWORD"'
+in_bench bash -c "$new_site" new-site "$SITE" \
+	--mariadb-user-host-login-scope=% --db-root-username root "${install[@]}"
+
+step "apps installed on $SITE"
+installed=$(bench_output --site "$SITE" list-apps --format json | sed -n '/^{/,$p')
+jq -r --arg site "$SITE" '.[$site] | join(" ")' <<<"$installed"
+for name in "${names[@]}"; do
+	if ! jq -e --arg site "$SITE" --arg app "$name" '.[$site] | index($app)' <<<"$installed" >/dev/null; then
+		fail "$name is not installed on $SITE"
+	fi
+done
+
+step "making $SITE the default site"
+in_bench bench use "$SITE"
+
+# The default site serves bench and Socket.IO; gunicorn takes the site of a request from its Host header.
+step "backend: gunicorn, the default command of the image"
+"${compose[@]}" up --detach --no-deps backend
+pong=$(wait_for backend http://localhost:8000/api/method/ping -H "Host: $SITE")
+echo "$pong"
+[[ "$pong" == *'"pong"'* ]] || fail "the backend answered the ping with $pong"
+login=$("${compose[@]}" exec -T backend curl -fsS -H "Host: $SITE" http://localhost:8000/login)
+grep -qi '<html' <<<"$login" || fail "the login page of the backend is no HTML"
+echo "the login page is HTML"
+
+step "frontend: nginx in front of the backend"
+"${compose[@]}" up --detach --no-deps frontend
+pong=$(wait_for frontend http://localhost:8080/api/method/ping -H "Host: $SITE")
+echo "$pong"
+[[ "$pong" == *'"pong"'* ]] || fail "the frontend answered the ping with $pong"
+bundle=$("${compose[@]}" exec -T frontend jq -r '[.[]][0]' /home/frappe/frappe-bench/assets/assets.json)
+"${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$bundle" ||
+	fail "nginx does not serve the asset $bundle"
+echo "nginx serves $bundle"
