@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the tag against apps.json
+    if: github.repository == 'encircle360-oss/erpnext_germanized'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      - name: Check the tag against apps.json
+        run: python -m germanized release-check --ref "$GITHUB_REF"
+
+  image:
+    name: Image
+    needs: check
+    permissions:
+      contents: read
+      packages: write # push the image and the build cache
+      id-token: write # sign the provenance attestation
+      attestations: write # store the provenance attestation
+      security-events: write # upload the vulnerability scan
+    uses: $/.github/workflows/build.yml
+
+  release:
+    name: GitHub release
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      - name: Download the SBOM
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: erpnext_germanized.spdx.json
+          path: ${{ runner.temp }}/sbom
+
+      - name: Write the release notes
+        run: |
+          tags=$(python -m germanized tags --ref "$GITHUB_REF" --sha "$GITHUB_SHA")
+          python -m germanized summary --tags "${tags//$'\n'/,}" > "$RUNNER_TEMP/notes.md"
+          if [[ -f CHANGELOG.md ]]; then
+            # The section whose heading starts with this version, such as "## [16.60.0-1] - 2026-11-20".
+            awk -v version="${GITHUB_REF_NAME#v}" '
+              /^## / {
+                if (found) exit
+                heading = $2
+                gsub(/[][]/, "", heading)
+                sub(/^v/, "", heading)
+                found = heading == version
+                next
+              }
+              found
+            ' CHANGELOG.md > "$RUNNER_TEMP/changes.md"
+            if [[ -s $RUNNER_TEMP/changes.md ]]; then
+              { echo; cat "$RUNNER_TEMP/changes.md"; } >> "$RUNNER_TEMP/notes.md"
+            fi
+          fi
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sbom="$RUNNER_TEMP/erpnext_germanized-$GITHUB_REF_NAME.spdx.json"
+          mv "$RUNNER_TEMP/sbom/erpnext_germanized.spdx.json" "$sbom"
+          gh release create "$GITHUB_REF_NAME" "$sbom" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
