@@ -5,7 +5,7 @@ Der Einsatz von Coding-Agenten ist in diesem Projekt ausdrücklich erlaubt, für
 ## Was ein Agent wissen muss
 
 - **Projekt:** ein Rezept für ein Container-Image, keine Frappe-App. Das Image enthält Frappe und ERPNext 16, HRMS, die Apps von ALYF und Steuerbote und entsteht aus `apps.json` mit dem `Containerfile` aus frappe_docker v4.2.0.
-- **Struktur:** `apps.json` listet die Apps mit ihren Tags, `Containerfile` ist das Rezept, `build.sh` baut lokal. `germanized/` enthält die Werkzeuge (Python 3.14, nur Standardbibliothek, Tabs, `ruff`), `tests/` ihre Tests mit `pytest` und 100 % Abdeckung, `tests/site/` den Site-Test des Images. Die Workflows liegen unter `.github/workflows/`, die Dokumentation unter `docs/`.
+- **Struktur:** `apps.json` listet die Apps mit ihren Tags, `Containerfile` ist das Rezept, `build.sh` baut lokal. `germanized/` enthält die Werkzeuge (Python 3.14, nur Standardbibliothek, Tabs, `ruff`), `tests/` ihre Tests mit `pytest` und 100 % Abdeckung, `tests/site/` den Site-Test des Images. Die Workflows liegen unter `.github/workflows/`, die gemeinsamen Schritte der Image-Jobs (Build, Site-Test, Scan) als Composite-Action unter `.github/actions/build-and-test/`, die Dokumentation unter `docs/`.
 - **Sprache:** Code, Kommentare, Meldungen, Namen von Workflow-Schritten und Commit-Nachrichten englisch. Dokumentation, Issues und Pull Requests deutsch.
 - **Quellen:** Aussagen über eine App stammen aus ihrem README und ihrer Dokumentation zum gepinnten Tag, Optionen von bench aus dem Quelltext von Frappe 16. Was dort nicht steht, wird nicht aus dem Gedächtnis ergänzt, sondern nachgeschlagen und belegt.
 
