@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from germanized.apps import load_apps, validate
-from germanized.containerfile import base_image, frappe_tag, pins
+from germanized.containerfile import base_image, frappe_tag, pins, split_digest
 from germanized.versions import write_apps
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,7 +19,15 @@ def test_the_first_from_names_the_image_of_the_python_and_debian_pins():
 	# Dependabot updates the literal FROM, the other stages and the labels read the ARGs.
 	text = CONTAINERFILE.read_text(encoding="utf-8")
 	pinned = pins(text)
-	assert base_image(text) == f"python:{pinned['PYTHON_VERSION']}-slim-{pinned['DEBIAN_BASE']}"
+	image, _ = split_digest(base_image(text))
+	assert image == f"python:{pinned['PYTHON_VERSION']}-slim-{pinned['DEBIAN_BASE']}"
+
+
+def test_the_first_from_pins_the_base_image_by_digest():
+	# The tag moves with every patch release of Python and every rebuild on Debian, but without a digest in
+	# the FROM, Dependabot has nothing to propose.
+	_, digest = split_digest(base_image(CONTAINERFILE.read_text(encoding="utf-8")))
+	assert digest is not None
 
 
 def test_apps_json_has_the_format_that_bump_writes(tmp_path):

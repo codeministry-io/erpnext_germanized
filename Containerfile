@@ -5,8 +5,8 @@
 # Based on images/custom/Containerfile of frappe_docker v4.2.0 (https://github.com/frappe/frappe_docker),
 # MIT License, Copyright (c) 2017 Frappe Technologies Pvt. Ltd., see LICENSES/frappe_docker.MIT.txt.
 # Changed against upstream:
-# - the first FROM names its image literally, so Dependabot can update it; PYTHON_VERSION and DEBIAN_BASE
-#   stay as ARGs, and the tests fail when they disagree with that FROM
+# - the first FROM names its image literally and pins it by digest, so Dependabot can update it;
+#   PYTHON_VERSION and DEBIAN_BASE stay as ARGs, and the tests fail when they disagree with that FROM
 # - FRAPPE_BRANCH defaults to a release tag instead of the branch version-16, so the ARG defaults pin
 #   every version
 # - Ghostscript is installed in the base stage
@@ -15,6 +15,12 @@
 # - OCI labels
 # The upstream instructions are otherwise unchanged; hadolint findings in them are ignored per instruction
 # with the reason, so the next upstream release can be compared line by line.
+#
+# The recipe itself, the repository erpnext_germanized, is Apache-2.0, apart from this Containerfile, which
+# stays MIT like its upstream. The label org.opencontainers.image.licenses joins that license with those of
+# the software in the image: Frappe (MIT), ERPNext, HRMS, erpnext_germany, erpnext_datev and banking
+# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later) and Steuerbote
+# (AGPL-3.0-or-later). The Python, Node.js and Debian packages underneath keep their own licenses.
 
 # The stages switch to the frappe user (uid 1000, gid 0) by name like the frappe images do, so the image
 # behaves the same under their compose files and Helm chart.
@@ -22,7 +28,7 @@
 
 ARG PYTHON_VERSION=3.14
 ARG DEBIAN_BASE=trixie
-FROM python:3.14-slim-trixie AS base
+FROM python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS base
 
 # ADD --chmod gives the directories it creates the mode of the file, which would lock the frappe user out.
 RUN mkdir -p /templates/nginx /etc/nginx/snippets
@@ -228,7 +234,7 @@ ARG VERSION=dev
 LABEL org.opencontainers.image.title="erpnext_germanized" \
   org.opencontainers.image.description="ERPNext 16 for German companies, with HRMS and German apps for accounting, e-invoicing, banking and ELSTER" \
   org.opencontainers.image.source="https://github.com/encircle360-oss/erpnext_germanized" \
-  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.licenses="Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later" \
   org.opencontainers.image.version="${VERSION}" \
   org.opencontainers.image.base.name="docker.io/library/python:${PYTHON_VERSION}-slim-${DEBIAN_BASE}"
 
