@@ -6,6 +6,8 @@ the recipe on that version, starting at 1. The image of a release gets the full 
 every other ref is built and not pushed.
 """
 
+from __future__ import annotations
+
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
