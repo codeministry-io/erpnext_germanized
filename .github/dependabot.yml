@@ -20,6 +20,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    ignore:
+      # Frappe 16 runs on Python 3.14; a newer minor or major version of the base image is a decision, not
+      # an update, and the tests fail until the ARGs follow it.
+      - dependency-name: python
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
     labels: []
 
   # The database and Redis images of the site test and of the example.
@@ -31,6 +36,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    ignore:
+      # The database and Redis of the site test and the example follow what frappe_docker supports; a new
+      # major version is a decision, not an update.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     labels: []
 
   - package-ecosystem: pip
