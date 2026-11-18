@@ -86,21 +86,31 @@ trap 'echo "site test stopped, the time limit is $TIME_LIMIT" >&2; exit 143' TER
 
 step "apps of $image against apps.json"
 mapfile -t pinned < <(jq -r '.[] | "\(.url) \(.branch)"' "$apps_json")
-# bench lists the apps in the order it fetched them from apps.json; the module names it installs are not
-# always the repository names, so they come from the image.
-mapfile -t names < <(docker run --rm --quiet --entrypoint cat "$image" sites/apps.txt)
+# The module names bench installs are not always the repository names, and apps.txt does not always keep
+# the order of apps.json, so the names and the tags come from the manifest bench writes, in the order in
+# which it fetched the apps.
 manifest=$(docker run --rm --quiet --entrypoint cat "$image" sites/apps.json)
+mapfile -t names < <(jq -r 'to_entries | sort_by(.value.idx) | .[].key' <<<"$manifest")
 if [[ ${#names[@]} -ne $((${#pinned[@]} + 1)) || "${names[0]}" != frappe ]]; then
 	fail "the image has the apps ${names[*]}, apps.json lists ${#pinned[@]} apps besides frappe"
 fi
-for index in "${!pinned[@]}"; do
-	read -r url tag <<<"${pinned[index]}"
-	name=${names[index + 1]}
-	branch=$(jq -r --arg app "$name" '.[$app].resolution.branch // "unknown"' <<<"$manifest")
-	printf '  %-16s %-10s %s\n' "$name" "$branch" "$url"
-	if [[ "$branch" != "$tag" ]]; then
-		fail "$name in the image was built from $branch, apps.json pins $tag of $url"
+# Every pinned tag must have been built once; two apps may share a tag, so each match is used up.
+mapfile -t built < <(jq -r 'to_entries | sort_by(.value.idx) | .[1:] | .[] | "\(.key) \(.value.resolution.branch // "unknown")"' <<<"$manifest")
+for pin in "${pinned[@]}"; do
+	read -r url tag <<<"$pin"
+	found=""
+	for index in "${!built[@]}"; do
+		read -r name branch <<<"${built[index]}"
+		if [[ "$branch" == "$tag" ]]; then
+			found=$name
+			unset 'built[index]'
+			break
+		fi
+	done
+	if [[ -z "$found" ]]; then
+		fail "no app of the image was built from $tag of $url; the image has ${built[*]}"
 	fi
+	printf '  %-16s %-10s %s\n' "$found" "$tag" "$url"
 done
 
 step "Ghostscript for the PDF/A-3 invoices of eu_einvoice"
