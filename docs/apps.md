@@ -18,7 +18,7 @@ Für Deutschland:
 
 Einrichtung:
 
-- **Systemeinstellungen** (System Settings): Sprache, Land, Zeitzone, Datums- und Zahlenformat und Währung. „Erster Wochentag“ steht auch nach dem Assistenten auf Sonntag. Als „Rundungsmethode“ setzt der Assistent „Symmetrisches Runden“, zur Wahl steht auch „Kaufmännisches Runden“. Welche Rundung zur Buchhaltung passt, klärt die Firma mit ihrer Steuerberatung.
+- **Systemeinstellungen** (System Settings): Sprache, Land, Zeitzone, Datums- und Zahlenformat und Währung. „Erster Wochentag“ steht auch nach dem Assistenten auf Sonntag. Als „Rundungsmethode“ steht vor dem Assistenten „Symmetrisches Runden (alt)“, der Assistent setzt „Symmetrisches Runden“, zur Wahl steht außerdem „Kaufmännisches Runden“. Welche Rundung zur Buchhaltung passt, klärt die Firma mit ihrer Steuerberatung.
 - **Druckeinstellungen** (Print Settings): Vorgabe für den PDF-Generator, siehe [Architektur](architektur.md#was-im-image-steckt).
 
 ## ERPNext
@@ -56,12 +56,12 @@ Die App sammelt regionale Anpassungen für Deutschland:
 
 - **Berichte** „Summen- und Saldenliste“ und „Zusammenfassende Meldung“. Die Zusammenfassende Meldung führt derzeit jede Rechnung als sonstige Leistung (S). Dreiecksgeschäfte (D) und innergemeinschaftliche Lieferungen (L) sind in der CSV-Datei von Hand zu ändern.
 - **Registerinformation** mit Registerart, Registergericht und Registernummer an Unternehmen, Kunde und Lieferant.
-- **Prüfung der USt-IdNr.** über den Dienst VIES der Europäischen Kommission, von Hand oder automatisch: Der Scheduler prüft nach und nach jeden aktiven Kunden und Lieferanten mit USt-IdNr., dessen letzte Prüfung (USt-IdNr Prüfung, VAT ID Check) mehr als drei Monate zurückliegt. Dafür braucht der Container Zugang zu `ec.europa.eu`.
+- **Prüfung der USt-IdNr.** über den Dienst VIES der Europäischen Kommission, von Hand oder automatisch: Der Scheduler prüft nach und nach jeden aktiven Kunden und Lieferanten mit USt-IdNr., dessen letzte Prüfung (USt-IdNr Prüfung, VAT ID Check) mehr als drei Monate zurückliegt. Jede Prüfung läuft als Hintergrundjob in der Queue `long`; der Worker dafür braucht Zugang zu `ec.europa.eu`.
 - **Lückenlose Nummern.** Von Angeboten, Aufträgen und Ausgangsrechnungen lässt sich je Nummernkreis und Firma nur der jeweils letzte Beleg löschen. Den Schalter dazu enthalten die ERPNext-Deutschland-Einstellungen (ERPNext Germany Settings), vorgegeben ist er an.
 - **Geschützte Anhänge.** An Angeboten, Aufträgen, Lieferscheinen, Rechnungen, Zahlungen, Buchungssätzen, Anlagen und weiteren Belegen lassen sich Anhänge nur löschen, solange der Beleg ein Entwurf oder storniert ist.
 - **Mitarbeiter:** zusätzliche Felder, etwa für Steuerangaben, eine Liste der Konfessionen und, mit HRMS, eine Liste der deutschen Krankenkassen.
 - **Geschäftsbriefe** (Business Letter) aus einer Geschäftsbriefvorlage, zum Drucken oder als E-Mail an Kunden und Lieferanten.
-- **Dienstreisen** (Business Trip) mit HRMS: Verpflegungsmehraufwand nach Dienstreise-Region und Kilometerpauschale für den privaten Pkw. Eine gebuchte Dienstreise legt eine Auslagenabrechnung (Expense Claim) als Entwurf an. Die Regionen mit ihren Pauschalen kommen bei der Installation als Grundliste nach dem deutschen Steuerrecht dazu und werden danach nicht aktualisiert; Kilometerpauschale und Auslagenarten stehen in den Dienstreise-Einstellungen.
+- **Dienstreisen** (Business Trip) mit HRMS: Verpflegungsmehraufwand nach Dienstreise-Region und Kilometerpauschale für den privaten Pkw. Eine gebuchte Dienstreise legt eine Spesenabrechnung (Expense Claim) als Entwurf an. Die Regionen mit ihren Pauschalen kommen bei der Installation als Grundliste nach dem deutschen Steuerrecht dazu. Ein Update der App kann neue Pauschalen bringen: Der Patch `import_business_trip_regions` in `patches.txt` importiert die Liste bei `bench migrate` erneut, legt fehlende Regionen an und ergänzt neue Zeiträume, ohne vorhandene Beträge zu ändern. In den Dienstreise-Einstellungen stehen die Kilometerpauschale und je eine „Art der Auslagenabrechnung“ für Verpflegungsmehraufwand und Kilometerpauschale.
 - **GDPdU-Export** für die Übergabe von Daten an das Finanzamt nach § 147 Abs. 6 AO und den GoBD: je DocType eine CSV-Datei, auf Wunsch mit den Anhängen, dazu `index.xml` und die DTD, als ZIP-Datei am Export. Welche DocTypes dazugehören, entscheidet die App nicht, das klärt die Firma mit ihrer Steuerberatung.
 
 Die DTD `gdpdu-01-03-2019.dtd` gehört nicht zur App, sie ist von der CaseWare Germany GmbH und liegt unverändert bei. Mehr steht im [README von erpnext_germany](https://github.com/alyf-de/erpnext_germany/blob/v16.2.2/README.md).
@@ -73,8 +73,8 @@ Die DTD `gdpdu-01-03-2019.dtd` gehört nicht zur App, sie ist von der CaseWare G
 
 Die App verbindet ERPNext mit DATEV auf zwei Wegen:
 
-- **DATEV Unternehmen Online.** Beim Buchen einer Ausgangsrechnung, Eingangsrechnung oder Auslagenabrechnung schickt die App den Beleg per E-Mail an DATEV Unternehmen Online, als PDF des Ausdrucks oder als die Anhänge des Belegs. Einrichtung in den DATEV Unternehmen Online-Einstellungen: Integration aktivieren, E-Mail-Konto wählen, je Belegart die Zieladresse aus DATEV Unternehmen Online eintragen und „Anhänge hinzufügen“ oder „Druck hinzufügen“ wählen. Die Absenderadresse muss die des gewählten E-Mail-Kontos sein.
-- **DATEV-CSV-Export.** Der Bericht „DATEV“ zeigt die Buchungen (GL Entry) im Format von DATEV und exportiert sie mit den Stammdaten als ZIP-Datei für die Steuerberatung. Einrichtung in den DATEV-Einstellungen: Mandantennummer, Beraternummer und ein vorläufiges Gegenkonto, empfohlen ist 9090.
+- **DATEV Unternehmen Online.** Beim Buchen einer Ausgangsrechnung, Eingangsrechnung oder Spesenabrechnung schickt die App den Beleg per E-Mail an DATEV Unternehmen Online, als PDF des Ausdrucks oder als die Anhänge des Belegs. Einrichtung in den DATEV Unternehmen Online-Einstellungen: Integration aktivieren, unter „Absender“ das E-Mail-Konto wählen, je Belegart die Zieladresse aus DATEV Unternehmen Online eintragen und „Anhänge anfügen“ oder „Druck anfügen“ wählen. Die Absenderadresse muss die des gewählten E-Mail-Kontos sein.
+- **DATEV-CSV-Export.** Der Bericht „DATEV“ zeigt die Buchungen (GL Entry) im Format von DATEV und exportiert sie mit den Stammdaten als ZIP-Datei für die Steuerberatung. Einrichtung in den DATEV-Einstellungen: Mandantennummer, Beraternummer und „Temporäre Gegenkontonummer“, empfohlen ist 9090.
 
 ERPNext kennt keine Automatikkonten von DATEV. Mit dem Gegenkonto 9090 ist die Automatik abgeschaltet. Wer ein anderes Gegenkonto nimmt, bucht in ERPNext nur auf Konten ohne Automatik, sonst stimmt der Abzug der Umsatzsteuer nicht. DATEV und DATEV Unternehmen Online sind Marken der DATEV eG, die App ist von ihr weder geprüft noch empfohlen. Mehr steht im [README von erpnext_datev](https://github.com/alyf-de/erpnext_datev/blob/v16.0.2/README.md).
 
@@ -107,7 +107,7 @@ Die App [Compendium](https://github.com/alyf-de/compendium), die die Dokumentati
 
 Die App erzeugt beim Buchen eines Belegs ein PDF und hängt es an den Beleg. Das geht für jeden DocType, der sich drucken und buchen lässt.
 
-Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für“ steht eine Zeile je DocType, auf Wunsch mit eigenem Druckformat, Briefkopf, Muster für den Dateinamen und Filtern, etwa für eigene PDFs von Gutschriften. Ist „Create PDF in Background“ aktiv, entsteht das PDF in einem Hintergrundjob, also nur mit laufenden Workern. Das PDF entsteht in der Sprache aus dem Feld Sprache des Belegs; an Kunden und Lieferanten lässt sich dafür eine eigene Drucksprache (Print Language) wählen.
+Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für“ steht eine Zeile je DocType, auf Wunsch mit eigenem Druckformat, Briefkopf, Muster für den Dateinamen und Filtern, etwa für eigene PDFs von Gutschriften. „PDF im Hintergrund erstellen“ ist vorgegeben an: Das PDF entsteht dann in einem Hintergrundjob, also nur mit laufenden Workern. Das PDF entsteht in der Sprache aus dem Feld Sprache des Belegs; an Kunden und Lieferanten lässt sich dafür eine eigene Drucksprache (Print Language) wählen.
 
 ## banking
 
@@ -117,10 +117,10 @@ Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für
 
 Die App holt Kontoauszüge als Banktransaktionen (Bank Transaction) in ERPNext und hilft, sie mit Belegen abzugleichen.
 
-- **Abgleich** im Bankabgleich Beta (Bank Reconciliation Tool Beta): Banktransaktionen gegen Zahlungen und Buchungssätze oder gegen offene Ausgangs- und Eingangsrechnungen, für die der Abgleich die Zahlung selbst anlegt, mit HRMS auch gegen Auslagenabrechnungen. Der Abgleich ist kostenlos und arbeitet auch mit Umsätzen aus anderen Quellen.
+- **Abgleich** im Bankabgleich Beta (Bank Reconciliation Tool Beta): Banktransaktionen gegen Zahlungen und Buchungssätze oder gegen offene Ausgangs- und Eingangsrechnungen, für die der Abgleich die Zahlung selbst anlegt, mit HRMS auch gegen Spesenabrechnungen. Der Abgleich ist kostenlos und arbeitet auch mit Umsätzen aus anderen Quellen.
 - **Import von Hand:** CAMT-Dateien (camt.052, camt.053) und MT940-Dateien, hochgeladen im Bankabgleich Beta.
 - **EBICS:** Abruf der Umsätze direkt bei der Bank, für Banken in Deutschland, Österreich, Frankreich und der Schweiz. EBICS braucht ein kostenpflichtiges Abonnement bei ALYF ([banking.alyf.de](https://banking.alyf.de/banking-pricing)) und einen EBICS-Zugang der Bank. Für diesen Zugang empfiehlt die Dokumentation die Signaturklasse T: Damit ruft ERPNext Umsätze ab, kann aber keine Zahlungen auslösen.
-- **SEPA-Zahlungsaufträge** (pain.001) für Zahlungen an Lieferanten und Mitarbeiter, mit passendem EBICS-Zugang auch direkt an die Bank.
+- **SEPA-Zahlungsaufträge** (SEPA Payment Order) im Format pain.001 für Zahlungen an Lieferanten und Mitarbeiter, aus Eingangsrechnungen und mit HRMS aus Spesenabrechnungen. Einen gebuchten Auftrag lädt man unter „Aktionen“ mit „Als XML herunterladen“ herunter und dann selbst bei der Bank hoch. Das Senden per EBICS ist in banking v16.6.4 abgeschaltet, siehe [SEPA Payment Order](https://github.com/alyf-de/banking/blob/v16.6.4/banking/docs/en/banking/sepa-payment-order.md#send-via-ebics-currently-disabled).
 
 Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.6.4/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
 
@@ -145,10 +145,10 @@ Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github
 
 ## Zusammenspiel der Apps
 
-- **HRMS und erpnext_germany:** Dienstreisen legen Auslagenabrechnungen von HRMS an, die Krankenkassen hängen an HRMS. Deshalb kommt HRMS zuerst.
-- **erpnext_datev und erpnext_pdf-on-submit:** Wer für dieselbe Belegart beide nutzt, wählt in den DATEV Unternehmen Online-Einstellungen „Anhänge hinzufügen“. PDF on Submit hängt das PDF an, und erpnext_datev schickt diesen Anhang.
-- **banking und erpnext_germany:** Eine Eingangsrechnung aus einer Dienstreise verweist auf Dienstreise und Mitarbeiter. Ein SEPA-Zahlungsauftrag dazu geht dann an den Mitarbeiter, nicht an den Lieferanten; banking ergänzt dafür an der Eingangsrechnung das Feld für das Bankkonto des Mitarbeiters.
-- **banking und HRMS:** Banktransaktionen lassen sich gegen offene Auslagenabrechnungen abgleichen, und aus einer genehmigten Auslagenabrechnung entsteht direkt ein SEPA-Zahlungsauftrag.
+- **HRMS und erpnext_germany:** Dienstreisen legen Spesenabrechnungen von HRMS an, die Krankenkassen hängen an HRMS. Deshalb kommt HRMS zuerst.
+- **erpnext_datev und erpnext_pdf-on-submit:** Wer für dieselbe Belegart beide nutzt, wählt in den DATEV Unternehmen Online-Einstellungen „Anhänge anfügen“. PDF on Submit hängt das PDF an, und erpnext_datev schickt diesen Anhang.
+- **banking und erpnext_germany:** erpnext_germany ergänzt die Eingangsrechnung um „Dienstreise“, „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“. Das letzte Feld markiert eine Rechnung, die ein Mitarbeiter vorgestreckt hat, mit oder ohne Dienstreise. Sind „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“ gesetzt, geht ein SEPA-Zahlungsauftrag dazu an den Mitarbeiter statt an den Lieferanten; banking zeigt dann statt „Lieferanten-Bankkonto“ das Feld „Mitarbeiter-Bankkonto“.
+- **banking und HRMS:** Banktransaktionen lassen sich gegen offene Spesenabrechnungen abgleichen, und aus einer genehmigten Spesenabrechnung entsteht direkt ein SEPA-Zahlungsauftrag.
 - **ERPNext und Steuerbote:** Die Vorgaben von Steuerbote für SKR03 und SKR04 kennen die Kontonummern der SKR-Vorlagen von ERPNext.
 
 ## Nicht im Image
