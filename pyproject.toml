@@ -1,0 +1,62 @@
+[project]
+name = "erpnext-germanized-tools"
+version = "0.0.0"
+authors = [{ name = "encircle360 GmbH", email = "oss@encircle360.com" }]
+description = "Tools that validate, tag and update the erpnext_germanized image recipe"
+requires-python = ">=3.14"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+# The tools run from the repository root with the standard library only; requirements-dev.txt pins the
+# tools that check them.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/encircle360-oss/erpnext_germanized"
+Repository = "https://github.com/encircle360-oss/erpnext_germanized.git"
+"Bug Reports" = "https://github.com/encircle360-oss/erpnext_germanized/issues"
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+  "F",   # pyflakes
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "I",   # import order
+  "UP",  # modern syntax
+  "B",   # bugbear
+  "RUF", # ruff's own rules
+  "S",   # bandit security checks
+  "SIM", # simplifications
+  "C4",  # comprehensions
+  "T20", # no print statements in library code
+]
+ignore = [
+  "E101", # indentation contains mixed spaces and tabs (the code uses tabs, like Frappe)
+  "W191", # indentation contains tabs
+  "E501", # line length is enforced by the formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"germanized/__main__.py" = ["T201"] # the command line prints its results
+"tests/*.py" = ["S101"] # assert is fine in tests
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The tools are not installed; the tests import them from the repository root.
+pythonpath = ["."]
+addopts = "--strict-markers --cov=germanized --cov-fail-under=100"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
