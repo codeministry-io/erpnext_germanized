@@ -1,0 +1,17 @@
+# Changelog
+
+Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
+
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Erste Distribution: ein Image mit Frappe v16.60.2, ERPNext v16.60.0, HRMS v16.60.0, erpnext_germany v16.2.2, erpnext_datev v16.0.2, eu_einvoice v16.4.0, erpnext_pdf-on-submit v16.3.1, banking v16.6.4 und Steuerbote v0.1.1, in dieser Reihenfolge installiert.
+- Rezept aus `images/custom/Containerfile` von frappe_docker v4.2.0 auf Python 3.14 und Debian trixie, mit Node.js 24, wkhtmltopdf 0.12.6.1-3, Chromium und zusätzlich Ghostscript für die PDF/A-3-Rechnungen von eu_einvoice.
+- `apps.json` als einzige Liste der Apps, jede auf ein Release-Tag gepinnt.
+- `build.sh` für den lokalen Build mit denselben Eingaben wie in der CI.
+- Werkzeuge `python -m germanized`: `validate`, `tags`, `release-check`, `summary`, `check-versions`, `bump` und `readme`, mit 100 % Testabdeckung.
+- Site-Test `tests/site/run.sh`, der alle Apps auf einer frischen Site installiert und Backend und nginx prüft.
+- CI mit den Workflows Tests, Linters, Security, Image, Release und App versions. Pushes auf `main` veröffentlichen die Image-Tags `main` und `main-<sha7>`, ein Release-Tag wie `v16.60.0-1` die Tags `16.60.0-1`, `16.60.0`, `16` und `latest`.
+- Beispiel für docker compose in `examples/compose.yaml`.
+- Dokumentation zu Architektur, Betrieb, Versionierung, Apps, Entwicklung und Roadmap, dazu Regeln für Beiträge, Coding-Agenten und Sicherheit sowie Vorlagen für Issues und Pull Requests.

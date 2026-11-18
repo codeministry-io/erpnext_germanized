@@ -1,0 +1,86 @@
+# Architektur
+
+erpnext_germanized ist ein Rezept für ein Image, keine eigene App. Das Rezept besteht aus `apps.json` mit den Apps und ihren Tags, dem `Containerfile` aus frappe_docker und `build.sh` für den lokalen Build. Ins Image kommt kein eigener Code dieses Repositories, nur Frappe, die Apps aus `apps.json` und ihre Laufzeit. Diese Seite beschreibt, wie das Image entsteht und was darin steckt. Den Betrieb beschreibt [Betrieb](betrieb.md), Werkzeuge und CI [Entwicklung](entwicklung.md).
+
+## Das Rezept und sein Ursprung
+
+Das `Containerfile` ist `images/custom/Containerfile` aus [frappe_docker](https://github.com/frappe/frappe_docker) v4.2.0, das Rezept, das frappe_docker für Images mit eigenen Apps vorsieht. Es steht wie das Original unter der MIT-Lizenz, ihr Text liegt in `LICENSES/frappe_docker.MIT.txt`. Gegenüber dem Original ändert sich nur:
+
+- **Ghostscript** wird in der Stufe `base` installiert, siehe [Ghostscript](#ghostscript).
+- **Die Vorgaben der ARGs sind die Pins:** `FRAPPE_BRANCH=v16.60.2`, `FRAPPE_PATH=https://github.com/frappe/frappe`, `PYTHON_VERSION=3.14`, `DEBIAN_BASE=trixie`, `NODE_VERSION=24`, `WKHTMLTOPDF_VERSION=0.12.6.1-3` und `WKHTMLTOPDF_DISTRO=bookworm`. `INSTALL_CHROMIUM` bleibt wie im Original auf `true`.
+- **Das erste `FROM` nennt das Basis-Image wörtlich**, `python:3.14-slim-trixie`, damit Dependabot es aktualisieren kann. Ein Test in `tests/` vergleicht es mit `PYTHON_VERSION` und `DEBIAN_BASE`, damit beide nicht auseinanderlaufen.
+- **OCI-Labels** beschreiben das Image, siehe [Labels](#labels).
+
+Die Startskripte und die nginx-Vorlage, die das Original aus seinem Verzeichnis `resources/core` kopiert, kommen unverändert aus derselben Version von frappe_docker. Das `Containerfile` lädt sie beim Build und prüft dabei ihre SHA-256-Summe. Der Kopf des `Containerfile` nennt jede Abweichung vom Original, damit sich die nächste Version von frappe_docker Zeile für Zeile vergleichen lässt.
+
+## Stufen des Containerfile
+
+| Stufe | Was sie tut |
+|---|---|
+| `base` | Debian trixie mit Python 3.14 aus `python:3.14-slim-trixie`. Legt den Benutzer `frappe` an (UID 1000, Gruppe 0) und installiert nginx, git, die Clients von MariaDB und PostgreSQL, restic und gpg für Sicherungen, wait-for-it und jq, die Bibliotheken für WeasyPrint, Ghostscript, wkhtmltopdf mit gepatchtem Qt und Chromium als `chromium-headless-shell`. Node.js 24 kommt über nvm mit yarn und pnpm, bench über pip. nginx läuft ohne root, die Verzeichnisse gehören der Gruppe 0, damit das Image auch mit beliebiger UID läuft, etwa unter OpenShift. |
+| `builder` | Installiert Compiler und Entwicklungsbibliotheken, die Python-Pakete der Apps zum Bauen brauchen. Führt `bench init` mit Frappe aus `FRAPPE_PATH` zum Tag `FRAPPE_BRANCH` und den Apps aus `apps.json` aus und entfernt danach die `.git`-Verzeichnisse der Apps. |
+| `backend` | Das Image, das veröffentlicht wird. Kopiert die fertige Bench aus `builder` nach `/home/frappe/frappe-bench`, ohne Compiler und Entwicklungsbibliotheken. Verschiebt die gebauten Assets aus `sites/assets` nach `/home/frappe/frappe-bench/assets`, damit sie zum Image gehören und nicht zum Volume `sites`, und setzt Volumes, Entrypoint, Befehl und Labels. |
+
+## apps.json als Build-Secret
+
+`apps.json` kommt als BuildKit-Secret `apps_json` in den Build, wie frappe_docker es vorsieht. Das Secret liegt nur während des einen `RUN` mit `bench init` unter `/opt/frappe/apps.json` und landet in keiner Schicht des Images.
+
+- `bench init --apps_path=/opt/frappe/apps.json` holt jede App mit `git clone --branch <tag>`. `git clone` nimmt für `--branch` auch Tags, deshalb steht in `apps.json` unter `branch` das Release-Tag.
+- bench installiert die Apps in der Reihenfolge von `apps.json`. `erpnext` steht deshalb vor allen Apps, die darauf aufbauen.
+- bench legt jede App unter dem Namen aus ihrer `pyproject.toml` ab. Für `erpnext_pdf-on-submit` ist das `pdf_on_submit`. Unter diesem Namen erwarten sie auch `bench --site <site> install-app` und `bench new-site --install-app`.
+- Fehlt das Secret oder ist es leer, baut das Original ohne Fehler ein Image nur mit Frappe. Dem Site-Test fällt das auf, denn er vergleicht die Apps im Image mit `apps.json`.
+
+`build.sh` und die CI übergeben das Secret auf dieselbe Weise: `build.sh` mit `--secret id=apps_json,src=apps.json`, die CI über `secret-files` von `docker/build-push-action`.
+
+## CACHE_BUST
+
+BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches auf. Ohne weiteres Zutun würde ein geändertes `apps.json` deshalb die zwischengespeicherte Schicht mit `bench init` wiederverwenden, und das Image enthielte die alten Apps. Das Build-Argument `CACHE_BUST` verhindert das. `build.sh` und die CI setzen es auf die ersten 16 Zeichen der SHA-256-Summe von `apps.json`, und der `RUN` mit `bench init` liest es. Ändert sich `apps.json`, ändert sich `CACHE_BUST`, und die Schicht wird neu gebaut.
+
+## Labels
+
+| Label | Inhalt |
+|---|---|
+| `org.opencontainers.image.source` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.title` | `erpnext_germanized` |
+| `org.opencontainers.image.description` | eine Zeile auf Englisch |
+| `org.opencontainers.image.licenses` | `Apache-2.0`, die Lizenz des Rezepts; die Lizenzen des Inhalts nennt das [README](../README.md#lizenz) |
+| `org.opencontainers.image.version` | aus dem Build-Argument `VERSION`, Vorgabe `dev`; `build.sh` setzt es auf die Ausgabe von `git describe --tags --always --dirty`, die CI bei einem Release auf das Tag und sonst ebenfalls auf `git describe` |
+| `org.opencontainers.image.base.name` | das Basis-Image, `docker.io/library/python:3.14-slim-trixie` |
+
+Das Label `org.opencontainers.image.source` verbindet das Paket in der GitHub Container Registry mit diesem Repository. Die Labels eines Images zeigt `docker image inspect --format '{{json .Config.Labels}}' <image>`.
+
+## Was im Image steckt
+
+| Was | Wo oder wie |
+|---|---|
+| Bench | `/home/frappe/frappe-bench` mit `apps/`, der Python-Umgebung `env/`, `sites/`, `logs/` und den Assets unter `assets/`; Arbeitsverzeichnis des Images |
+| Benutzer | `frappe`, UID 1000, Gruppe 0; das Image läuft nicht als root |
+| Volumes | `/home/frappe/frappe-bench/sites` und `/home/frappe/frappe-bench/logs` |
+| Entrypoint | `/usr/local/bin/entrypoint.sh` verlinkt beim Start die Assets des Images nach `sites/assets` und führt dann den Befehl aus. So passen die Assets im Volume immer zum laufenden Image. |
+| Befehl (Vorgabe) | `start.sh` startet gunicorn auf Port 8000. `GUNICORN_WORKERS` (Vorgabe 2), `GUNICORN_THREADS` (4) und `GUNICORN_TIMEOUT` (120 Sekunden) steuern ihn. |
+| Frontend | `nginx-entrypoint.sh` startet nginx auf Port 8080 (`NGINX_LISTEN_PORT`). nginx liefert Assets und Dateien aus und leitet alles andere an `BACKEND` und `SOCKETIO` weiter, siehe [Betrieb](betrieb.md#reverse-proxy). |
+| Websocket | `node /home/frappe/frappe-bench/apps/frappe/socketio.js` auf Port 9000, sofern `socketio_port` in `common_site_config.json` keinen anderen nennt |
+| Worker und Scheduler | `bench worker --queue <queues>` und `bench schedule` |
+| Python, Node.js | Python 3.14 aus dem Basis-Image, Node.js 24 über nvm unter `/home/frappe/.nvm` |
+| PDF | wkhtmltopdf 0.12.6.1-3, Chromium unter `/usr/lib/chromium/chromium-headless-shell` und die Bibliotheken für WeasyPrint. Welcher Generator ein PDF erzeugt, wählt Frappe 16 nach dem Feld „PDF-Generator“ des Druckformats, sonst nach der Vorgabe in den Druckeinstellungen. Zur Wahl stehen wkhtmltopdf, chrome, PlutoPrint, Typst und WeasyPrint. |
+| Ghostscript | für die Umwandlung in PDF/A-3 durch eu_einvoice |
+| Clients und Werkzeuge | `mariadb` und `psql` für `bench` und Sicherungen, restic und gpg, wait-for-it, jq, git, curl, vim |
+
+Alle Dienste laufen aus demselben Image, nur mit anderem Befehl. Welcher Dienst welchen Befehl bekommt, zeigt [examples/compose.yaml](../examples/compose.yaml).
+
+### Ghostscript
+
+eu_einvoice wandelt ein PDF in PDF/A-3 um, bevor es die XML einer ZUGFeRD-Rechnung einbettet. Dafür ruft es Ghostscript (`gs`) auf und braucht das ICC-Profil `srgb.icc` in dessen Suchpfad. Ist `gs` nicht installiert, überspringt eu_einvoice die Umwandlung ohne Meldung und bettet die XML in das ursprüngliche PDF ein. Schlägt die Umwandlung fehl, schreibt es einen Eintrag ins Fehlerprotokoll und bettet ebenfalls in das ursprüngliche PDF ein (`eu_einvoice/european_e_invoice/einvoice.py`, Funktion `attach_xml_to_pdf`). frappe_docker installiert Ghostscript nicht, deshalb kommt es hier dazu. Der Site-Test prüft, dass `gs` und `srgb.icc` im Image sind.
+
+### Chromium
+
+`INSTALL_CHROMIUM=true` installiert `chromium-headless-shell` aus Debian. Frappe nutzt Chromium, wenn ein Druckformat oder die Druckeinstellungen den PDF-Generator „chrome“ wählen. Den Pfad liest Frappe aus `chromium_path` in `common_site_config.json`. Fehlt der Eintrag, lädt Frappe beim ersten Gebrauch selbst ein Chromium in das Verzeichnis `chromium` der Bench (`find_or_download_chromium_executable` in `frappe/utils/print_utils.py`). Im Container liegt dieses Verzeichnis nicht in einem Volume, und der Download braucht Internetzugang. Das Beispiel für docker compose setzt `chromium_path` deshalb auf `/usr/lib/chromium/chromium-headless-shell`.
+
+## Woher das Deutsche kommt
+
+erpnext_germanized übersetzt nichts selbst und ändert keine App. Die deutschen Teile kommen aus Frappe, ERPNext und den Apps:
+
+- **Oberfläche.** Frappe, ERPNext und HRMS bringen ihre deutsche Übersetzung als `locale/de.po` mit. Sie entsteht in der Community über [Crowdin](https://crowdin.com/project/frappe). Die Apps von ALYF haben eigene Dateien `locale/de.po`, Steuerbote `steuerbote/translations/de.csv`. Die Sprache gilt für die ganze Site in den Systemeinstellungen und kann je Benutzer abweichen.
+- **Formate.** Wählt man im Einrichtungsassistenten das Land Deutschland, übernimmt Frappe dessen Vorgaben: Datum `dd.mm.yyyy`, Uhrzeit `HH:mm`, Zahlen `#.###,##`, Währung EUR und Zeitzone Europe/Berlin (`frappe/geo/country_info.json`).
+- **Kontenrahmen und Steuervorlagen.** ERPNext bringt die Vorlagen „SKR03 mit Kontonummern“ und „SKR04 mit Kontonummern“ mit und legt beim Anlegen einer Firma mit dem Land Deutschland passende Steuervorlagen an, siehe [Apps](apps.md#erpnext).
+- **Deutsche Funktionen.** Registerangaben, USt-IdNr.-Prüfung, Summen- und Saldenliste, DATEV, E-Rechnungen, EBICS und ELSTER kommen aus den Apps erpnext_germany, erpnext_datev, eu_einvoice, banking und Steuerbote, siehe [Apps](apps.md).
