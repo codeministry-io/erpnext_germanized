@@ -1,7 +1,18 @@
 version: 2
+
+# ruff and zizmor are pinned twice, in requirements-dev.txt and as pre-commit hooks. One pull request for
+# both ecosystems moves them together; the tests fail while the two pins disagree.
+multi-ecosystem-groups:
+  development-tools:
+    schedule:
+      interval: weekly
+
 updates:
+  # The workflows and the composite actions they share.
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/actions/*
     schedule:
       interval: weekly
     # A week gives a compromised release time to be noticed and pulled before it lands here.
@@ -12,8 +23,8 @@ updates:
         patterns: ['*']
     labels: []
 
-  # The first FROM of the Containerfile. Its ARGs PYTHON_VERSION and DEBIAN_BASE follow by hand; the tests
-  # fail until they agree with it.
+  # The first FROM of the Containerfile, by tag and digest. Its ARGs PYTHON_VERSION and DEBIAN_BASE follow
+  # by hand; the tests fail until they agree with it.
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -41,15 +52,23 @@ updates:
       # major version is a decision, not an update.
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+      # The example runs the image of this repository on its moving tag 16 on purpose. Dependabot names the
+      # image without its registry.
+      - dependency-name: encircle360-oss/erpnext_germanized
     labels: []
 
   - package-ecosystem: pip
     directory: /
-    schedule:
-      interval: weekly
+    multi-ecosystem-group: development-tools
+    patterns: ['*']
     cooldown:
       default-days: 7
-    groups:
-      python:
-        patterns: ['*']
+    labels: []
+
+  - package-ecosystem: pre-commit
+    directory: /
+    multi-ecosystem-group: development-tools
+    patterns: ['*']
+    cooldown:
+      default-days: 7
     labels: []
