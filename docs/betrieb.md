@@ -42,14 +42,31 @@ Einstellungen im Beispiel:
 
 ## Auf Kubernetes
 
-Für Kubernetes gibt es das offizielle Helm-Chart [frappe/helm](https://github.com/frappe/helm), Chart `erpnext` aus dem Repository `https://helm.erpnext.com`. Das Chart ist für die Images aus frappe_docker gebaut und startet dieselben Befehle wie das Beispiel für docker compose: `nginx-entrypoint.sh`, gunicorn, `bench worker`, `bench schedule` und `socketio.js`. Dieses Image hat denselben Aufbau. Welches Image das Chart nimmt, bestimmen die Werte `image.repository` und `image.tag`:
+Für Kubernetes gibt es das offizielle Helm-Chart [frappe/helm](https://github.com/frappe/helm), Chart `erpnext` aus dem Repository `https://helm.erpnext.com`. Das Chart ist für die Images aus frappe_docker gebaut und startet dieselben Befehle wie das Beispiel für docker compose: `nginx-entrypoint.sh`, gunicorn, `bench worker`, `bench schedule` und `socketio.js`. Dieses Image hat denselben Aufbau. Diese Werte reichen für eine Site mit allen Apps, hier für das Chart in Version 8.0.93:
 
 ```yaml
-# custom-values.yaml
+# custom-values.yaml for the chart erpnext 8.0.93
 image:
   repository: ghcr.io/encircle360-oss/erpnext_germanized
   tag: "16.60.0-1"
   pullPolicy: IfNotPresent
+
+persistence:
+  worker:
+    storageClass: CHANGE_ME # a storage class with ReadWriteMany
+
+mariadb-sts:
+  enabled: true
+  rootPassword: CHANGE_ME
+  image:
+    tag: "11.8"
+  myCnf: |
+    [mysqld]
+    skip-character-set-client-handshake
+    skip-innodb-read-only-compressed
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_unicode_ci
+    innodb-snapshot-isolation=OFF
 
 jobs:
   createSite:
@@ -69,13 +86,27 @@ jobs:
 
 ```bash
 helm repo add frappe https://helm.erpnext.com
-helm upgrade --install frappe-bench --namespace erpnext --create-namespace frappe/erpnext -f custom-values.yaml
+helm upgrade --install frappe-bench --namespace erpnext --create-namespace frappe/erpnext --version 8.0.93 -f custom-values.yaml
 ```
 
+Geprüft ist das Beispiel gegen das Chart 8.0.93: `helm template` rendert es ohne Fehler, kubeconform findet in den Manifesten keinen Fehler, und die Jobs `jobs.configure` und `jobs.createSite` nehmen die MariaDB des Charts mit dem Passwort aus `mariadb-sts.rootPassword`. Eine neuere Version des Charts kann Werte umbenennen, deshalb steht die Version im Befehl.
+
+- **Image:** `image.repository` und `image.tag` gelten für alle Pods und Jobs des Charts, die Frappe ausführen.
+- **Speicher:** Das Chart legt für `sites` ein Volume mit `ReadWriteMany` an (`persistence.worker`), denn Backend, Worker, Scheduler und Websocket teilen es. Ohne `persistence.worker.storageClass` bricht `helm` mit einem Fehler ab, außer `persistence.worker.existingClaim` nennt ein vorhandenes Volume. Die Storage Class muss `ReadWriteMany` können; das README des Charts nennt Möglichkeiten und lässt auf einem Cluster mit nur einem Knoten auch `ReadWriteOnce` unter `persistence.worker.accessModes` zu.
+- **Datenbank:** Ohne weitere Werte legt das Chart keine Datenbank an. `mariadb-sts` startet MariaDB als StatefulSet des Charts, mit einem eigenen Volume aus der Standard-Storage-Class des Clusters, sofern `mariadb-sts.persistence.storageClass` keine andere nennt. Statt der Vorgabe `mariadb:10.6` des Charts nimmt das Beispiel MariaDB 11.8 mit den Einstellungen des Site-Tests, darunter `innodb-snapshot-isolation=OFF`. `myCnf` ersetzt die Vorgabe des Charts ganz, deshalb stehen dort alle Zeilen. Eine MariaDB außerhalb des Charts braucht dieselben Einstellungen. Für sie stehen statt `mariadb-sts` diese Werte in der Datei, dazu ein vorher angelegtes Secret mit dem Root-Passwort:
+
+  ```yaml
+  dbHost: mariadb.example.com
+  dbPort: 3306
+  dbRootUser: root
+  dbExistingSecret: erpnext-db-root
+  dbExistingSecretPasswordKey: password
+  ```
+
 - **Apps** stehen unter `jobs.createSite.installApps` in der Reihenfolge von `apps.json` und mit den Namen, die bench kennt, also `pdf_on_submit` statt `erpnext_pdf-on-submit`. Statt `adminPassword` kann `adminExistingSecret` auf ein vorhandenes Secret zeigen.
-- **Speicher:** Das Chart legt für `sites` ein Volume mit `ReadWriteMany` an (`persistence.worker`), denn Backend, Worker, Scheduler und Websocket teilen es. Der Cluster braucht dafür eine passende Storage Class, das README des Charts beschreibt die Möglichkeiten.
-- **Migration und Sicherung** laufen als Jobs des Charts: `jobs.migrate` mit `siteName` schaltet den Wartungsmodus ein, führt `bench migrate` aus und schaltet ihn wieder aus. `jobs.backup` mit `siteName` und `withFiles` legt eine Sicherung an.
-- Alle Werte nennt das [README des Charts](https://github.com/frappe/helm/blob/main/erpnext/README.md).
+- **Chromium:** Anders als das Beispiel für docker compose setzt das Chart `chromium_path` nicht. Ohne den Eintrag lädt Frappe beim ersten PDF mit dem Generator „chrome“, der Vorgabe der Druckeinstellungen, in jedem Pod, der ein PDF erzeugt, ein eigenes Chromium aus dem Internet, siehe [Architektur](architektur.md#chromium). Weil `common_site_config.json` im Volume `sites` liegt, reicht es, den Eintrag einmal zu setzen: `kubectl --namespace erpnext exec deploy/frappe-bench-erpnext-gunicorn -- bench set-config -g chromium_path /usr/lib/chromium/chromium-headless-shell`.
+- **Migration und Sicherung** laufen als Jobs des Charts. `jobs.migrate` mit `siteName` schaltet den Wartungsmodus ein, führt `bench migrate` aus und schaltet ihn wieder aus, auch wenn die Migration fehlschlägt: Die drei Befehle stehen mit `;` hintereinander, und der Job endet mit dem Ergebnis des letzten. Ob die Migration gelungen ist, zeigt deshalb nur das Log des Jobs. `jobs.backup` mit `siteName` und `withFiles` legt eine Sicherung im Volume `sites` an.
+- Alle Werte nennt das [README des Charts](https://github.com/frappe/helm/blob/main/erpnext/README.md), ihre Vorgaben stehen in seiner [values.yaml](https://github.com/frappe/helm/blob/main/erpnext/values.yaml).
 
 Ein volles Tag mit `pullPolicy: IfNotPresent` hält die Pods auf der Version, die eingetragen ist. Bewegliche Tags führen mit `Always` beim nächsten Neustart eines Pods zu einer neuen Version ohne Migration.
 
@@ -138,12 +169,12 @@ Schlägt die Migration fehl, bleibt der Wartungsmodus an. Das Log von `bench mig
 
 **Zurück zur vorigen Version** geht es nur mit der Sicherung aus Schritt 2. `bench migrate` ändert die Datenbank, und die Patches von Frappe und den Apps laufen nur vorwärts: Das vorige Tag allein läuft nicht sicher auf einer migrierten Datenbank. Also das vorige Tag eintragen, `docker compose up -d` und die Site aus der Sicherung wiederherstellen.
 
-Auf Kubernetes gilt dieselbe Reihenfolge: Sicherung über `jobs.backup`, neues `image.tag`, dann `jobs.migrate`.
+Auf Kubernetes gilt dieselbe Reihenfolge: Sicherung über `jobs.backup`, neues `image.tag`, dann `jobs.migrate`. Anders als oben bleibt der Wartungsmodus nach einer fehlgeschlagenen Migration nicht an: `jobs.migrate` schaltet ihn in jedem Fall aus, und nur das Log des Jobs zeigt, ob `bench migrate` durchgelaufen ist, siehe [Auf Kubernetes](#auf-kubernetes).
 
 ## Scheduler und Worker
 
-- **Scheduler.** Der Dienst `scheduler` (`bench schedule`) startet die geplanten Jobs aller Sites. Davon hängen etwa Versand und Abruf von E-Mails und die regelmäßige Prüfung der USt-IdNr. in erpnext_germany ab. Der Einrichtungsassistent schaltet den Scheduler einer Site ein. Den Zustand zeigt `docker compose exec backend bench --site <site> scheduler status`.
-- **Worker.** Hintergrundjobs laufen in den Diensten `queue-short` und `queue-long`. Lange Jobs, etwa die Übermittlung von Steuerbote, laufen in der Queue `long`. Fehlen die Worker, bleiben Hintergrundjobs liegen, etwa PDFs von PDF on Submit, die im Hintergrund entstehen sollen. `docker compose exec backend bench --site <site> show-pending-jobs` zeigt, was wartet.
+- **Scheduler.** Der Dienst `scheduler` (`bench schedule`) startet die geplanten Jobs aller Sites. Davon hängen etwa Versand und Abruf von E-Mails ab, ebenso die regelmäßige Prüfung der USt-IdNr. in erpnext_germany: Der Scheduler legt die Prüfungen an, die Abfrage bei VIES läuft dann als Hintergrundjob in der Queue `long`. Der Einrichtungsassistent schaltet den Scheduler einer Site ein. Den Zustand zeigt `docker compose exec backend bench --site <site> scheduler status`.
+- **Worker.** Hintergrundjobs laufen in den Diensten `queue-short` und `queue-long`. Lange Jobs, etwa die Übermittlung von Steuerbote und die Prüfung der USt-IdNr. bei VIES, laufen in der Queue `long`, im Beispiel also nur im Dienst `queue-long`. Fehlen die Worker, bleiben Hintergrundjobs liegen, etwa PDFs von PDF on Submit, die im Hintergrund entstehen sollen. `docker compose exec backend bench --site <site> show-pending-jobs` zeigt, was wartet.
 - Mehr Last verteilt sich auf zusätzliche Worker: `docker compose up -d --scale queue-short=2`.
 
 ## Reverse Proxy
