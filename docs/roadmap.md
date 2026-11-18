@@ -9,13 +9,13 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 - **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site und prüft Backend und nginx.
 - **CI:** Tests, Linters, Security, Image, Release und App versions, siehe [Entwicklung](entwicklung.md#ci).
 - **Beispiel** für docker compose und Hinweise für den Betrieb auf Kubernetes mit dem Helm-Chart von Frappe, siehe [Betrieb](betrieb.md).
-- **Noch nicht vorhanden:** ein veröffentlichtes Image. Unter `ghcr.io/encircle360-oss/erpnext_germanized` gibt es erst nach dem ersten Release ein Image.
+- **Erstes Release:** `v16.60.0-1` als Image `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1`, mit SBOM und Herkunftsangabe, siehe [Changelog](../CHANGELOG.md).
 
 ## Nächste Schritte
 
 | Paket | Inhalt | Ergebnis |
 |---|---|---|
-| Erstes Release | Erstes Release `v16.60.0-1` taggen und das Paket in der GitHub Container Registry öffentlich schalten. | Das Image lässt sich ohne Anmeldung ziehen, mit SBOM und Herkunftsangabe. |
+| Rückmeldungen | Erfahrungen aus ersten Installationen sammeln: fehlende Apps, Einstellungen, die das Beispiel vorbelegen sollte, Fehler im Betrieb. | Issues und Discussions, die in die nächste Revision einfließen. |
 | `linux/arm64` | Ein Image auch für Server mit ARM-Prozessoren. Das Rezept von frappe_docker enthält die Schritte für arm64 schon. Offen sind Dauer und Kosten des Builds, ein Site-Test auf arm64 und ob alle Apps dort laufen. ERiC für Steuerbote gibt es nur für Linux x86_64. | Ein Image für beide Plattformen unter denselben Tags. |
 | Signierte Images | Images zusätzlich mit cosign signieren, falls Betreiber das brauchen, etwa für Richtlinien in ihrem Cluster, die Signaturen von cosign prüfen. | Eine Signatur, die sich mit `cosign verify` prüfen lässt. |
 | Weitere Apps | Apps, die deutsche Unternehmen brauchen, auf Anfrage und nach Prüfung von Lizenz, Pflege und Hauptversion, siehe [Entwicklung](entwicklung.md#eine-app-hinzufügen-oder-entfernen). | Jede neue App mit Site-Test, Dokumentation und Eintrag im Changelog. |
