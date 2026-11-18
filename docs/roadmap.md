@@ -4,7 +4,7 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 
 ## Stand
 
-- **Rezept:** `Containerfile` aus frappe_docker v4.2.0 mit Ghostscript, gepinnten Vorgaben und OCI-Labels, `apps.json` mit Frappe v16.60.2, ERPNext, HRMS, den fünf Apps von ALYF und Steuerbote, siehe [Architektur](architektur.md).
+- **Rezept:** `Containerfile` aus frappe_docker v4.2.0 mit Ghostscript, gepinnten Vorgaben, darunter Frappe in `FRAPPE_BRANCH`, und OCI-Labels; `apps.json` mit ERPNext, HRMS, den fünf Apps von ALYF und Steuerbote. Die Versionen nennt die Tabelle im [README](../README.md#enthaltene-apps), den Aufbau [Architektur](architektur.md).
 - **Werkzeuge:** `python -m germanized` prüft `apps.json`, leitet die Image-Tags ab, prüft Release-Tags, hebt Versionen an und hält die Tabelle im README aktuell, mit 100 % Testabdeckung, siehe [Entwicklung](entwicklung.md#werkzeuge).
 - **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site und prüft Backend und nginx.
 - **CI:** Tests, Linters, Security, Image, Release und App versions, siehe [Entwicklung](entwicklung.md#ci).
@@ -20,11 +20,7 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 | Signierte Images | Images zusätzlich mit cosign signieren, falls Betreiber das brauchen, etwa für Richtlinien in ihrem Cluster, die Signaturen von cosign prüfen. | Eine Signatur, die sich mit `cosign verify` prüfen lässt. |
 | Weitere Apps | Apps, die deutsche Unternehmen brauchen, auf Anfrage und nach Prüfung von Lizenz, Pflege und Hauptversion, siehe [Entwicklung](entwicklung.md#eine-app-hinzufügen-oder-entfernen). | Jede neue App mit Site-Test, Dokumentation und Eintrag im Changelog. |
 | Demo-Site | Eine öffentliche Site mit Beispieldaten zum Ausprobieren, ohne eigene Installation. | Eine Site mit dem jeweils neuesten Release, regelmäßig zurückgesetzt. |
-| Steuerbote | Die weiteren Meldungen von Steuerbote, sobald sie veröffentlicht sind: Dauerfristverlängerung, Zusammenfassende Meldung und die Jahresmeldungen, siehe die [Roadmap von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/main/docs/roadmap.md). | Jede neue Version von Steuerbote als neue Revision des Images. |
-
-## Offene Punkte
-
-- **Releases von Steuerbote.** `check-versions` und `bump` lesen Releases auf GitHub, Steuerbote veröffentlicht bisher nur Tags. Bis Steuerbote Releases anlegt, kommen seine neuen Versionen von Hand in `apps.json`.
+| Steuerbote | Die weiteren Meldungen von Steuerbote, sobald sie veröffentlicht sind: Dauerfristverlängerung, Zusammenfassende Meldung und die Jahresmeldungen, siehe die [Roadmap von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/main/docs/roadmap.md). | Jede neue Version von Steuerbote als neue Revision des Images; den Pull Request dazu öffnet der Workflow App versions. |
 
 ## Grundsätze
 

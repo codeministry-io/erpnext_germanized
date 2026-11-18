@@ -7,7 +7,7 @@ erpnext_germanized ist ein Rezept für ein Image, keine eigene App. Das Rezept b
 Das `Containerfile` ist `images/custom/Containerfile` aus [frappe_docker](https://github.com/frappe/frappe_docker) v4.2.0, das Rezept, das frappe_docker für Images mit eigenen Apps vorsieht. Es steht wie das Original unter der MIT-Lizenz, ihr Text liegt in `LICENSES/frappe_docker.MIT.txt`. Gegenüber dem Original ändert sich nur:
 
 - **Ghostscript** wird in der Stufe `base` installiert, siehe [Ghostscript](#ghostscript).
-- **Die Vorgaben der ARGs sind die Pins:** `FRAPPE_BRANCH=v16.60.2`, `FRAPPE_PATH=https://github.com/frappe/frappe`, `PYTHON_VERSION=3.14`, `DEBIAN_BASE=trixie`, `NODE_VERSION=24`, `WKHTMLTOPDF_VERSION=0.12.6.1-3` und `WKHTMLTOPDF_DISTRO=bookworm`. `INSTALL_CHROMIUM` bleibt wie im Original auf `true`.
+- **Die Vorgaben der ARGs sind die Pins:** `FRAPPE_BRANCH` nennt statt des Branches `version-16` ein Release-Tag von Frappe; welches, zeigt die Tabelle im [README](../README.md#enthaltene-apps). Dazu kommen `FRAPPE_PATH=https://github.com/frappe/frappe`, `PYTHON_VERSION=3.14`, `DEBIAN_BASE=trixie`, `NODE_VERSION=24`, `WKHTMLTOPDF_VERSION=0.12.6.1-3` und `WKHTMLTOPDF_DISTRO=bookworm`. `INSTALL_CHROMIUM` bleibt wie im Original auf `true`.
 - **Das erste `FROM` nennt das Basis-Image wörtlich**, `python:3.14-slim-trixie`, damit Dependabot es aktualisieren kann. Ein Test in `tests/` vergleicht es mit `PYTHON_VERSION` und `DEBIAN_BASE`, damit beide nicht auseinanderlaufen.
 - **OCI-Labels** beschreiben das Image, siehe [Labels](#labels).
 
@@ -62,7 +62,7 @@ Das Label `org.opencontainers.image.source` verbindet das Paket in der GitHub Co
 | Websocket | `node /home/frappe/frappe-bench/apps/frappe/socketio.js` auf Port 9000, sofern `socketio_port` in `common_site_config.json` keinen anderen nennt |
 | Worker und Scheduler | `bench worker --queue <queues>` und `bench schedule` |
 | Python, Node.js | Python 3.14 aus dem Basis-Image, Node.js 24 über nvm unter `/home/frappe/.nvm` |
-| PDF | wkhtmltopdf 0.12.6.1-3, Chromium unter `/usr/lib/chromium/chromium-headless-shell` und die Bibliotheken für WeasyPrint. Welcher Generator ein PDF erzeugt, wählt Frappe 16 nach dem Feld „PDF-Generator“ des Druckformats, sonst nach der Vorgabe in den Druckeinstellungen. Zur Wahl stehen wkhtmltopdf, chrome, PlutoPrint, Typst und WeasyPrint. |
+| PDF | wkhtmltopdf 0.12.6.1-3, Chromium unter `/usr/lib/chromium/chromium-headless-shell` und die Bibliotheken für WeasyPrint. Welcher Generator ein PDF erzeugt, wählt Frappe 16 nach dem Feld „PDF-Generator“ des Druckformats, sonst nach der Vorgabe in den Druckeinstellungen: wkhtmltopdf, chrome oder PlutoPrint, auf einer neuen Site chrome. Typst und WeasyPrint gibt es nur für Druckformate aus dem Print Format Editor, dem visuellen Editor für Druckformate (`resolve_pdf_generator` in `frappe/utils/print_utils.py`). |
 | Ghostscript | für die Umwandlung in PDF/A-3 durch eu_einvoice |
 | Clients und Werkzeuge | `mariadb` und `psql` für `bench` und Sicherungen, restic und gpg, wait-for-it, jq, git, curl, vim |
 

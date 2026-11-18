@@ -86,7 +86,7 @@ Es gibt Images nur für die aktuelle Hauptversion von Frappe und ERPNext, derzei
    python -m germanized readme --write    # sets the Version cells of the README table
    ```
 
-   `bump` hebt jede App nur innerhalb ihrer Hauptversion an. `check-versions` und `bump` lesen die Releases auf GitHub. Steuerbote hat bisher nur Tags und keine Releases, neue Versionen von Steuerbote kommen deshalb vorerst von Hand in `apps.json`.
+   `bump` hebt jede App nur innerhalb ihrer Hauptversion an, Steuerbote mit seinen eigenen Versionsnummern also innerhalb der Hauptversion 0: Ein neueres Release `v0.x.y` schlägt der Workflow vor wie bei jeder anderen App, den Wechsel auf Version 1 entscheidet ein Maintainer. `check-versions` und `bump` lesen dafür die Releases auf GitHub; Entwürfe und Vorabversionen zählen nicht.
 
 2. **Prüfen.** Vor dem Merge die Release-Notes von ERPNext und jeder geänderten App lesen, besonders auf Patches der Datenbank und geänderte Abhängigkeiten. Die CI baut das Image und installiert alle Apps auf einer frischen Site. Die Checks eines Pull Requests, den der Workflow geöffnet hat, starten erst, wenn ein Maintainer sie mit „Approve workflows to run“ freigibt oder den Pull Request schließt und wieder öffnet.
 
