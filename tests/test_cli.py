@@ -121,6 +121,18 @@ def test_tags_prints_the_tags_of_a_release(repo, capsys):
 	assert capsys.readouterr().out == f"{IMAGE}:16.60.0-2,{IMAGE}:16.60.0,{IMAGE}:16,{IMAGE}:latest\n"
 
 
+def test_tags_leaves_the_moving_tags_to_newer_releases(repo, capsys):
+	existing = "v16.59.0-1\nv16.59.0-2\nv16.60.0-1\n"
+	assert main(["tags", "--ref", "refs/tags/v16.59.0-2", "--sha", SHA, "--existing", existing]) == 0
+	assert capsys.readouterr().out == f"{IMAGE}:16.59.0-2,{IMAGE}:16.59.0\n"
+
+
+def test_tags_takes_the_existing_release_tags_separated_by_commas(repo, capsys):
+	existing = "v16.60.0-1,v16.60.0-2"
+	assert main(["tags", "--ref", "refs/tags/v16.60.0-2", "--sha", SHA, "--existing", existing]) == 0
+	assert capsys.readouterr().out == f"{IMAGE}:16.60.0-2,{IMAGE}:16.60.0,{IMAGE}:16,{IMAGE}:latest\n"
+
+
 def test_tags_prints_an_empty_line_for_refs_that_are_not_pushed(repo, capsys):
 	assert main(["tags", "--ref", "refs/pull/7/merge", "--sha", SHA]) == 0
 	assert capsys.readouterr().out == "\n"
