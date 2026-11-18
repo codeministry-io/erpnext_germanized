@@ -97,7 +97,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      packages: read # pull the image while the package is private
+      packages: read # pull the image from the registry
       security-events: write # upload the findings to code scanning
     env:
       IMAGE: ghcr.io/encircle360-oss/erpnext_germanized:latest
