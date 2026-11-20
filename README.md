@@ -2,7 +2,7 @@
 
 ERPNext für deutsche Unternehmen als fertiges Container-Image: Frappe, ERPNext und HRMS mit den deutschen Apps von ALYF und Steuerbote in einem versionierten Image für die GitHub Container Registry.
 
-> **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-2` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
+> **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-3` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
 
 Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://github.com/encircle360-oss/steuerbote), zuerst die Umsatzsteuer-Voranmeldung. Steuerbote verweist in seinem README umgekehrt auf dieses Image.
 
