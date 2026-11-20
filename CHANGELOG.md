@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## [16.60.0-3] - 2026-11-20
+
+### Geändert
+
+- Steuerbote v0.1.3: „Steuern“ steht in der Leiste von ERPNext hinter Rechnungswesen, mit eigenem Logo und Eintrag für den App-Umschalter.
+
 ## [16.60.0-2] - 2026-11-18
 
 ### Geändert
