@@ -30,7 +30,7 @@ Frappe ist das Framework unter allen Apps. Die Apps stehen in der Reihenfolge vo
 | [eu_einvoice](https://github.com/alyf-de/eu_einvoice) | v16.4.0 | Erstellt und liest E-Rechnungen im Format UN/CEFACT CII in den Profilen BASIC, EN 16931, EXTENDED und XRECHNUNG, außer bei XRECHNUNG auch eingebettet in ein PDF (ZUGFeRD, Factur-X). | GPL-3.0-or-later |
 | [erpnext_pdf-on-submit](https://github.com/alyf-de/erpnext_pdf-on-submit) | v16.3.1 | Erzeugt beim Buchen eines Belegs ein PDF und hängt es an den Beleg. | GPL-3.0-or-later |
 | [banking](https://github.com/alyf-de/banking) | v16.6.4 | Holt Bankumsätze per EBICS in ERPNext und gleicht sie mit Belegen ab, wobei EBICS ein Abonnement bei ALYF braucht und der Abgleich nicht. | GPL-3.0 |
-| [steuerbote](https://github.com/encircle360-oss/steuerbote) | v0.1.3 | Steuermeldungen aus ERPNext an ELSTER, zuerst die Umsatzsteuer-Voranmeldung, noch in Entwicklung und nicht einsatzfähig. | AGPL-3.0-or-later |
+| [steuerbote](https://github.com/encircle360-oss/steuerbote) | v0.2.0 | Steuermeldungen aus ERPNext an ELSTER, zuerst die Umsatzsteuer-Voranmeldung, noch in Entwicklung und nicht einsatzfähig. | AGPL-3.0-or-later |
 
 Was jede App mitbringt und wo sie eingerichtet wird, steht in [Apps](docs/apps.md).
 
