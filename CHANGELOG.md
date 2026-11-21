@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## [16.60.0-6] - 2026-11-21
+
+### Geändert
+
+- Steuerbote v0.4.0: Zusammenfassende Meldung über ERiC (Datenart ZMDO, Teilnehmernummer in den Einstellungen, Laufzeitprüfung mit Plugin-Check), beobachtete Konten mit Stufe „Hinweis“, zwei Runden der Sicherheitsprüfung (Speichern über die API ändert keine berechneten Werte mehr, Dateischutz für Übermittlungen und USt-IdNr.-Nachweise, Zertifikat und PIN an Benutzer und Beleg gebunden, ERiC-Worker in privatem Verzeichnis) und ihre Reste, 28 Browsertests in der CI. Für Betreiber: Pfad und SHA-256 des ERiC-Archivs stehen jetzt in der `common_site_config.json` der Bench (`bench set-config -g steuerbote_eric_archive …`, `steuerbote_eric_archive_sha256 …`), nicht mehr in den ERiC-Einstellungen; Steuerbote verlangt Frappe ab 16.54.0, das Image hat v16.60.2.
+
+### Hinzugefügt
+
+- Ideen-Dokument [Verfahrensdokumentation](docs/ideen/verfahrensdokumentation.md): Recherche, Zielbild und Ausbauplan für eine App, die die GoBD-Verfahrensdokumentation aus einer Site erzeugt; noch nicht umgesetzt.
+
 ## [16.60.0-5] - 2026-11-21
 
 ### Geändert
