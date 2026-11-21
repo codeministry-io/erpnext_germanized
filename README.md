@@ -112,6 +112,7 @@ Was beim Hinzufügen oder Entfernen einer App sonst zu tun ist, steht in [Entwic
 - [Apps](docs/apps.md): jede App mit Zweck, Lizenz, deutschen Besonderheiten und Einrichtung
 - [Entwicklung](docs/entwicklung.md): Aufbau, Werkzeuge, Tests, CI, lokaler Build, Apps hinzufügen und entfernen
 - [Roadmap](docs/roadmap.md): Stand und nächste Schritte
+- [Idee: Verfahrensdokumentation](docs/ideen/verfahrensdokumentation.md): eine GoBD-Verfahrensdokumentation aus den Einstellungen und Protokollen der Site erzeugen; Recherche und Ausbauplan, noch nicht umgesetzt
 - [Changelog](CHANGELOG.md), [Mitwirken](CONTRIBUTING.md), [Hinweise für Coding-Agenten](AGENTS.md), [Sicherheit](SECURITY.md)
 
 ## Mitwirken und Community
