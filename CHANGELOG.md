@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## [16.60.0-5] - 2026-11-21
+
+### Geändert
+
+- Steuerbote v0.3.0: Dauerfristverlängerung über ERiC, ZM-XML für ERiC, Fristenkalender mit Erinnerungen, Jahrgänge als Daten, Kz 70, Datenlieferant aus dem Unternehmen, Proxy für ERiC, Standard-Druckformate.
+
 ## [16.60.0-4] - 2026-11-21
 
 ### Geändert
