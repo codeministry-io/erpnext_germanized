@@ -278,6 +278,21 @@ def test_readme_needs_check_or_write(repo, capsys):
 	assert "not allowed with argument" in capsys.readouterr().err
 
 
+def test_prune_node_modules_reports_each_app(tmp_path, capsys):
+	app = tmp_path / "apps" / "hrms"
+	(app / "frontend" / "node_modules" / "vite").mkdir(parents=True)
+	assert main(["prune-node-modules", str(tmp_path)]) == 0
+	assert capsys.readouterr().out == (
+		"hrms: kept 0 of 0 packages in node_modules, removed 1 node_modules of sub projects\n"
+	)
+	assert not (app / "frontend" / "node_modules").exists()
+
+
+def test_prune_node_modules_needs_a_bench(tmp_path, capsys):
+	assert main(["prune-node-modules", str(tmp_path)]) == 1
+	assert capsys.readouterr().err == f"error: {tmp_path} has no apps directory\n"
+
+
 def test_a_command_is_required(repo, capsys):
 	assert main([]) == 1
 	err = capsys.readouterr().err

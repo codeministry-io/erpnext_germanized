@@ -10,6 +10,7 @@ Das `Containerfile` ist `images/custom/Containerfile` aus [frappe_docker](https:
 - **Die Vorgaben der ARGs sind die Pins:** `FRAPPE_BRANCH` nennt statt des Branches `version-16` ein Release-Tag von Frappe; welches, zeigt die Tabelle im [README](../README.md#enthaltene-apps). Dazu kommen `FRAPPE_PATH=https://github.com/frappe/frappe`, `PYTHON_VERSION=3.14`, `DEBIAN_BASE=trixie`, `NODE_VERSION=24`, `WKHTMLTOPDF_VERSION=0.12.6.1-3` und `WKHTMLTOPDF_DISTRO=bookworm`. `INSTALL_CHROMIUM` bleibt wie im Original auf `true`.
 - **Das erste `FROM` nennt das Basis-Image wörtlich und pinnt es per Digest**, `python:3.14-slim-trixie@sha256:…`, damit Dependabot es aktualisieren kann: Der Digest ändert sich mit jedem neuen Build des Tags, etwa mit einer neuen Patch-Version von Python oder Korrekturen aus Debian. Tests in `tests/` prüfen, dass der Digest dasteht und dass das Image zu `PYTHON_VERSION` und `DEBIAN_BASE` passt.
 - **OCI-Labels** beschreiben das Image, siehe [Labels](#labels).
+- **Ein eigener `RUN` in der Stufe `builder` entfernt die Node.js-Pakete, die nach dem Build niemand lädt**, siehe [Node.js-Pakete nach dem Build](#nodejs-pakete-nach-dem-build).
 
 Die Startskripte und die nginx-Vorlage, die das Original aus seinem Verzeichnis `resources/core` kopiert, kommen unverändert aus derselben Version von frappe_docker. Das `Containerfile` lädt sie beim Build und prüft dabei ihre SHA-256-Summe. Der Kopf des `Containerfile` nennt jede Abweichung vom Original, damit sich die nächste Version von frappe_docker Zeile für Zeile vergleichen lässt.
 
@@ -18,7 +19,7 @@ Die Startskripte und die nginx-Vorlage, die das Original aus seinem Verzeichnis 
 | Stufe | Was sie tut |
 |---|---|
 | `base` | Debian trixie mit Python 3.14 aus `python:3.14-slim-trixie`. Legt den Benutzer `frappe` an (UID 1000, Gruppe 0) und installiert nginx, git, die Clients von MariaDB und PostgreSQL, restic und gpg für Sicherungen, wait-for-it und jq, die Bibliotheken für WeasyPrint, Ghostscript, wkhtmltopdf mit gepatchtem Qt und Chromium als `chromium-headless-shell`. Node.js 24 kommt über nvm mit yarn und pnpm, bench über pip. nginx läuft ohne root, die Verzeichnisse gehören der Gruppe 0, damit das Image auch mit beliebiger UID läuft, etwa unter OpenShift. |
-| `builder` | Installiert Compiler und Entwicklungsbibliotheken, die Python-Pakete der Apps zum Bauen brauchen. Führt `bench init` mit Frappe aus `FRAPPE_PATH` zum Tag `FRAPPE_BRANCH` und den Apps aus `apps.json` aus und entfernt danach die `.git`-Verzeichnisse der Apps. |
+| `builder` | Installiert Compiler und Entwicklungsbibliotheken, die Python-Pakete der Apps zum Bauen brauchen. Führt `bench init` mit Frappe aus `FRAPPE_PATH` zum Tag `FRAPPE_BRANCH` und den Apps aus `apps.json` aus und entfernt danach die `.git`-Verzeichnisse der Apps. Ein zweiter `RUN` entfernt die Node.js-Pakete, die nur zum Bauen da waren. |
 | `backend` | Das Image, das veröffentlicht wird. Kopiert die fertige Bench aus `builder` nach `/home/frappe/frappe-bench`, ohne Compiler und Entwicklungsbibliotheken. Verschiebt die gebauten Assets aus `sites/assets` nach `/home/frappe/frappe-bench/assets`, damit sie zum Image gehören und nicht zum Volume `sites`, und setzt Volumes, Entrypoint, Befehl und Labels. |
 
 ## apps.json als Build-Secret
@@ -77,6 +78,24 @@ eu_einvoice wandelt ein PDF in PDF/A-3 um, bevor es die XML einer ZUGFeRD-Rechnu
 ### Chromium
 
 `INSTALL_CHROMIUM=true` installiert `chromium-headless-shell` aus Debian. Frappe nutzt Chromium, wenn ein Druckformat oder die Druckeinstellungen den PDF-Generator „chrome“ wählen. Den Pfad liest Frappe aus `chromium_path` in `common_site_config.json`. Fehlt der Eintrag, lädt Frappe beim ersten Gebrauch selbst ein Chromium in das Verzeichnis `chromium` der Bench (`find_or_download_chromium_executable` in `frappe/utils/print_utils.py`). Im Container liegt dieses Verzeichnis nicht in einem Volume, und der Download braucht Internetzugang. Das Beispiel für docker compose setzt `chromium_path` deshalb auf `/usr/lib/chromium/chromium-headless-shell`. Der Site-Test setzt den Eintrag genauso und erzeugt mit beiden Generatoren je ein PDF: mit wkhtmltopdf über `frappe.utils.pdf.get_pdf`, Seitenzahlen im Footer eingeschlossen, und mit Chromium über `frappe.get_print`, den Weg des Druck-Knopfs.
+
+## Node.js-Pakete nach dem Build
+
+`bench init` installiert die Node.js-Abhängigkeiten jeder App und der Oberflächen in den Apps (etwa `hrms/frontend`, `frappe/flow`, `erpnext/islands`) und baut damit die Assets. Danach liegen in der Bench rund 2,7 GB `node_modules`, fast alles Compiler, Bundler und esbuild-Programme, die zur Laufzeit niemand startet. Scanner melden ihre Schwachstellen trotzdem, denn sie sehen nur, was im Image liegt.
+
+Der zweite `RUN` der Stufe `builder` ruft deshalb `python -m germanized prune-node-modules` auf (`germanized/node_modules.py`). Die Werkzeuge kommen über einen Bind-Mount in den Build und landen nicht im Image. Behalten wird, was nach dem Build noch geladen wird, jeweils mit allen Paketen, von denen es abhängt:
+
+- **Socket.IO:** die Pakete, die `apps/frappe/socketio.js` und alles, was es über relative Pfade lädt, mit `require` oder `import` einbinden, dazu die des Verzeichnisses `realtime` jeder App, aus dem der Server `<app>/realtime/handlers.js` lädt. Heute sind das `socket.io`, `@redis/client` und `cookie`.
+- **Bibliotheken für den Browser:** jedes Paket, das die gebauten Assets oder die Quellen einer App als `assets/<app>/node_modules/<paket>` nennen, etwa `qz-tray` und `js-sha256` für den Direktdruck, `html5-qrcode` für den Scanner, `frappe-gantt`, `photoswipe`, `ace-builds` und `occt-import-js` für 3D-Modelle in ERPNext.
+
+Alles andere fällt weg: die `node_modules` der Oberflächen in den Apps ganz, aus dem `node_modules` jeder App alle übrigen Pakete und `.bin`. Links namens `node_modules`, die danach ins Leere zeigen, etwa `sites/assets/hrms/node_modules`, entfernt der Schritt ebenfalls. Fehlt einem behaltenen Paket eine reguläre Abhängigkeit, bricht der Build ab, statt ein unvollständiges Image zu bauen.
+
+Was dadurch nicht mehr geht:
+
+- **`bench build` im Container.** Neue Assets brauchen ohnehin ein neues Image, denn auch eine neue App kommt über `apps.json` und einen neuen Build.
+- **Bundles von Frappe Studio.** Veröffentlicht man eine App aus Frappe Studio, baut Frappe ihr Bundle mit yarn und vite aus `frappe/studio/frontend`; diese Pakete fehlen, und der Build der Studio-App scheitert mit einem Eintrag im Fehlerprotokoll. Der Lauf nach `bench migrate` baut nur bereits veröffentlichte Studio-Apps neu und meldet Fehler nur.
+
+Der Site-Test startet den Socket.IO-Server und ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen.
 
 ## Woher das Deutsche kommt
 
