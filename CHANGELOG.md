@@ -7,6 +7,7 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 ### Hinzugefügt
 
 - Image für `linux/arm64`. Jedes Tag nennt jetzt einen Index mit einem Image für `linux/amd64` und einem für `linux/arm64`. Die CI baut jede Plattform nativ, `linux/arm64` auf `ubuntu-24.04-arm`, und lässt den Site-Test und den Scan auf jeder laufen; veröffentlicht wird erst, wenn beide bestanden haben, und ein Schritt prüft, dass der Index genau die getesteten Images nennt. Die Herkunftsangabe gilt dem Index, jedes Release bekommt eine SBOM je Plattform. ERiC für Steuerbote gibt es nur für x86_64, Übermittlungen an ELSTER gehen deshalb weiter nur mit `linux/amd64`.
+- Der Site-Test erzeugt je ein PDF mit wkhtmltopdf und mit Chromium, dem vorgegebenen Generator von Frappe 16, und setzt dafür `chromium_path` wie das Beispiel für docker compose. Bisher erzeugte er kein PDF, und wkhtmltopdf und Chromium sind auf jeder Plattform eigene Programme.
 
 ### Geändert
 
