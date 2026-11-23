@@ -1,0 +1,91 @@
+name: Fork test image
+
+# Only in the fork codeministry/erpnext_germanized, never meant for upstream: builds the unchanged recipe natively
+# for linux/arm64, runs the site test and pushes the tested image as a single manifest (no index, no provenance),
+# so a vulnerability scanner sees exactly the image that runs. It bridges the time until upstream publishes
+# linux/arm64 itself (encircle360-oss/erpnext_germanized#25).
+# A push to the branch fork-test-image builds; workflow_dispatch would need the file on the fork's default branch.
+on:
+  push:
+    branches: [fork-test-image]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-image
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/codeministry/erpnext_germanized
+  LOCAL_TAG: erpnext_germanized:ci
+
+jobs:
+  image:
+    name: Build, test and push (arm64)
+    if: github.repository == 'codeministry/erpnext_germanized'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write # push the image
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      - name: Validate apps.json and plan the build
+        id: plan
+        run: |
+          python -m germanized validate
+          {
+            echo "cache-bust=$(sha256sum apps.json | cut -c1-16)"
+            echo "version=$(git describe --tags --always)"
+            echo "tag=test-${GITHUB_SHA::7}"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build the image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: Containerfile
+          platforms: linux/arm64
+          secret-files: apps_json=./apps.json
+          build-args: |
+            CACHE_BUST=${{ steps.plan.outputs.cache-bust }}
+            VERSION=${{ steps.plan.outputs.version }}
+          # The package is linked to this fork, not to upstream.
+          labels: org.opencontainers.image.source=https://github.com/codeministry/erpnext_germanized
+          provenance: false
+          load: true
+          tags: ${{ env.LOCAL_TAG }}
+
+      - name: Install every app on a fresh site
+        run: ./tests/site/run.sh "$LOCAL_TAG"
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Push the tested image
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          docker tag "$LOCAL_TAG" "$IMAGE:$TAG"
+          docker push "$IMAGE:$TAG"
+          {
+            echo "### Pushed"
+            echo
+            echo "\`$IMAGE:$TAG\` ($(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$TAG"))"
+          } >> "$GITHUB_STEP_SUMMARY"
