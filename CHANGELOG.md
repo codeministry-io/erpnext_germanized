@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## [16.60.0-7] - 2026-11-23
+
+### Geändert
+
+- Steuerbote v0.5.0: „Steuervorlagen prüfen“ in der Kontenzuordnung, Abgleich der Voranmeldung mit Sales Register und Purchase Register (Abweichungen brauchen eine Erklärung vor der Abgabe), „USt-IdNrn. prüfen“ und Hinweise zu ungeprüften, veralteten und ungültigen Nummern an der Voranmeldung, wöchentliche Prüfung der ERiC-Laufzeiten gegen die öffentliche Mindestversionsliste von ELSTER mit Benachrichtigung der System Manager, gesperrte Entwürfe ohne Berechnen und Verwerfen; Steuerbote unterstützt die Jahre ab 2026.
+
 ## [16.60.0-6] - 2026-11-21
 
 ### Geändert
