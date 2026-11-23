@@ -131,7 +131,9 @@ jobs:
             echo
             echo "Lauf: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             echo
-            echo "Konflikt auf dem Branch \`$SYNC_BRANCH\` von Hand lösen, siehe FORK.md."
+            echo "Der Lauf hat nichts gepusht. Lösen, wie in FORK.md unter „Konflikte“ beschrieben:"
+            echo "\`$SYNC_BRANCH\` von \`$BASE\` neu anlegen, \`$NEWEST\` mergen, Konflikte lösen,"
+            echo "\`fork/upstream-tag\` auf \`$NEWEST\` setzen, pushen und den Pull Request öffnen."
           )
           gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body" \
             --label "$LABEL" --assignee "$ASSIGNEE"
