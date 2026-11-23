@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## [16.60.0-9] - 2026-11-23
+
+### Geändert
+
+- Steuerbote v0.7.0: Belege „Körperschaftsteuererklärung“ und „Gewerbesteuererklärung“ (vorläufig aus den Jahresdokumentationen 2025) mit Rückstellungsvorschlag und Kontennachweis; „Bilanzzuordnung“ je Unternehmen für E-Bilanz und Offenlegung mit Salden aus dem Hauptbuch; Kern der E-Bilanz mit Instanz, Nutzdaten und Simulation; XBRL-Datei der Offenlegung für das Unternehmensregister mit geführtem Upload; Leser der Jahresdokumentationen und Jahresprüfung aller Datenarten.
+
 ## [16.60.0-8] - 2026-11-23
 
 ### Geändert
