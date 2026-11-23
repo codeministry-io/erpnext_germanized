@@ -32,7 +32,7 @@ jobs:
   image:
     name: Build, test and push (arm64)
     if: github.repository == 'codeministry/erpnext_germanized'
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     timeout-minutes: 120
     permissions:
       contents: write # push the git tag cm/<tag>
