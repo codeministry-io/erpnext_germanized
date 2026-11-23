@@ -1,11 +1,14 @@
 name: Build and test the image
 description: >-
-  Builds the image once into the local Docker engine, installs every app on a fresh site with it and scans
-  it for vulnerabilities. Both jobs of the workflow Image run it after the checkout with tags and Python 3.14;
-  only the publishing job writes the build cache and has the same build push the image by digest, without a
-  tag.
+  Builds the image for one platform once into the local Docker engine, installs every app on a fresh site
+  with it and scans it for vulnerabilities. Both jobs of the workflow Image run it once per platform, on a
+  runner of that platform, after the checkout with tags and Python 3.14; only the publishing job writes the
+  build cache and has the same build push the image by digest, without a tag.
 
 inputs:
+  platform:
+    description: The platform to build, test and scan, such as linux/arm64; the runner has to be of that platform
+    required: true
   local-tag:
     description: The tag of the image in the local Docker engine, which the site test and the scan use
     required: true
@@ -20,6 +23,9 @@ inputs:
     description: Where the build writes its cache; empty writes none
     required: false
     default: ''
+  scan-category:
+    description: The code scanning category of the vulnerability scan, one per platform
+    required: true
 
 outputs:
   digest:
@@ -88,7 +94,7 @@ runs:
       with:
         context: .
         file: Containerfile
-        platforms: linux/amd64
+        platforms: ${{ inputs.platform }}
         secret-files: apps_json=./apps.json
         build-args: |
           CACHE_BUST=${{ steps.plan.outputs.cache-bust }}
@@ -133,4 +139,4 @@ runs:
       uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
       with:
         sarif_file: trivy-image.sarif
-        category: trivy-image
+        category: ${{ inputs.scan-category }}
