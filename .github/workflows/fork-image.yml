@@ -1,13 +1,20 @@
 name: Fork test image
 
-# Only in the fork codeministry/erpnext_germanized, never meant for upstream: builds the unchanged recipe natively
-# for linux/arm64, runs the site test and pushes the tested image as a single manifest (no index, no provenance),
-# so a vulnerability scanner sees exactly the image that runs. It bridges the time until upstream publishes
-# linux/arm64 itself (encircle360-oss/erpnext_germanized#25).
-# A push to the branch fork-test-image builds; workflow_dispatch would need the file on the fork's default branch.
+# Only in the fork codeministry/erpnext_germanized, never meant for upstream: builds the recipe natively for
+# linux/arm64, runs the site test and pushes the tested image as a single manifest (no index, no provenance), so a
+# vulnerability scanner sees exactly the image that runs. See FORK.md for why the fork exists and when it can go.
+#
+# The tag is <upstream version>-cm<n>: the version comes from fork/upstream-tag, which only the upstream sync pull
+# request writes; n counts the builds of that version. Every pushed image gets an annotated git tag cm/<tag> whose
+# message names the run, created only after the push, so the git tags list exactly the published images.
+# A push to fork-test-image builds; so does the weekly schedule, which rebuilds the same state as the next revision
+# to pick up the packages the recipe installs.
 on:
   push:
     branches: [fork-test-image]
+    paths-ignore: [FORK.md, renovate.json]
+  schedule:
+    - cron: '41 3 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -28,7 +35,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 120
     permissions:
-      contents: read
+      contents: write # push the git tag cm/<tag>
       packages: write # push the image
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,11 +51,20 @@ jobs:
         id: plan
         run: |
           python -m germanized validate
+          upstream=$(tr -d '[:space:]' < fork/upstream-tag)
+          if [[ ! $upstream =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]; then
+            echo "::error::fork/upstream-tag holds '$upstream', not a release tag like v16.60.0-7."
+            exit 1
+          fi
+          version=${upstream#v}
+          last=$(git tag -l "cm/$version-cm*" | sed 's/.*-cm//' | sort -n | tail -n 1)
+          tag="$version-cm$(( ${last:-0} + 1 ))"
           {
             echo "cache-bust=$(sha256sum apps.json | cut -c1-16)"
-            echo "version=$(git describe --tags --always)"
-            echo "tag=test-${GITHUB_SHA::7}"
+            echo "version=$tag"
+            echo "tag=$tag"
           } >> "$GITHUB_OUTPUT"
+          echo "building $tag from $upstream"
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -89,3 +105,13 @@ jobs:
             echo
             echo "\`$IMAGE:$TAG\` ($(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$TAG"))"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag the built commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "cm/$TAG" -m "run $GITHUB_RUN_ID" "$GITHUB_SHA"
+          git push --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/cm/$TAG"
