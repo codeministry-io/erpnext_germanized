@@ -25,10 +25,10 @@
   },
   {
     "url": "https://github.com/alyf-de/banking",
-    "branch": "v16.6.4"
+    "branch": "v16.7.0"
   },
   {
     "url": "https://github.com/encircle360-oss/steuerbote",
-    "branch": "v0.4.0"
+    "branch": "v0.5.0"
   }
 ]
