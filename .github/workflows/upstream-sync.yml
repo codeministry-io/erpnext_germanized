@@ -1,0 +1,193 @@
+name: Upstream sync
+
+# Only in the fork codeministry/erpnext_germanized, never meant for upstream. Once a week (or on demand) it merges
+# the newest release tag of encircle360-oss/erpnext_germanized into the branch sync/upstream and keeps exactly one
+# pull request from there into fork-test-image open. A newer tag moves the same pull request on. CHANGELOG.md and
+# README.md always take upstream's version: the fork keeps its own notes in FORK.md. Any other conflict fails the
+# run and opens an issue naming the tag and the files. See FORK.md.
+#
+# A second job checks whether upstream already publishes what the fork exists for; once it does, the fork can go.
+on:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: https://github.com/encircle360-oss/erpnext_germanized.git
+  UPSTREAM_IMAGE: ghcr.io/encircle360-oss/erpnext_germanized
+  BASE: fork-test-image
+  SYNC_BRANCH: sync/upstream
+  LABEL: upstream-sync
+  ASSIGNEE: codeministry
+  # Files upstream rewrites with every release and the fork never needs to change.
+  TAKE_UPSTREAM: CHANGELOG.md README.md
+
+jobs:
+  sync:
+    name: Merge the newest upstream tag
+    if: github.repository == 'codeministry/erpnext_germanized'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write # push the branch sync/upstream
+      pull-requests: write # open or update the sync pull request
+      issues: write # report a merge conflict
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BASE }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Find the newest upstream tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          newest=$(git ls-remote --tags --refs "$UPSTREAM_REPO" 'v*' | sed 's|.*refs/tags/||' | sort -V | tail -n 1)
+          if [[ -z $newest ]]; then
+            echo "::error::No release tag found at $UPSTREAM_REPO."
+            exit 1
+          fi
+          merged=$(tr -d '[:space:]' < fork/upstream-tag)
+          # The tag an open sync pull request already carries. A closed one counts as nothing, so the next run
+          # opens a new pull request instead of waiting on a branch nobody looks at.
+          pending=""
+          open=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --base "$BASE" --state open \
+            --json number --jq '.[0].number // empty')
+          if [[ -n $open ]]; then
+            git fetch --quiet origin "$SYNC_BRANCH"
+            pending=$(git show "FETCH_HEAD:fork/upstream-tag" 2> /dev/null | tr -d '[:space:]' || true)
+          fi
+          {
+            echo "newest=$newest"
+            echo "merged=$merged"
+            echo "pending=$pending"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Upstream sync"
+            echo
+            echo "- newest upstream tag: \`$newest\`"
+            echo "- merged into $BASE: \`$merged\`"
+            echo "- on $SYNC_BRANCH: \`${pending:-none}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Merge the tag into the sync branch
+        id: merge
+        if: steps.tag.outputs.newest != steps.tag.outputs.merged && steps.tag.outputs.newest != steps.tag.outputs.pending
+        env:
+          NEWEST: ${{ steps.tag.outputs.newest }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --quiet --no-tags "$UPSTREAM_REPO" "refs/tags/$NEWEST:refs/upstream/$NEWEST"
+          git switch --quiet -c "$SYNC_BRANCH"
+          git merge --no-ff --no-commit "refs/upstream/$NEWEST" || true
+          for file in $TAKE_UPSTREAM; do
+            if git cat-file -e "refs/upstream/$NEWEST:$file" 2> /dev/null; then
+              git checkout "refs/upstream/$NEWEST" -- "$file"
+              git add -- "$file"
+            fi
+          done
+          conflicts=$(git diff --name-only --diff-filter=U)
+          if [[ -n $conflicts ]]; then
+            {
+              echo 'conflicts<<EOF'
+              echo "$conflicts"
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+            echo "::error::Merging $NEWEST conflicts in: $(echo "$conflicts" | tr '\n' ' ')"
+            exit 1
+          fi
+          printf '%s\n' "$NEWEST" > fork/upstream-tag
+          git add fork/upstream-tag
+          git commit --quiet -m "merge upstream $NEWEST"
+          echo "merged $NEWEST onto $(git rev-parse --short HEAD~1)"
+
+      - name: Report the conflict
+        if: failure() && steps.merge.outputs.conflicts != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEWEST: ${{ steps.tag.outputs.newest }}
+          CONFLICTS: ${{ steps.merge.outputs.conflicts }}
+        run: |
+          title="Upstream-Sync $NEWEST: Konflikt beim Merge"
+          if gh issue list --repo "$GITHUB_REPOSITORY" --label "$LABEL" --state open --search "in:title \"$title\"" \
+            --json number --jq '.[].number' | grep -q .; then
+            echo "an open issue already reports $NEWEST"
+            exit 0
+          fi
+          body=$(
+            echo "Der Merge von \`$NEWEST\` in \`$BASE\` hat Konflikte in Dateien, die der Fork selbst ändert:"
+            echo
+            while IFS= read -r file; do echo "- \`$file\`"; done <<< "$CONFLICTS"
+            echo
+            echo "Lauf: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "Konflikt auf dem Branch \`$SYNC_BRANCH\` von Hand lösen, siehe FORK.md."
+          )
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body" \
+            --label "$LABEL" --assignee "$ASSIGNEE"
+
+      - name: Push the sync branch and open or update the pull request
+        if: steps.merge.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEWEST: ${{ steps.tag.outputs.newest }}
+          MERGED: ${{ steps.tag.outputs.merged }}
+        run: |
+          # The branch belongs to this workflow; it is rebuilt from the base on every new tag.
+          git push --force --quiet "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/$SYNC_BRANCH"
+          title="Upstream $NEWEST übernehmen"
+          body=$(
+            echo "Übernimmt das Release \`$NEWEST\` von encircle360-oss/erpnext_germanized (bisher \`$MERGED\`)."
+            echo
+            echo "\`CHANGELOG.md\` und \`README.md\` stehen in der Fassung von upstream, \`fork/upstream-tag\` nennt das Tag."
+            echo "Nach dem Merge baut der Workflow Fork image das Image \`${NEWEST#v}-cm1\`."
+          )
+          number=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --base "$BASE" --state open \
+            --json number --jq '.[0].number // empty')
+          if [[ -n $number ]]; then
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+            echo "updated pull request #$number" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$SYNC_BRANCH" --title "$title" \
+              --body "$body" --label "$LABEL" --assignee "$ASSIGNEE" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+  exit-condition:
+    name: Check whether the fork can go
+    if: github.repository == 'codeministry/erpnext_germanized'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check the newest upstream release
+        run: |
+          newest=$(git ls-remote --tags --refs "$UPSTREAM_REPO" 'v*' | sed 's|.*refs/tags/||' | sort -V | tail -n 1)
+          git init --quiet upstream
+          git -C upstream fetch --quiet --depth 1 --no-tags "$UPSTREAM_REPO" "refs/tags/$newest:refs/tags/$newest"
+          verdict() { if "$@"; then echo "erfüllt"; else echo "offen"; fi; }
+          arm64=$(verdict grep -q 'linux/arm64' <(git -C upstream show "$newest:.github/workflows/build.yml"))
+          prune=$(verdict grep -q 'node_modules' <(git -C upstream show "$newest:Containerfile"))
+          image="$UPSTREAM_IMAGE:${newest#v}"
+          media=$(docker buildx imagetools inspect "$image" --raw 2> /dev/null | jq -r '.mediaType // empty' || true)
+          arch=""
+          if [[ $media == *manifest.v1+json || $media == *manifest.v2+json ]]; then
+            arch=$(docker buildx imagetools inspect "$image" --format '{{.Image.Architecture}}' 2> /dev/null || true)
+          fi
+          single=$(verdict test "$arch" = arm64)
+          all=$([[ $arm64 == erfüllt && $prune == erfüllt && $single == erfüllt ]] && echo erfüllt || echo offen)
+          {
+            echo "Ausstieg: $all (upstream $newest)"
+            echo "Ausstieg: arm64-Build in build.yml: $arm64"
+            echo "Ausstieg: node_modules-Schritt im Containerfile: $prune"
+            echo "Ausstieg: $image als einzelnes arm64-Manifest: $single (${media:-nicht gefunden}${arch:+, $arch})"
+          } | tee -a "$GITHUB_STEP_SUMMARY"

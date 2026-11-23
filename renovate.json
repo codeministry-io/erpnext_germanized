@@ -1,0 +1,9 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Fork only. Upstream maintains every file it owns; bumping one here would collide with the next upstream sync.",
+    "Renovate therefore only keeps the actions in the fork's own workflows current. See FORK.md."
+  ],
+  "enabledManagers": ["github-actions"],
+  "includePaths": [".github/workflows/fork-image.yml", ".github/workflows/upstream-sync.yml"]
+}
