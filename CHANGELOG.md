@@ -2,12 +2,11 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
-## Unveröffentlicht
+## [16.60.0-8] - 2026-11-23
 
 ### Geändert
 
-- Das Image enthält nur noch die Node.js-Pakete, die nach dem Build geladen werden: Socket.IO mit seinen Abhängigkeiten und die Bibliotheken, die der Browser aus `/assets/<app>/node_modules` lädt. Die `node_modules` der Oberflächen in den Apps und die Build-Werkzeuge in `node_modules` der Apps fallen weg, rund 2,7 GB, und mit ihnen die Schwachstellen, die Scanner darin melden. `bench build` im Container und Bundles von Frappe Studio gehen damit nicht mehr, siehe [Architektur](docs/architektur.md#nodejs-pakete-nach-dem-build).
-- Der Site-Test startet den Socket.IO-Server und prüft, dass nginx die Bibliotheken aus `node_modules` ausliefert.
+- Steuerbote v0.6.0: Seite „Steuerbote einrichten“ mit Vorgaben, „Vorgaben aktualisieren“ und Export/Import der Kontenzuordnung; Jahresmeldungen mit „Einstellungen Jahresmeldungen“, dem Beleg „Umsatzsteuererklärung“ (USt 2 A 2026) samt Druckformat und Übermittlung als Simulation, der Kontenzuordnung Ertragsteuern mit Vorgaben für SKR03 und SKR04 und den Fristen der Jahresmeldungen in „Offene Fristen“; Rechenkerne für Körperschaftsteuer, Gewerbesteuer, Jahresabschluss nach HGB und XBRL mit Taxonomie 6.9; ERiC-Datenarten für Erklärungen und Bilanz, Versionsprüfung mit den Bibliotheksversionen aus den öffentlichen Versionsinformationen.
 
 ## [16.60.0-7] - 2026-11-23
 
