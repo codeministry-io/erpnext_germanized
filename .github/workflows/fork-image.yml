@@ -57,6 +57,14 @@ jobs:
             exit 1
           fi
           version=${upstream#v}
+          # CHANGELOG.md always holds upstream's version (the sync takes it from the tag). Its newest release must be
+          # the tag in fork/upstream-tag; otherwise upstream was merged some other way, for example with GitHub's
+          # "Sync fork" button, and the image would carry a version its code is not.
+          changelog=$(grep -m 1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+-[0-9]+\]' CHANGELOG.md | tr -d '#[] ')
+          if [[ "v$changelog" != "$upstream" ]]; then
+            echo "::error::fork/upstream-tag says $upstream, but CHANGELOG.md is at v$changelog. Merge upstream only through upstream-sync.yml (FORK.md)."
+            exit 1
+          fi
           last=$(git tag -l "cm/$version-cm*" | sed 's/.*-cm//' | sort -n | tail -n 1)
           tag="$version-cm$(( ${last:-0} + 1 ))"
           {

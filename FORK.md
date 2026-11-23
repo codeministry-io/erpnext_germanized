@@ -44,6 +44,10 @@ Der Default-Branch ist `fork-test-image`. `main` bleibt ein unveränderter Spieg
   ```
 
   Solange dieser Pull Request offen ist und dasselbe Tag trägt, lässt der nächste Lauf ihn stehen.
+- **Nur über den Sync-Workflow:** Den Knopf „Sync fork“ auf GitHub nicht benutzen. Er merged `main` von upstream,
+  ohne `fork/upstream-tag` nachzuziehen, und das Image trüge dann eine Version, die sein Code nicht ist.
+  `fork-image.yml` bricht deshalb ab, wenn das oberste Release in `CHANGELOG.md` nicht dem Tag in
+  `fork/upstream-tag` entspricht.
 - **Abgeschaltet:** Die Workflows von upstream mit Zeitplan (`versions.yml`, `security.yml`) laufen im Fork nicht.
 
 ## Wann der Fork entfallen kann
