@@ -7,10 +7,12 @@ import argparse
 import re
 import sys
 from collections.abc import Callable, Sequence
+from pathlib import Path
 
 from germanized import readme, versions
 from germanized.apps import APPS_JSON, App, frappe_app, load_apps, validate
 from germanized.containerfile import CONTAINERFILE, frappe_tag, pins
+from germanized.node_modules import prune
 from germanized.summary import markdown
 from germanized.tags import TAG_PREFIX, image_tags, parse_release, release_check
 
@@ -111,6 +113,12 @@ def _readme(args: argparse.Namespace) -> int:
 	return 0
 
 
+def _prune_node_modules(args: argparse.Namespace) -> int:
+	for line in prune(args.bench):
+		print(line)
+	return 0
+
+
 def _parser() -> argparse.ArgumentParser:
 	parser = argparse.ArgumentParser(
 		prog="python -m germanized",
@@ -145,6 +153,14 @@ def _parser() -> argparse.ArgumentParser:
 	mode = readme_command.add_mutually_exclusive_group(required=True)
 	mode.add_argument("--check", action="store_true", help="fail when the table differs from the pins")
 	mode.add_argument("--write", action="store_true", help="set the Version cells to the pins")
+	prune_command = command(
+		"prune-node-modules",
+		_prune_node_modules,
+		"remove the Node.js packages of a bench that nothing loads after the build (runs in the image build)",
+	)
+	prune_command.add_argument(
+		"bench", type=Path, help="the bench directory, such as /home/frappe/frappe-bench"
+	)
 	return parser
 
 
