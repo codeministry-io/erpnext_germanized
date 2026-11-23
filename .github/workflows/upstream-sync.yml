@@ -33,7 +33,7 @@ jobs:
   sync:
     name: Merge the newest upstream tag
     if: github.repository == 'codeministry/erpnext_germanized'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
       contents: write # push the branch sync/upstream
@@ -168,7 +168,7 @@ jobs:
   exit-condition:
     name: Check whether the fork can go
     if: github.repository == 'codeministry/erpnext_germanized'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - name: Check the newest upstream release
