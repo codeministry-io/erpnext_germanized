@@ -6,7 +6,7 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 
 - **Rezept:** `Containerfile` aus frappe_docker v4.2.0 mit Ghostscript, gepinnten Vorgaben, darunter Frappe in `FRAPPE_BRANCH`, und OCI-Labels; `apps.json` mit ERPNext, HRMS, den fünf Apps von ALYF und Steuerbote. Die Versionen nennt die Tabelle im [README](../README.md#enthaltene-apps), den Aufbau [Architektur](architektur.md).
 - **Werkzeuge:** `python -m germanized` prüft `apps.json`, leitet die Image-Tags ab, prüft Release-Tags, hebt Versionen an und hält die Tabelle im README aktuell, mit 100 % Testabdeckung, siehe [Entwicklung](entwicklung.md#werkzeuge).
-- **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site und prüft Backend und nginx.
+- **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site, erzeugt PDFs mit wkhtmltopdf und Chromium und prüft Backend und nginx.
 - **CI:** Tests, Linters, Security, Image, Release und App versions, siehe [Entwicklung](entwicklung.md#ci).
 - **Beispiel** für docker compose und Hinweise für den Betrieb auf Kubernetes mit dem Helm-Chart von Frappe, siehe [Betrieb](betrieb.md).
 - **`linux/arm64`:** jedes Tag nennt ein Image für `linux/amd64` und `linux/arm64`, beide nativ gebaut und mit Site-Test, siehe [Entwicklung](entwicklung.md#ci). ERiC für Steuerbote gibt es nur für x86_64.
