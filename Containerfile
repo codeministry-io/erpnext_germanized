@@ -13,6 +13,10 @@
 # - the entrypoints and the nginx template are fetched from the same frappe_docker release and checked
 #   against their SHA-256, because this repository does not carry frappe_docker's resources directory
 # - OCI labels
+# - a RUN of its own in the builder stage removes the Node.js packages that nothing loads after the build: the
+#   node_modules of the frontends inside the apps and the build tools in node_modules of each app, among them
+#   the esbuild binaries; Socket.IO with what it requires and the libraries the browser loads from
+#   /assets/<app>/node_modules stay (germanized/node_modules.py)
 # The upstream instructions are otherwise unchanged; hadolint findings in them are ignored per instruction
 # with the reason, so the next upstream release can be compared line by line.
 #
@@ -194,6 +198,13 @@ RUN --mount=type=secret,id=apps_json,target=/opt/frappe/apps.json,uid=1000,gid=0
   echo "{}" > sites/common_site_config.json && \
   find apps -mindepth 1 -path "*/.git" | xargs rm -fr && \
   chmod -R g=u /home/frappe/frappe-bench
+
+# Not in frappe_docker: after the build only Socket.IO and the libraries the browser loads from
+# /assets/<app>/node_modules need Node.js packages; the compilers, bundlers and esbuild binaries around them
+# would only be scanned and reported. The tools come in through a bind mount and stay out of the image.
+RUN --mount=type=bind,source=germanized,target=/opt/germanized/germanized \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/germanized \
+  python3 -m germanized prune-node-modules /home/frappe/frappe-bench
 
 FROM base AS backend
 

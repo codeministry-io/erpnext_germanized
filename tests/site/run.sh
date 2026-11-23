@@ -163,6 +163,13 @@ login=$("${compose[@]}" exec -T backend curl -fsS -H "Host: $SITE" http://localh
 grep -qi '<html' <<<"$login" || fail "the login page of the backend is no HTML"
 echo "the login page is HTML"
 
+# Engine.IO answers the opening request of a client with its session before any authentication.
+step "socketio: node socketio.js on the Node.js packages left after the build"
+"${compose[@]}" up --detach --no-deps socketio
+handshake=$(wait_for socketio "http://localhost:9000/socket.io/?EIO=4&transport=polling" -H "Host: $SITE")
+echo "$handshake"
+[[ "$handshake" == '0{"sid":'* ]] || fail "Socket.IO answered the handshake with $handshake"
+
 step "frontend: nginx in front of the backend"
 "${compose[@]}" up --detach --no-deps frontend
 pong=$(wait_for frontend http://localhost:8080/api/method/ping -H "Host: $SITE")
@@ -172,3 +179,20 @@ bundle=$("${compose[@]}" exec -T frontend jq -r '[.[]][0]' /home/frappe/frappe-b
 "${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$bundle" ||
 	fail "nginx does not serve the asset $bundle"
 echo "nginx serves $bundle"
+handshake=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" \
+	"http://localhost:8080/socket.io/?EIO=4&transport=polling")
+[[ "$handshake" == '0{"sid":'* ]] || fail "nginx does not pass /socket.io/ to Socket.IO: $handshake"
+echo "nginx passes /socket.io/ to Socket.IO"
+
+# The desk loads some libraries at run time from node_modules, such as qz-tray for printing; the build stage
+# keeps exactly those, so every such path in the built bundles has to answer.
+step "frontend: the libraries the browser loads from node_modules"
+mapfile -t libraries < <("${compose[@]}" exec -T frontend sh -c \
+	'grep -rhoE "/?assets/[a-z0-9_]+/node_modules/[^\"'"'"' )]+\.(js|css)" /home/frappe/frappe-bench/assets/*/dist' |
+	sed 's#^/*#/#' | sort -u)
+[[ ${#libraries[@]} -gt 0 ]] || fail "the built bundles name no library under node_modules; the search has gone stale"
+for library in "${libraries[@]}"; do
+	"${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$library" ||
+		fail "nginx does not serve $library"
+	echo "nginx serves $library"
+done
