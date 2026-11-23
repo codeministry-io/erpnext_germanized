@@ -30,8 +30,20 @@ Der Default-Branch ist `fork-test-image`. `main` bleibt ein unveränderter Spieg
 - **Spur im Repository:** Zu jedem veröffentlichten Image gehört ein annotierter Git-Tag `cm/<version>-cm<n>`, dessen
   Nachricht den Lauf nennt. Ein Build, dessen Site-Test scheitert, veröffentlicht weder Image noch Git-Tag.
 - **Konflikte:** `CHANGELOG.md` und `README.md` übernimmt der Abgleich immer in der Fassung von upstream. Jede andere
-  Datei mit Konflikt lässt den Lauf scheitern und öffnet ein Issue mit Tag und Dateiliste. Den Konflikt löst man
-  dann auf `sync/upstream` von Hand.
+  Datei mit Konflikt lässt den Lauf scheitern und öffnet ein Issue mit Tag und Dateiliste; gepusht wird dann nichts.
+  Gelöst wird von Hand, mit dem Tag aus dem Issue:
+
+  ```bash
+  git fetch upstream --tags
+  git switch -C sync/upstream origin/fork-test-image
+  git merge --no-ff <tag>                       # Konflikte lösen
+  git checkout <tag> -- CHANGELOG.md README.md
+  echo <tag> > fork/upstream-tag
+  git commit -am "merge upstream <tag>"
+  git push --force origin sync/upstream         # danach den Pull Request nach fork-test-image öffnen
+  ```
+
+  Solange dieser Pull Request offen ist und dasselbe Tag trägt, lässt der nächste Lauf ihn stehen.
 - **Abgeschaltet:** Die Workflows von upstream mit Zeitplan (`versions.yml`, `security.yml`) laufen im Fork nicht.
 
 ## Wann der Fork entfallen kann
