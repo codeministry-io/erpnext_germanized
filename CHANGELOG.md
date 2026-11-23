@@ -8,6 +8,28 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 - Image für `linux/arm64`. Jedes Tag nennt jetzt einen Index mit einem Image für `linux/amd64` und einem für `linux/arm64`. Die CI baut jede Plattform nativ, `linux/arm64` auf `ubuntu-24.04-arm`, und lässt den Site-Test und den Scan auf jeder laufen; veröffentlicht wird erst, wenn beide bestanden haben, und ein Schritt prüft, dass der Index genau die getesteten Images nennt. Die Herkunftsangabe gilt dem Index, jedes Release bekommt eine SBOM je Plattform. ERiC für Steuerbote gibt es nur für x86_64, Übermittlungen an ELSTER gehen deshalb weiter nur mit `linux/amd64`.
 
+### Geändert
+
+- Die CI baut das Image je Plattform nur noch einmal und schiebt es im selben Build per Digest ohne Tag in die Registry; die Tags bekommt der Digest erst nach dem Site-Test und einer Prüfung, dass er das getestete Image ist. Bisher baute der Push ein zweites Mal und konnte dabei Schichten eines gleichzeitigen Release-Laufs aus dem gemeinsamen Cache nehmen; die Prüfung schlug dann erst fehl, als die Tags schon gesetzt waren.
+
+## [16.60.0-9] - 2026-11-23
+
+### Geändert
+
+- Steuerbote v0.7.0: Belege „Körperschaftsteuererklärung“ und „Gewerbesteuererklärung“ (vorläufig aus den Jahresdokumentationen 2025) mit Rückstellungsvorschlag und Kontennachweis; „Bilanzzuordnung“ je Unternehmen für E-Bilanz und Offenlegung mit Salden aus dem Hauptbuch; Kern der E-Bilanz mit Instanz, Nutzdaten und Simulation; XBRL-Datei der Offenlegung für das Unternehmensregister mit geführtem Upload; Leser der Jahresdokumentationen und Jahresprüfung aller Datenarten.
+
+## [16.60.0-8] - 2026-11-23
+
+### Geändert
+
+- Steuerbote v0.6.0: Seite „Steuerbote einrichten“ mit Vorgaben, „Vorgaben aktualisieren“ und Export/Import der Kontenzuordnung; Jahresmeldungen mit „Einstellungen Jahresmeldungen“, dem Beleg „Umsatzsteuererklärung“ (USt 2 A 2026) samt Druckformat und Übermittlung als Simulation, der Kontenzuordnung Ertragsteuern mit Vorgaben für SKR03 und SKR04 und den Fristen der Jahresmeldungen in „Offene Fristen“; Rechenkerne für Körperschaftsteuer, Gewerbesteuer, Jahresabschluss nach HGB und XBRL mit Taxonomie 6.9; ERiC-Datenarten für Erklärungen und Bilanz, Versionsprüfung mit den Bibliotheksversionen aus den öffentlichen Versionsinformationen.
+
+## [16.60.0-7] - 2026-11-23
+
+### Geändert
+
+- Steuerbote v0.5.0: „Steuervorlagen prüfen“ in der Kontenzuordnung, Abgleich der Voranmeldung mit Sales Register und Purchase Register (Abweichungen brauchen eine Erklärung vor der Abgabe), „USt-IdNrn. prüfen“ und Hinweise zu ungeprüften, veralteten und ungültigen Nummern an der Voranmeldung, wöchentliche Prüfung der ERiC-Laufzeiten gegen die öffentliche Mindestversionsliste von ELSTER mit Benachrichtigung der System Manager, gesperrte Entwürfe ohne Berechnen und Verwerfen; Steuerbote unterstützt die Jahre ab 2026.
+
 ## [16.60.0-6] - 2026-11-21
 
 ### Geändert

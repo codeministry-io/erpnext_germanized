@@ -3,7 +3,7 @@ description: >-
   Builds the image for one platform once into the local Docker engine, installs every app on a fresh site
   with it and scans it for vulnerabilities. Both jobs of the workflow Image run it once per platform, on a
   runner of that platform, after the checkout with tags and Python 3.14; only the publishing job writes the
-  build cache and pushes the tested image afterwards.
+  build cache and has the same build push the image by digest, without a tag.
 
 inputs:
   platform:
@@ -15,6 +15,10 @@ inputs:
   build-cache:
     description: The registry reference of the build cache, which the build reads
     required: true
+  push-to:
+    description: The repository the build also pushes the image to, by digest without a tag; empty pushes none
+    required: false
+    default: ''
   cache-to:
     description: Where the build writes its cache; empty writes none
     required: false
@@ -24,12 +28,9 @@ inputs:
     required: true
 
 outputs:
-  version:
-    description: The version label of the image, the release tag or the output of git describe
-    value: ${{ steps.plan.outputs.version }}
-  cache-bust:
-    description: The checksum of apps.json the build takes as CACHE_BUST
-    value: ${{ steps.plan.outputs.cache-bust }}
+  digest:
+    description: The digest under which the build pushed the image to push-to
+    value: ${{ steps.build.outputs.digest }}
   public:
     description: Whether the repository is public, which code scanning and attestations need
     value: ${{ steps.visibility.outputs.public }}
@@ -88,6 +89,7 @@ runs:
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
     - name: Build the image
+      id: build
       uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
       with:
         context: .
@@ -101,8 +103,12 @@ runs:
         cache-to: ${{ inputs.cache-to }}
         # The provenance comes from the attestation of the pushed image.
         provenance: false
-        load: true
-        tags: ${{ inputs.local-tag }}
+        # The engine and the registry get the image from this one build: a second build could take layers from
+        # a cache that another run has written in the meantime. The outputs name their images, as tags would
+        # rename both.
+        outputs: |
+          type=docker,name=${{ inputs.local-tag }}
+          ${{ inputs.push-to && format('type=image,name={0},push-by-digest=true,name-canonical=true,push=true', inputs.push-to) || '' }}
 
     - name: Install every app on a fresh site
       # Composite steps have no timeout-minutes; the site test stops itself after 20 minutes.
