@@ -1,9 +1,10 @@
 name: Build and test the image
 description: >-
   Builds the image for one platform once into the local Docker engine, installs every app on a fresh site
-  with it and scans it for vulnerabilities. Both jobs of the workflow Image run it once per platform, on a
-  runner of that platform, after the checkout with tags and Python 3.14; only the publishing job writes the
-  build cache and has the same build push the image by digest, without a tag.
+  with it and scans it for vulnerabilities. The jobs test and build of the workflow Image run it once per
+  platform, on a runner of that platform, after the checkout with tags and Python 3.14; only the job build
+  writes the build cache and has the same build push the image by digest, without a tag. The job publish
+  does not run it, it names the pushed digests under the tags.
 
 inputs:
   platform:
