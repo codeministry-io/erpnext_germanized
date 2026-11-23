@@ -14,7 +14,7 @@ Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://git
 - **Updates durch Tag-Wechsel.** Ein Update ist ein anderes Image-Tag und danach `bench migrate`. Sites, Dateien und Datenbank liegen in Volumes und bleiben erhalten.
 - **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
 - **SBOM und Provenance.** Zu jedem veröffentlichten Image erzeugt die CI eine Stückliste der enthaltenen Pakete (SBOM) und eine signierte Herkunftsangabe (Build Provenance), die `gh attestation verify` prüft.
-- **Nur `linux/amd64`.** Ein Image für `linux/arm64` gibt es noch nicht, siehe [Roadmap](docs/roadmap.md).
+- **`linux/amd64` und `linux/arm64`.** Jedes Tag nennt ein Image für beide Plattformen, und Docker wählt das passende. Die CI baut jede Plattform nativ und lässt den Site-Test auf jeder laufen. ERiC für Steuerbote gibt es nur für x86_64, Übermittlungen an ELSTER gehen deshalb nur mit `linux/amd64`, siehe [Steuerbote](docs/apps.md#steuerbote).
 
 ## Enthaltene Apps
 
@@ -36,7 +36,7 @@ Was jede App mitbringt und wo sie eingerichtet wird, steht in [Apps](docs/apps.m
 
 ## Schnellstart
 
-Du brauchst Docker mit dem Compose-Plugin auf einem Rechner mit `linux/amd64`. Das Beispiel nutzt das Tag `16`, also das neueste Release mit ERPNext 16; für den Dauerbetrieb trägst du unter `x-erpnext` das volle Tag ein, etwa `16.60.0-1`, siehe [Versionen und Updates](#versionen-und-updates).
+Du brauchst Docker mit dem Compose-Plugin auf einem Rechner mit `linux/amd64` oder `linux/arm64`. Das Beispiel nutzt das Tag `16`, also das neueste Release mit ERPNext 16; für den Dauerbetrieb trägst du unter `x-erpnext` das volle Tag ein, etwa `16.60.0-1`, siehe [Versionen und Updates](#versionen-und-updates).
 
 1. Lege ein Verzeichnis an und hol das Beispiel [examples/compose.yaml](examples/compose.yaml):
 

@@ -14,8 +14,6 @@ name: erpnext_germanized
 
 x-erpnext: &erpnext
   image: ghcr.io/encircle360-oss/erpnext_germanized:16
-  # The image is built for linux/amd64 only.
-  platform: linux/amd64
   networks:
     - frappe_network
 

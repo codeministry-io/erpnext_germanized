@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), die Versionen dem Schema `v<ERPNext-Version>-<Revision>` aus [Versionierung](docs/versionierung.md). Ein Release bekommt einen Abschnitt `## [16.60.0-1] - JJJJ-MM-TT`; der Workflow Release übernimmt ihn in die Release-Notes.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Image für `linux/arm64`. Jedes Tag nennt jetzt einen Index mit einem Image für `linux/amd64` und einem für `linux/arm64`. Die CI baut jede Plattform nativ, `linux/arm64` auf `ubuntu-24.04-arm`, und lässt den Site-Test und den Scan auf jeder laufen; veröffentlicht wird erst, wenn beide bestanden haben, und ein Schritt prüft, dass der Index genau die getesteten Images nennt. Die Herkunftsangabe gilt dem Index, jedes Release bekommt eine SBOM je Plattform. ERiC für Steuerbote gibt es nur für x86_64, Übermittlungen an ELSTER gehen deshalb weiter nur mit `linux/amd64`.
+
 ## [16.60.0-6] - 2026-11-21
 
 ### Geändert
