@@ -148,6 +148,9 @@ jobs:
           build-cache: ${{ matrix.build-cache }}
           push-to: ${{ env.IMAGE }}
           cache-to: type=registry,ref=${{ matrix.build-cache }},mode=max,ignore-error=true
+          # The Debian packages of the stage base come from apt only when it runs; from the cache they would
+          # stay as old as its first build. Every stage built on base runs again with it.
+          no-cache-filters: base
           scan-category: ${{ matrix.scan-category }}
 
       - name: Check that the pushed image is the tested one
@@ -273,14 +276,18 @@ jobs:
             echo "::error::${tags[0]} does not name exactly the tested images of linux/amd64 and linux/arm64."
             exit 1
           fi
-          echo "digest=$(jq --raw-output .digest <<< "$manifest")" >> "$GITHUB_OUTPUT"
 
-      - name: Attest the build provenance
+          # gh attestation verify looks the attestation up by the digest a reference resolves to: the index for
+          # a tag, one image for the digest of its platform. One attestation names all three.
+          for digest in "$(jq --raw-output .digest <<< "$manifest")" "${digests[@]#"$IMAGE@"}"; do
+            printf '%s  %s\n' "${digest#sha256:}" "$IMAGE"
+          done > "$RUNNER_TEMP/attestation-subjects"
+
+      - name: Attest the build provenance of the index and both images
         if: needs.build.outputs.public == 'true'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.index.outputs.digest }}
+          subject-checksums: ${{ runner.temp }}/attestation-subjects
 
       - name: Write the summary
         env:

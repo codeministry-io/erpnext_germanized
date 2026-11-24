@@ -12,11 +12,13 @@
 # - Ghostscript is installed in the base stage
 # - the entrypoints and the nginx template are fetched from the same frappe_docker release and checked
 #   against their SHA-256, because this repository does not carry frappe_docker's resources directory
+# - the wkhtmltopdf package of each architecture is checked against its SHA-256 from
+#   WKHTMLTOPDF_SHA256_AMD64 or WKHTMLTOPDF_SHA256_ARM64
 # - OCI labels
 # - a RUN of its own in the builder stage removes the Node.js packages that nothing loads after the build: the
 #   node_modules of the frontends inside the apps and the build tools in node_modules of each app, among them
-#   the esbuild binaries; Socket.IO with what it requires and the libraries the browser loads from
-#   /assets/<app>/node_modules stay (germanized/node_modules.py)
+#   the esbuild binaries; Socket.IO with what it requires, the libraries the browser loads from
+#   /assets/<app>/node_modules and what saving a Website Theme needs stay (germanized/node_modules.py)
 # The upstream instructions are otherwise unchanged; hadolint findings in them are ignored per instruction
 # with the reason, so the next upstream release can be compared line by line.
 #
@@ -48,6 +50,10 @@ ADD --checksum=sha256:ccb615012f1a7c8592041535a74aa014ef089d66c7ef5800b2a180321a
 
 ARG WKHTMLTOPDF_VERSION=0.12.6.1-3
 ARG WKHTMLTOPDF_DISTRO=bookworm
+# The SHA-256 of the packages of this version and distribution, taken from the downloaded packages because
+# the release publishes none; they change with WKHTMLTOPDF_VERSION and WKHTMLTOPDF_DISTRO.
+ARG WKHTMLTOPDF_SHA256_AMD64=98ba0d157b50d36f23bd0dedf4c0aa28c7b0c50fcdcdc54aa5b6bbba81a3941d
+ARG WKHTMLTOPDF_SHA256_ARM64=b6606157b27c13e044d0abbe670301f88de4e1782afca4f9c06a5817f3e03a9c
 ARG INSTALL_CHROMIUM=true
 
 ARG NODE_VERSION=24
@@ -55,9 +61,9 @@ ENV NVM_DIR=/home/frappe/.nvm
 ENV NVM_SYMLINK_CURRENT=true
 ENV PATH=${NVM_DIR}/current/bin/:${PATH}
 
-# This instruction is upstream's: Debian packages unpinned from trixie, frappe-bench and yarn unpinned from
-# their registries, wkhtmltopdf with its recommended packages, the nvm installer piped into bash and the
-# build arguments unquoted.
+# This instruction is upstream's apart from the checksum of the wkhtmltopdf package: Debian packages unpinned
+# from trixie, frappe-bench and yarn unpinned from their registries, wkhtmltopdf with its recommended
+# packages, the nvm installer piped into bash and the build arguments unquoted.
 # hadolint ignore=DL3008,DL3013,DL3015,DL3016,DL3042,DL4006,SC2086
 RUN useradd -u 1000 -g 0 -d /home/frappe -ms /bin/bash frappe \
     && apt-get update \
@@ -112,6 +118,9 @@ RUN useradd -u 1000 -g 0 -d /home/frappe -ms /bin/bash frappe \
     && if [ "$(uname -m)" = "x86_64" ]; then export ARCH=amd64; fi \
     && downloaded_file=wkhtmltox_${WKHTMLTOPDF_VERSION}.${WKHTMLTOPDF_DISTRO}_${ARCH}.deb \
     && curl -sLO https://github.com/wkhtmltopdf/packaging/releases/download/$WKHTMLTOPDF_VERSION/$downloaded_file \
+    && if [ "$ARCH" = "amd64" ]; then checksum=$WKHTMLTOPDF_SHA256_AMD64; fi \
+    && if [ "$ARCH" = "arm64" ]; then checksum=$WKHTMLTOPDF_SHA256_ARM64; fi \
+    && echo "$checksum  $downloaded_file" | sha256sum --check --strict \
     && apt-get install -y ./$downloaded_file \
     && rm $downloaded_file \
     # Chromium
@@ -199,9 +208,10 @@ RUN --mount=type=secret,id=apps_json,target=/opt/frappe/apps.json,uid=1000,gid=0
   find apps -mindepth 1 -path "*/.git" | xargs rm -fr && \
   chmod -R g=u /home/frappe/frappe-bench
 
-# Not in frappe_docker: after the build only Socket.IO and the libraries the browser loads from
-# /assets/<app>/node_modules need Node.js packages; the compilers, bundlers and esbuild binaries around them
-# would only be scanned and reported. The tools come in through a bind mount and stay out of the image.
+# Not in frappe_docker: after the build only Socket.IO, the Website Theme compiler and the libraries the browser
+# loads from /assets/<app>/node_modules need Node.js packages; the compilers, bundlers and esbuild binaries
+# around them would only be scanned and reported. The tools come in through a bind mount and stay out of the
+# image.
 RUN --mount=type=bind,source=germanized,target=/opt/germanized/germanized \
   PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/germanized \
   python3 -m germanized prune-node-modules /home/frappe/frappe-bench

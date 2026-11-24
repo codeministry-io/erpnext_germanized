@@ -9,6 +9,7 @@ Das `Containerfile` ist `images/custom/Containerfile` aus [frappe_docker](https:
 - **Ghostscript** wird in der Stufe `base` installiert, siehe [Ghostscript](#ghostscript).
 - **Die Vorgaben der ARGs sind die Pins:** `FRAPPE_BRANCH` nennt statt des Branches `version-16` ein Release-Tag von Frappe; welches, zeigt die Tabelle im [README](../README.md#enthaltene-apps). Dazu kommen `FRAPPE_PATH=https://github.com/frappe/frappe`, `PYTHON_VERSION=3.14`, `DEBIAN_BASE=trixie`, `NODE_VERSION=24`, `WKHTMLTOPDF_VERSION=0.12.6.1-3` und `WKHTMLTOPDF_DISTRO=bookworm`. `INSTALL_CHROMIUM` bleibt wie im Original auf `true`.
 - **Das erste `FROM` nennt das Basis-Image wörtlich und pinnt es per Digest**, `python:3.14-slim-trixie@sha256:…`, damit Dependabot es aktualisieren kann: Der Digest ändert sich mit jedem neuen Build des Tags, etwa mit einer neuen Patch-Version von Python oder Korrekturen aus Debian. Tests in `tests/` prüfen, dass der Digest dasteht und dass das Image zu `PYTHON_VERSION` und `DEBIAN_BASE` passt.
+- **Das Paket von wkhtmltopdf wird geprüft.** Nach dem Laden vergleicht der Build seine SHA-256-Summe mit `WKHTMLTOPDF_SHA256_AMD64` oder `WKHTMLTOPDF_SHA256_ARM64`, je nach Plattform, und bricht ab, wenn sie nicht passt. Das Release von wkhtmltopdf veröffentlicht keine Summen; die Vorgaben stammen aus den geladenen Paketen und ändern sich mit `WKHTMLTOPDF_VERSION` und `WKHTMLTOPDF_DISTRO`.
 - **OCI-Labels** beschreiben das Image, siehe [Labels](#labels).
 - **Ein eigener `RUN` in der Stufe `builder` entfernt die Node.js-Pakete, die nach dem Build niemand lädt**, siehe [Node.js-Pakete nach dem Build](#nodejs-pakete-nach-dem-build).
 
@@ -81,21 +82,28 @@ eu_einvoice wandelt ein PDF in PDF/A-3 um, bevor es die XML einer ZUGFeRD-Rechnu
 
 ## Node.js-Pakete nach dem Build
 
-`bench init` installiert die Node.js-Abhängigkeiten jeder App und der Oberflächen in den Apps (etwa `hrms/frontend`, `frappe/flow`, `erpnext/islands`) und baut damit die Assets. Danach liegen in der Bench rund 2,7 GB `node_modules`, fast alles Compiler, Bundler und esbuild-Programme, die zur Laufzeit niemand startet. Scanner melden ihre Schwachstellen trotzdem, denn sie sehen nur, was im Image liegt.
+`bench init` installiert die Node.js-Abhängigkeiten jeder App und der Oberflächen in den Apps (etwa `hrms/frontend`, `frappe/flow`, `erpnext/islands`) und baut damit die Assets. Danach liegen in der Bench rund 2,6 GB `node_modules` in über 230.000 Dateien, fast alles Compiler, Bundler und esbuild-Programme, die zur Laufzeit niemand startet. Scanner melden ihre Schwachstellen trotzdem, denn sie sehen nur, was im Image liegt.
 
 Der zweite `RUN` der Stufe `builder` ruft deshalb `python -m germanized prune-node-modules` auf (`germanized/node_modules.py`). Die Werkzeuge kommen über einen Bind-Mount in den Build und landen nicht im Image. Behalten wird, was nach dem Build noch geladen wird, jeweils mit allen Paketen, von denen es abhängt:
 
 - **Socket.IO:** die Pakete, die `apps/frappe/socketio.js` und alles, was es über relative Pfade lädt, mit `require` oder `import` einbinden, dazu die des Verzeichnisses `realtime` jeder App, aus dem der Server `<app>/realtime/handlers.js` lädt. Heute sind das `socket.io`, `@redis/client` und `cookie`.
+- **Website Themes:** Speichert jemand ein Website Theme, übersetzt Frappe dessen SCSS mit `node generate_bootstrap_theme.js`. Behalten werden deshalb die Pakete, die dieses Skript über relative Pfade lädt (`sass`, dazu `fast-glob` und `chalk` aus `esbuild/utils.js`), und jedes Paket, das die SCSS-Dateien unter `<app>/<app>/public` mit `@import`, `@use` oder `@forward` einbinden, etwa `bootstrap`.
 - **Bibliotheken für den Browser:** jedes Paket, das die gebauten Assets oder die Quellen einer App als `assets/<app>/node_modules/<paket>` nennen, etwa `qz-tray` und `js-sha256` für den Direktdruck, `html5-qrcode` für den Scanner, `frappe-gantt`, `photoswipe`, `ace-builds` und `occt-import-js` für 3D-Modelle in ERPNext.
 
-Alles andere fällt weg: die `node_modules` der Oberflächen in den Apps ganz, aus dem `node_modules` jeder App alle übrigen Pakete und `.bin`. Links namens `node_modules`, die danach ins Leere zeigen, etwa `sites/assets/hrms/node_modules`, entfernt der Schritt ebenfalls. Fehlt einem behaltenen Paket eine reguläre Abhängigkeit, bricht der Build ab, statt ein unvollständiges Image zu bauen.
+Alles andere fällt weg: die `node_modules` der Oberflächen in den Apps ganz, aus jedem übrigen `node_modules` alle nicht behaltenen Pakete und jeder Eintrag mit Punkt am Anfang, also `.bin`, Caches wie `.cache` und Build-Ausgaben wie `.vite`. Ein verschachteltes `node_modules`, aus dem etwas behalten wird, etwa unter `<app>/realtime`, wird gekürzt statt gelöscht. Links namens `node_modules`, die danach ins Leere zeigen, entfernt der Schritt ebenfalls, etwa `apps/hrms/hrms/public/node_modules`, auf den `sites/assets/hrms` verweist.
+
+Der Schritt bricht den Build ab, statt ein unvollständiges Image zu bauen, wenn einem behaltenen Paket eine reguläre Abhängigkeit fehlt oder ein behaltenes Paket danach nicht mehr da ist. Er folgt keinem Link aus der Bench hinaus: Ist eine App oder ihr `node_modules` ein Link, bricht er ab, und das `node_modules` eines behaltenen Pakets bleibt unberührt, wenn eines von beiden ein Link ist. Abhängigkeiten eines Pakets, das selbst ein Link ist (etwa `link:` bei yarn), sucht er vom Link aus, nicht vom Ziel aus wie Node.js; keine der Apps im Image nutzt das.
 
 Was dadurch nicht mehr geht:
 
-- **`bench build` im Container.** Neue Assets brauchen ohnehin ein neues Image, denn auch eine neue App kommt über `apps.json` und einen neuen Build.
+- **`bench build` im Container**, und damit auch `bench get-app`, das die Assets der neuen App so baut. Neue Assets brauchen ohnehin ein neues Image, denn auch eine neue App kommt über `apps.json` und einen neuen Build. Wer für ein eigenes Image alle Pakete behalten will, lässt den zweiten `RUN` der Stufe `builder` weg.
 - **Bundles von Frappe Studio.** Veröffentlicht man eine App aus Frappe Studio, baut Frappe ihr Bundle mit yarn und vite aus `frappe/studio/frontend`; diese Pakete fehlen, und der Build der Studio-App scheitert mit einem Eintrag im Fehlerprotokoll. Der Lauf nach `bench migrate` baut nur bereits veröffentlichte Studio-Apps neu und meldet Fehler nur.
+- **Bibliotheken unter `/assets/<app>/node_modules`, die nirgends wörtlich stehen.** Behalten wird nur, was die Assets oder Quellen einer App als Pfad nennen. Setzt eigener Code den Pfad erst zur Laufzeit zusammen oder steht er nur in der Datenbank, etwa in einem Client Script, einer Web Page oder einem Print Format, antwortet nginx darauf mit 404.
+- **Lizenz und Autor der JavaScript-Pakete in Frappe.** Die Seite `/attribution` und die SBOM, die Frappe in „Installed Applications“ mit „Generate SBOM“ erzeugt, lesen beides aus dem `package.json` eines Pakets unter `node_modules`. Für die entfernten Pakete nennen sie nur noch Name und Version aus `yarn.lock`.
 
-Der Site-Test startet den Socket.IO-Server und ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen.
+Ein Teil der entfernten Pakete steckt gebündelt in den Assets unter `<app>/<app>/public`, etwa Vue in den Bundles von Frappe unter `dist` und frappe-ui in `hrms/public/frontend`. Scanner und die SBOM des Images erkennen ein Paket an seinem `package.json` unter `node_modules`, diese Bibliotheken sehen sie danach nicht mehr. Eine Schwachstelle darin meldet der Scan des Images also nicht; behoben wird sie mit einer Version der App, deren Assets mit der korrigierten Bibliothek gebaut sind.
+
+Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` der Apps, ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen, prüft jedes Verzeichnis unter `node_modules`, das sie nennen, und speichert ein eigenes Website Theme.
 
 ## Woher das Deutsche kommt
 

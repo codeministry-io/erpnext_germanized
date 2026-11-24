@@ -24,6 +24,10 @@ inputs:
     description: Where the build writes its cache; empty writes none
     required: false
     default: ''
+  no-cache-filters:
+    description: The stages the build runs without the cache, separated by commas; empty uses the cache for all
+    required: false
+    default: ''
   scan-category:
     description: The code scanning category of the vulnerability scan, one per platform
     required: true
@@ -102,6 +106,7 @@ runs:
           VERSION=${{ steps.plan.outputs.version }}
         cache-from: type=registry,ref=${{ inputs.build-cache }}
         cache-to: ${{ inputs.cache-to }}
+        no-cache-filters: ${{ inputs.no-cache-filters }}
         # The provenance comes from the attestation of the pushed image.
         provenance: false
         # The engine and the registry get the image from this one build: a second build could take layers from
