@@ -9,7 +9,7 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 - **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site, erzeugt PDFs mit wkhtmltopdf und Chromium und prüft Backend und nginx.
 - **CI:** Tests, Linters, Security, Image, Release und App versions, siehe [Entwicklung](entwicklung.md#ci).
 - **Beispiel** für docker compose und Hinweise für den Betrieb auf Kubernetes mit dem Helm-Chart von Frappe, siehe [Betrieb](betrieb.md).
-- **`linux/arm64`:** Releases nach 16.60.0-11 und `main` gibt es für `linux/amd64` und `linux/arm64` unter denselben Tags, beide nativ gebaut und mit Site-Test, siehe [Entwicklung](entwicklung.md#ci). ERiC für Steuerbote gibt es nur für Linux x86_64.
+- **`linux/arm64`:** Releases nach 16.60.0-12 und `main` gibt es für `linux/amd64` und `linux/arm64` unter denselben Tags, beide nativ gebaut und mit Site-Test, siehe [Entwicklung](entwicklung.md#ci). ERiC für Steuerbote gibt es nur für Linux x86_64.
 - **Erstes Release:** `v16.60.0-1` als Image `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1`, mit SBOM und Herkunftsangabe, siehe [Changelog](../CHANGELOG.md).
 
 ## Nächste Schritte
