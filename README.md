@@ -12,9 +12,9 @@ Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://git
 - **Deutsche Apps.** Registerangaben, Prüfung der USt-IdNr., Summen- und Saldenliste, DATEV-Export, E-Rechnungen nach XRechnung und ZUGFeRD, Bankanbindung und die Umsatzsteuer-Voranmeldung kommen als eigene Apps dazu, siehe [Enthaltene Apps](#enthaltene-apps).
 - **Versionen aus `apps.json`.** Jede App ist auf ein Release-Tag gepinnt, nie auf einen Branch. `apps.json` ist die einzige Liste der Apps. Das Tag von Frappe steht als Vorgabe von `FRAPPE_BRANCH` im `Containerfile`.
 - **Updates durch Tag-Wechsel.** Ein Update ist ein anderes Image-Tag und danach `bench migrate`. Sites, Dateien und Datenbank liegen in Volumes und bleiben erhalten.
-- **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
+- **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site, erzeugt mit wkhtmltopdf und mit Chromium je ein PDF und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
 - **SBOM und Provenance.** Zu jedem veröffentlichten Image erzeugt die CI eine Stückliste der enthaltenen Pakete (SBOM) und eine signierte Herkunftsangabe (Build Provenance), die `gh attestation verify` prüft.
-- **Nur `linux/amd64`.** Ein Image für `linux/arm64` gibt es noch nicht, siehe [Roadmap](docs/roadmap.md).
+- **`linux/amd64` und `linux/arm64`.** Releases nach 16.60.0-12 und `main` gibt es für beide Plattformen: Ihre Tags nennen einen Index mit je einem Image, und Docker wählt das passende. Die Releases bis 16.60.0-12 gibt es nur für `linux/amd64`. Die CI baut jede Plattform nativ und lässt den Site-Test auf jeder laufen. ERiC für Steuerbote gibt es nur für Linux x86_64: Prüfen, Testsenden und Senden über ERiC gehen nur mit `linux/amd64`, die Abgabe als XML-Datei über Mein ELSTER geht auch mit `linux/arm64`, siehe [Steuerbote](docs/apps.md#steuerbote).
 
 ## Enthaltene Apps
 
@@ -36,7 +36,7 @@ Was jede App mitbringt und wo sie eingerichtet wird, steht in [Apps](docs/apps.m
 
 ## Schnellstart
 
-Du brauchst Docker mit dem Compose-Plugin auf einem Rechner mit `linux/amd64`. Das Beispiel nutzt das Tag `16`, also das neueste Release mit ERPNext 16; für den Dauerbetrieb trägst du unter `x-erpnext` das volle Tag ein, etwa `16.60.0-1`, siehe [Versionen und Updates](#versionen-und-updates).
+Du brauchst Docker mit dem Compose-Plugin auf einem Rechner mit `linux/amd64` oder `linux/arm64`. Das Beispiel nutzt das Tag `16`, also das neueste Release mit ERPNext 16; für den Dauerbetrieb trägst du unter `x-erpnext` das volle Tag ein, etwa `16.60.0-1`, siehe [Versionen und Updates](#versionen-und-updates).
 
 1. Lege ein Verzeichnis an und hol das Beispiel [examples/compose.yaml](examples/compose.yaml):
 
@@ -93,6 +93,7 @@ Wer andere Apps oder Versionen braucht, baut das Image selbst. Dafür braucht es
 
    ```bash
    ./build.sh                                     # builds erpnext_germanized:local
+   ./build.sh --platform linux/arm64              # the same for linux/arm64, best on an ARM machine
    ./tests/site/run.sh erpnext_germanized:local   # installs every app on a test site
    ```
 
@@ -163,7 +164,7 @@ erpnext_germanized ist Software, keine Steuer- oder Rechtsberatung. Mit der Nutz
 
 - Du nutzt Image und Rezept auf eigenes Risiko. Für Betrieb, Sicherungen, Updates und die Sicherheit deiner Installation bist du selbst verantwortlich.
 - Die Buchhaltungs- und Steuerfunktionen kommen aus den enthaltenen Apps. Für sie gelten die Hinweise und Haftungsausschlüsse der jeweiligen Projekte, für Steuerbote etwa dessen [Haftungsausschluss](https://github.com/encircle360-oss/steuerbote#haftungsausschluss).
-- Ein grüner Site-Test zeigt, dass sich alle Apps installieren lassen und das Backend antwortet. Er zeigt nicht, dass jede Funktion richtig rechnet. Lass Kontenrahmen, Steuereinstellungen und Abläufe von deiner Steuerberatung prüfen.
+- Ein grüner Site-Test zeigt, dass sich alle Apps installieren lassen, PDFs entstehen und das Backend antwortet. Er zeigt nicht, dass jede Funktion richtig rechnet. Lass Kontenrahmen, Steuereinstellungen und Abläufe von deiner Steuerberatung prüfen.
 - Die Maintainer, die encircle360 GmbH und alle Mitwirkenden haften nicht für Schäden oder Verluste jeder Art, die aus der Nutzung oder der Unmöglichkeit der Nutzung entstehen, insbesondere nicht für Datenverlust, Ausfallzeiten, Steuernachzahlungen, Zinsen, Verspätungs- oder Säumniszuschläge, Bußgelder oder die Kosten einer Nachbearbeitung. Das gilt, soweit ein Haftungsausschluss gesetzlich zulässig ist.
 - erpnext_germanized ist weder ein Angebot der Frappe Technologies Pvt. Ltd. noch der ALYF GmbH. ERPNext ist eine Marke der Frappe Technologies Pvt. Ltd., DATEV eine Marke der DATEV eG. erpnext_germanized steht mit keinem davon in Verbindung.
 
