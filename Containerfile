@@ -12,6 +12,8 @@
 # - Ghostscript is installed in the base stage
 # - the entrypoints and the nginx template are fetched from the same frappe_docker release and checked
 #   against their SHA-256, because this repository does not carry frappe_docker's resources directory
+# - the wkhtmltopdf package of each architecture is checked against its SHA-256 from
+#   WKHTMLTOPDF_SHA256_AMD64 or WKHTMLTOPDF_SHA256_ARM64
 # - OCI labels
 # The upstream instructions are otherwise unchanged; hadolint findings in them are ignored per instruction
 # with the reason, so the next upstream release can be compared line by line.
@@ -44,6 +46,10 @@ ADD --checksum=sha256:ccb615012f1a7c8592041535a74aa014ef089d66c7ef5800b2a180321a
 
 ARG WKHTMLTOPDF_VERSION=0.12.6.1-3
 ARG WKHTMLTOPDF_DISTRO=bookworm
+# The SHA-256 of the packages of this version and distribution, taken from the downloaded packages because
+# the release publishes none; they change with WKHTMLTOPDF_VERSION and WKHTMLTOPDF_DISTRO.
+ARG WKHTMLTOPDF_SHA256_AMD64=98ba0d157b50d36f23bd0dedf4c0aa28c7b0c50fcdcdc54aa5b6bbba81a3941d
+ARG WKHTMLTOPDF_SHA256_ARM64=b6606157b27c13e044d0abbe670301f88de4e1782afca4f9c06a5817f3e03a9c
 ARG INSTALL_CHROMIUM=true
 
 ARG NODE_VERSION=24
@@ -51,9 +57,9 @@ ENV NVM_DIR=/home/frappe/.nvm
 ENV NVM_SYMLINK_CURRENT=true
 ENV PATH=${NVM_DIR}/current/bin/:${PATH}
 
-# This instruction is upstream's: Debian packages unpinned from trixie, frappe-bench and yarn unpinned from
-# their registries, wkhtmltopdf with its recommended packages, the nvm installer piped into bash and the
-# build arguments unquoted.
+# This instruction is upstream's apart from the checksum of the wkhtmltopdf package: Debian packages unpinned
+# from trixie, frappe-bench and yarn unpinned from their registries, wkhtmltopdf with its recommended
+# packages, the nvm installer piped into bash and the build arguments unquoted.
 # hadolint ignore=DL3008,DL3013,DL3015,DL3016,DL3042,DL4006,SC2086
 RUN useradd -u 1000 -g 0 -d /home/frappe -ms /bin/bash frappe \
     && apt-get update \
@@ -108,6 +114,9 @@ RUN useradd -u 1000 -g 0 -d /home/frappe -ms /bin/bash frappe \
     && if [ "$(uname -m)" = "x86_64" ]; then export ARCH=amd64; fi \
     && downloaded_file=wkhtmltox_${WKHTMLTOPDF_VERSION}.${WKHTMLTOPDF_DISTRO}_${ARCH}.deb \
     && curl -sLO https://github.com/wkhtmltopdf/packaging/releases/download/$WKHTMLTOPDF_VERSION/$downloaded_file \
+    && if [ "$ARCH" = "amd64" ]; then checksum=$WKHTMLTOPDF_SHA256_AMD64; fi \
+    && if [ "$ARCH" = "arm64" ]; then checksum=$WKHTMLTOPDF_SHA256_ARM64; fi \
+    && echo "$checksum  $downloaded_file" | sha256sum --check --strict \
     && apt-get install -y ./$downloaded_file \
     && rm $downloaded_file \
     # Chromium

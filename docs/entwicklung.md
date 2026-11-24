@@ -151,13 +151,13 @@ Ein Pull Request wird erst gemergt, wenn alle Jobs grün sind. Jeder Workflow li
 | Apps | `apps.json`, Release-Tags |
 | Frappe | `FRAPPE_BRANCH` im `Containerfile` |
 | Basis-Image, Python, Debian | erstes `FROM` des `Containerfile` per Tag und Digest, dazu `PYTHON_VERSION` und `DEBIAN_BASE` |
-| Node.js, wkhtmltopdf | `NODE_VERSION`, `WKHTMLTOPDF_VERSION` und `WKHTMLTOPDF_DISTRO` im `Containerfile` |
+| Node.js, wkhtmltopdf | `NODE_VERSION`, `WKHTMLTOPDF_VERSION` und `WKHTMLTOPDF_DISTRO` im `Containerfile`, dazu die SHA-256-Summen der Pakete von wkhtmltopdf in `WKHTMLTOPDF_SHA256_AMD64` und `WKHTMLTOPDF_SHA256_ARM64` |
 | Dateien aus frappe_docker | Adressen mit `v4.2.0` und SHA-256-Summen im `Containerfile` |
 | MariaDB, Redis | `tests/site/compose.yaml` und `examples/compose.yaml`, per Tag |
 | GitHub Actions | in den Workflows und in `.github/actions/`, per Commit-SHA mit Version als Kommentar |
 | Entwicklungswerkzeuge | `requirements-dev.txt` (`==`), Hooks in `.pre-commit-config.yaml` über `rev`, gitleaks mit Version und SHA-256 in `security.yml` |
 
-Eine Version, die an mehreren Stellen steht, etwa ruff in `requirements-dev.txt` und `.pre-commit-config.yaml`, wird an allen Stellen gleichzeitig angehoben. Für ruff und zizmor prüft das ein Test, der fehlschlägt, solange die beiden Dateien verschiedene Versionen nennen.
+Eine Version, die an mehreren Stellen steht, etwa ruff in `requirements-dev.txt` und `.pre-commit-config.yaml`, wird an allen Stellen gleichzeitig angehoben. Für ruff und zizmor prüft das ein Test, der fehlschlägt, solange die beiden Dateien verschiedene Versionen nennen. Mit `WKHTMLTOPDF_VERSION` oder `WKHTMLTOPDF_DISTRO` ändern sich auch beide Summen von wkhtmltopdf; solange eine nicht passt, bricht der Build der Plattform ab.
 
 ## Eine App hinzufügen oder entfernen
 
