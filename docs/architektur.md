@@ -49,6 +49,8 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 
 Das Label `org.opencontainers.image.source` verbindet das Paket in der GitHub Container Registry mit diesem Repository. Die Labels eines Images zeigt `docker image inspect --format '{{json .Config.Labels}}' <image>`.
 
+Neue Tags zeigen auf einen Index mit einem Image je Plattform. Für ein solches Image liest die GitHub Container Registry Beschreibung, Quelle und Lizenz aus den Annotationen des Index, nicht aus den Labels ([Working with the Container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#adding-a-description-to-multi-arch-images)). Der Job „Publish the image“ übernimmt `org.opencontainers.image.description`, `org.opencontainers.image.source` und `org.opencontainers.image.licenses` deshalb aus den Labels in den Index.
+
 ## Was im Image steckt
 
 | Was | Wo oder wie |

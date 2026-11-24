@@ -252,7 +252,16 @@ jobs:
           for tag in "${tags[@]}"; do
             tag_args+=(--tag "$tag")
           done
-          docker buildx imagetools create "${tag_args[@]}" "${digests[@]}"
+          # GHCR describes an image for several platforms by the annotations of its index, not by the labels.
+          labels=$(docker buildx imagetools inspect --format '{{json .Image.Config.Labels}}' "${digests[0]}")
+          annotation_args=()
+          for key in description source licenses; do
+            value=$(jq --raw-output --arg key "org.opencontainers.image.$key" '.[$key] // ""' <<< "$labels")
+            if [[ -n $value ]]; then
+              annotation_args+=(--annotation "index:org.opencontainers.image.$key=$value")
+            fi
+          done
+          docker buildx imagetools create "${tag_args[@]}" "${annotation_args[@]}" "${digests[@]}"
 
           # The index has to name exactly the two tested images, one per platform.
           manifest=$(docker buildx imagetools inspect --format '{{json .Manifest}}' "${tags[0]}")
