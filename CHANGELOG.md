@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.60.0-13] - 2026-11-24
+
 ### Hinzugefügt
 
 - Image für `linux/arm64`. Neue Tags nennen einen Index mit einem Image für `linux/amd64` und einem für `linux/arm64`, und Docker wählt das passende; die Tags bis 16.60.0-12 bleiben Images nur für `linux/amd64`. Die CI baut jede Plattform nativ, `linux/arm64` auf `ubuntu-26.04-arm`, und lässt den Site-Test und den Scan auf jeder laufen; veröffentlicht wird erst, wenn beide bestanden haben, und ein Schritt prüft, dass der Index genau die getesteten Images nennt. Die Herkunftsangabe gilt dem Index, jedes Release bekommt eine SBOM je Plattform. ERiC für Steuerbote gibt es nur für Linux x86_64: Prüfen, Testsenden und Senden über ERiC gehen weiter nur mit `linux/amd64`, die Abgabe als XML-Datei über Mein ELSTER braucht ERiC nicht.
@@ -11,6 +13,7 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ### Geändert
 
+- Steuerbote v0.12.0: Prüfliste für die Steuerberatung mit 105 Punkten, die vor der ersten echten Abgabe zu klären sind, und was davon heute eine Abgabe anhält; Befund der E-Bilanz, wenn die Bilanzzuordnung eine andere Version der HGB-Taxonomie nennt, mit dem Weg über „Auf neue Taxonomie heben“ oder die Version der Zuordnung; Bilder aller Belege aus den Browsertests im README. Darin auch Steuerbote v0.11.0, das in keinem Release war: Die Einrichtung füllt leere Zuordnungen mit den Vorgaben, „Vorgaben aktualisieren“ vermerkt die Vorgaben nur mit ausdrücklicher Entscheidung als übernommen, Beschreibungen und Dokumentation sind auf dem Stand aller Module.
 - `examples/compose.yaml` legt keine Plattform mehr fest, Docker wählt das Image passend zum Rechner. Wer ERiC nutzt, betreibt alle Dienste aus dem Image auf `linux/amd64`, in einem Kubernetes-Cluster mit Knoten beider Plattformen per `kubernetes.io/arch: amd64` im `nodeSelector`, siehe [Apps](docs/apps.md#steuerbote).
 - Die CI baut das Image je Plattform nur noch einmal und schiebt es im selben Build per Digest ohne Tag in die Registry; die Tags bekommt der Digest erst nach dem Site-Test und einer Prüfung, dass er das getestete Image ist. Bisher baute der Push ein zweites Mal und konnte dabei Schichten eines gleichzeitigen Release-Laufs aus dem gemeinsamen Cache nehmen; die Prüfung schlug dann erst fehl, als die Tags schon gesetzt waren.
 - Die Herkunftsangabe nennt neben dem Index auch die Images beider Plattformen. `gh attestation verify` prüft damit auch den Digest einer Plattform, etwa `oci://ghcr.io/encircle360-oss/erpnext_germanized@sha256:<digest>`; bisher fand es dafür keine Herkunftsangabe.
