@@ -21,7 +21,7 @@ Das Image enthält Software anderer Projekte: Frappe, ERPNext, HRMS, die Apps vo
 - **Steuerbote** wie in seiner [SECURITY.md](https://github.com/encircle360-oss/steuerbote/blob/main/SECURITY.md) beschrieben.
 - **Debian-Pakete des Basis-Images** an das [Sicherheitsteam von Debian](https://www.debian.org/security/), **Python** an das [Python Security Response Team](https://www.python.org/dev/security/).
 
-Ist eine Korrektur veröffentlicht, wird das Image neu gebaut und als neue Revision veröffentlicht. Neue Versionen der Apps findet der wöchentliche Workflow App versions, ein neues Basis-Image schlägt Dependabot vor. Korrekturen aus Debian kommen mit jedem neuen Build ins Image; wann einer fällig ist, zeigt der wöchentliche Scan des Images `latest`.
+Ist eine Korrektur veröffentlicht, wird das Image neu gebaut und als neue Revision veröffentlicht. Neue Versionen der Apps findet der wöchentliche Workflow App versions, ein neues Basis-Image schlägt Dependabot vor. Korrekturen aus Debian kommen mit jedem neuen Build ins Image; wann einer fällig ist, zeigt der wöchentliche Scan des Images `latest` für beide Plattformen.
 
 ## Was das Repository zusichert
 

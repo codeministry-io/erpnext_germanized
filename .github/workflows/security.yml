@@ -90,9 +90,21 @@ jobs:
           category: trivy-config
 
   image:
-    name: Image scan of the latest release (trivy)
+    name: Image scan of the latest release (trivy, ${{ matrix.arch }})
     # A weekly report, not a gate: new vulnerabilities in a published image are fixed by a rebuild or an update.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        # Code scanning matches the analyses by category: another category for linux/amd64 would leave its
+        # alerts open.
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            category: trivy-image-latest
+          - arch: arm64
+            platform: linux/arm64
+            category: trivy-image-latest-arm64
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -144,9 +156,34 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Scan the image for vulnerabilities
+      - name: Check that the release has an image for the platform
+        # The releases up to 16.60.0-12 have an image for linux/amd64 only, and trivy applies its platform
+        # to an index only: it would scan that image for linux/arm64 as well.
+        id: platform
         if: steps.release.outputs.exists == 'true'
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          manifest=$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$IMAGE")
+          if jq --exit-status 'has("manifests")' <<< "$manifest" > /dev/null; then
+            platforms=$(jq --raw-output '.manifests[].platform | "\(.os)/\(.architecture)"' <<< "$manifest")
+          else
+            platforms=$(docker buildx imagetools inspect --format '{{json .Image}}' "$IMAGE" |
+              jq --raw-output '"\(.os)/\(.architecture)"')
+          fi
+          if grep --quiet --fixed-strings --line-regexp "$PLATFORM" <<< "$platforms"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::$IMAGE has no image for $PLATFORM, so there is nothing to scan for it."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Scan the image for vulnerabilities
+        if: steps.platform.outputs.exists == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          # The action has no input for the platform; trivy reads it from the environment.
+          TRIVY_PLATFORM: ${{ matrix.platform }}
         with:
           image-ref: ${{ env.IMAGE }}
           scanners: vuln
@@ -159,8 +196,8 @@ jobs:
           limit-severities-for-sarif: true
 
       - name: Upload the findings to code scanning
-        if: steps.release.outputs.exists == 'true' && steps.scanning.outputs.available == 'true'
+        if: steps.platform.outputs.exists == 'true' && steps.scanning.outputs.available == 'true'
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: trivy-image.sarif
-          category: trivy-image-latest
+          category: ${{ matrix.category }}
