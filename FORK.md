@@ -18,11 +18,11 @@ Beide Änderungen sollen als Pull Requests an upstream gehen; arm64 liegt dort a
 
 ## Wie der Fork upstream folgt
 
-Der Default-Branch ist `fork-test-image`. `main` bleibt ein unveränderter Spiegel von upstream.
+Der Default-Branch ist `fork`. `main` bleibt ein unveränderter Spiegel von upstream.
 
 | Workflow | Wann | Was |
 |---|---|---|
-| `upstream-sync.yml` | montags und auf Knopfdruck | merged das neueste upstream-Tag auf `sync/upstream` und hält genau einen Pull Request nach `fork-test-image` offen; ein neueres Tag zieht ihn nach |
+| `upstream-sync.yml` | montags und auf Knopfdruck | merged das neueste upstream-Tag auf `sync/upstream` und hält genau einen Pull Request nach `fork` offen; ein neueres Tag zieht ihn nach |
 | `fork-image.yml` | nach jedem Merge und montags | baut, führt den Site-Test aus und veröffentlicht nur danach `ghcr.io/codeministry/erpnext_germanized:<version>-cm<n>` |
 
 - **Version und Revision:** `<version>` ist das upstream-Tag aus `fork/upstream-tag` ohne `v`, etwa `16.60.0-8`.
@@ -35,12 +35,12 @@ Der Default-Branch ist `fork-test-image`. `main` bleibt ein unveränderter Spieg
 
   ```bash
   git fetch upstream --tags
-  git switch -C sync/upstream origin/fork-test-image
+  git switch -C sync/upstream origin/fork
   git merge --no-ff <tag>                       # Konflikte lösen
   git checkout <tag> -- CHANGELOG.md README.md
   echo <tag> > fork/upstream-tag
   git commit -am "merge upstream <tag>"
-  git push --force origin sync/upstream         # danach den Pull Request nach fork-test-image öffnen
+  git push --force origin sync/upstream         # danach den Pull Request nach fork öffnen
   ```
 
   Solange dieser Pull Request offen ist und dasselbe Tag trägt, lässt der nächste Lauf ihn stehen.
