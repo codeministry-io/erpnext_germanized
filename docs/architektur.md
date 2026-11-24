@@ -82,7 +82,7 @@ eu_einvoice wandelt ein PDF in PDF/A-3 um, bevor es die XML einer ZUGFeRD-Rechnu
 
 ## Node.js-Pakete nach dem Build
 
-`bench init` installiert die Node.js-Abhängigkeiten jeder App und der Oberflächen in den Apps (etwa `hrms/frontend`, `frappe/flow`, `erpnext/islands`) und baut damit die Assets. Danach liegen in der Bench rund 2,7 GB `node_modules`, fast alles Compiler, Bundler und esbuild-Programme, die zur Laufzeit niemand startet. Scanner melden ihre Schwachstellen trotzdem, denn sie sehen nur, was im Image liegt.
+`bench init` installiert die Node.js-Abhängigkeiten jeder App und der Oberflächen in den Apps (etwa `hrms/frontend`, `frappe/flow`, `erpnext/islands`) und baut damit die Assets. Danach liegen in der Bench rund 2,6 GB `node_modules` in über 230.000 Dateien, fast alles Compiler, Bundler und esbuild-Programme, die zur Laufzeit niemand startet. Scanner melden ihre Schwachstellen trotzdem, denn sie sehen nur, was im Image liegt.
 
 Der zweite `RUN` der Stufe `builder` ruft deshalb `python -m germanized prune-node-modules` auf (`germanized/node_modules.py`). Die Werkzeuge kommen über einen Bind-Mount in den Build und landen nicht im Image. Behalten wird, was nach dem Build noch geladen wird, jeweils mit allen Paketen, von denen es abhängt:
 
@@ -96,9 +96,12 @@ Der Schritt bricht den Build ab, statt ein unvollständiges Image zu bauen, wenn
 
 Was dadurch nicht mehr geht:
 
-- **`bench build` im Container.** Neue Assets brauchen ohnehin ein neues Image, denn auch eine neue App kommt über `apps.json` und einen neuen Build.
+- **`bench build` im Container**, und damit auch `bench get-app`, das die Assets der neuen App so baut. Neue Assets brauchen ohnehin ein neues Image, denn auch eine neue App kommt über `apps.json` und einen neuen Build. Wer für ein eigenes Image alle Pakete behalten will, lässt den zweiten `RUN` der Stufe `builder` weg.
 - **Bundles von Frappe Studio.** Veröffentlicht man eine App aus Frappe Studio, baut Frappe ihr Bundle mit yarn und vite aus `frappe/studio/frontend`; diese Pakete fehlen, und der Build der Studio-App scheitert mit einem Eintrag im Fehlerprotokoll. Der Lauf nach `bench migrate` baut nur bereits veröffentlichte Studio-Apps neu und meldet Fehler nur.
 - **Bibliotheken unter `/assets/<app>/node_modules`, die nirgends wörtlich stehen.** Behalten wird nur, was die Assets oder Quellen einer App als Pfad nennen. Setzt eigener Code den Pfad erst zur Laufzeit zusammen oder steht er nur in der Datenbank, etwa in einem Client Script, einer Web Page oder einem Print Format, antwortet nginx darauf mit 404.
+- **Lizenz und Autor der JavaScript-Pakete in Frappe.** Die Seite `/attribution` und die SBOM, die Frappe in „Installed Applications“ mit „Generate SBOM“ erzeugt, lesen beides aus dem `package.json` eines Pakets unter `node_modules`. Für die entfernten Pakete nennen sie nur noch Name und Version aus `yarn.lock`.
+
+Ein Teil der entfernten Pakete steckt gebündelt in den Assets unter `<app>/<app>/public`, etwa Vue in den Bundles von Frappe unter `dist` und frappe-ui in `hrms/public/frontend`. Scanner und die SBOM des Images erkennen ein Paket an seinem `package.json` unter `node_modules`, diese Bibliotheken sehen sie danach nicht mehr. Eine Schwachstelle darin meldet der Scan des Images also nicht; behoben wird sie mit einer Version der App, deren Assets mit der korrigierten Bibliothek gebaut sind.
 
 Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` der Apps, ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen, prüft jedes Verzeichnis unter `node_modules`, das sie nennen, und speichert ein eigenes Website Theme.
 
