@@ -13,6 +13,11 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 - `examples/compose.yaml` legt keine Plattform mehr fest, Docker wählt das Image passend zum Rechner. Wer ERiC nutzt, betreibt alle Dienste aus dem Image auf `linux/amd64`, in einem Kubernetes-Cluster mit Knoten beider Plattformen per `kubernetes.io/arch: amd64` im `nodeSelector`, siehe [Apps](docs/apps.md#steuerbote).
 - Die CI baut das Image je Plattform nur noch einmal und schiebt es im selben Build per Digest ohne Tag in die Registry; die Tags bekommt der Digest erst nach dem Site-Test und einer Prüfung, dass er das getestete Image ist. Bisher baute der Push ein zweites Mal und konnte dabei Schichten eines gleichzeitigen Release-Laufs aus dem gemeinsamen Cache nehmen; die Prüfung schlug dann erst fehl, als die Tags schon gesetzt waren.
+- Die Herkunftsangabe nennt neben dem Index auch die Images beider Plattformen. `gh attestation verify` prüft damit auch den Digest einer Plattform, etwa `oci://ghcr.io/encircle360-oss/erpnext_germanized@sha256:<digest>`; bisher fand es dafür keine Herkunftsangabe.
+- Der wöchentliche Scan von `latest` läuft je Plattform, `linux/arm64` in der neuen Kategorie `trivy-image-latest-arm64` von Code Scanning; `linux/amd64` behält `trivy-image-latest`. Solange `latest` kein Image für `linux/arm64` hat, endet dieser Scan mit einem Hinweis.
+- Das `Containerfile` prüft das Paket von wkhtmltopdf vor der Installation gegen seine SHA-256-Summe, je Plattform in `WKHTMLTOPDF_SHA256_AMD64` und `WKHTMLTOPDF_SHA256_ARM64`.
+- Veröffentlichungen bauen die Stufe `base` ohne Cache, die Debian-Pakete wie nginx und Chromium sind damit auf dem Stand jedes Builds. Bisher kamen sie aus dem Cache und blieben so alt wie dessen erster Build; Pull Requests nutzen den Cache weiter.
+- README, [Apps](docs/apps.md) und [Roadmap](docs/roadmap.md) nennen den heutigen Umfang von Steuerbote von der Umsatzsteuer-Voranmeldung bis zu E-Bilanz und Jahresabschluss, statt „zuerst die Umsatzsteuer-Voranmeldung“; die Links auf die Dokumentation von Steuerbote und banking zeigen auf die gepinnten Tags.
 
 ## [16.60.0-12] - 2026-11-24
 

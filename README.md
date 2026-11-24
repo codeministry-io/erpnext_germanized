@@ -4,12 +4,12 @@ ERPNext für deutsche Unternehmen als fertiges Container-Image: Frappe, ERPNext 
 
 > **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-12` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
 
-Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://github.com/encircle360-oss/steuerbote), zuerst die Umsatzsteuer-Voranmeldung. Steuerbote verweist in seinem README umgekehrt auf dieses Image.
+Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://github.com/encircle360-oss/steuerbote): Umsatzsteuer-Voranmeldung, Dauerfristverlängerung und Zusammenfassende Meldung, Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung und E-Bilanz, dazu den Jahresabschluss mit der Offenlegung für das Unternehmensregister. Die Übermittlung über ERiC geht nur mit `linux/amd64`. Steuerbote verweist in seinem README umgekehrt auf dieses Image.
 
 ## Was erpnext_germanized ist
 
 - **Ein Image.** Frappe, ERPNext, HRMS, die Apps von ALYF und Steuerbote stecken zusammen in `ghcr.io/encircle360-oss/erpnext_germanized`. Backend, Frontend, Websocket, Worker und Scheduler starten aus demselben Image mit unterschiedlichen Befehlen, wie bei den Images von [frappe_docker](https://github.com/frappe/frappe_docker).
-- **Deutsche Apps.** Registerangaben, Prüfung der USt-IdNr., Summen- und Saldenliste, DATEV-Export, E-Rechnungen nach XRechnung und ZUGFeRD, Bankanbindung und die Umsatzsteuer-Voranmeldung kommen als eigene Apps dazu, siehe [Enthaltene Apps](#enthaltene-apps).
+- **Deutsche Apps.** Registerangaben, Prüfung der USt-IdNr., Summen- und Saldenliste, DATEV-Export, E-Rechnungen nach XRechnung und ZUGFeRD, Bankanbindung und die Steuermeldungen an ELSTER von der Umsatzsteuer-Voranmeldung bis zur E-Bilanz kommen als eigene Apps dazu, siehe [Enthaltene Apps](#enthaltene-apps).
 - **Versionen aus `apps.json`.** Jede App ist auf ein Release-Tag gepinnt, nie auf einen Branch. `apps.json` ist die einzige Liste der Apps. Das Tag von Frappe steht als Vorgabe von `FRAPPE_BRANCH` im `Containerfile`.
 - **Updates durch Tag-Wechsel.** Ein Update ist ein anderes Image-Tag und danach `bench migrate`. Sites, Dateien und Datenbank liegen in Volumes und bleiben erhalten.
 - **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site, erzeugt mit wkhtmltopdf und mit Chromium je ein PDF und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
@@ -30,7 +30,7 @@ Frappe ist das Framework unter allen Apps. Die Apps stehen in der Reihenfolge vo
 | [eu_einvoice](https://github.com/alyf-de/eu_einvoice) | v16.4.0 | Erstellt und liest E-Rechnungen im Format UN/CEFACT CII in den Profilen BASIC, EN 16931, EXTENDED und XRECHNUNG, außer bei XRECHNUNG auch eingebettet in ein PDF (ZUGFeRD, Factur-X). | GPL-3.0-or-later |
 | [erpnext_pdf-on-submit](https://github.com/alyf-de/erpnext_pdf-on-submit) | v16.3.1 | Erzeugt beim Buchen eines Belegs ein PDF und hängt es an den Beleg. | GPL-3.0-or-later |
 | [banking](https://github.com/alyf-de/banking) | v16.7.0 | Holt Bankumsätze per EBICS in ERPNext und gleicht sie mit Belegen ab, wobei EBICS ein Abonnement bei ALYF braucht und der Abgleich nicht. | GPL-3.0 |
-| [steuerbote](https://github.com/encircle360-oss/steuerbote) | v0.10.0 | Steuermeldungen aus ERPNext an ELSTER, zuerst die Umsatzsteuer-Voranmeldung, noch in Entwicklung und nicht einsatzfähig. | AGPL-3.0-or-later |
+| [steuerbote](https://github.com/encircle360-oss/steuerbote) | v0.10.0 | Steuermeldungen aus ERPNext an ELSTER: Umsatzsteuer-Voranmeldung, Dauerfristverlängerung, Zusammenfassende Meldung, Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung, E-Bilanz und Jahresabschluss mit Offenlegung für das Unternehmensregister; Übermittlung über ERiC nur mit `linux/amd64`, noch in Entwicklung und nicht einsatzfähig. | AGPL-3.0-or-later |
 
 Was jede App mitbringt und wo sie eingerichtet wird, steht in [Apps](docs/apps.md).
 
@@ -176,7 +176,7 @@ Dieses Repository steht unter der [Apache License 2.0](LICENSE) (Apache-2.0). Da
 
 Das Image enthält Software unter eigenen Lizenzen. Frappe steht unter MIT, ERPNext und HRMS unter GPL-3.0, die Apps von ALYF unter GPL-3.0 oder GPL-3.0-or-later und Steuerbote unter AGPL-3.0-or-later, wie es die Tabelle unter [Enthaltene Apps](#enthaltene-apps) für jede App nennt. Dazu kommen die Python- und Node-Pakete der Apps und die Debian-Pakete des Basis-Images, jeweils unter ihrer eigenen Lizenz. Die SBOM eines Images listet diese Pakete auf. Den Quelltext von Frappe und jeder App gibt es öffentlich auf GitHub, jeweils zum gepinnten Tag.
 
-Eine Ausnahme ist das Python-Paket [fintech](https://www.joonis.de/fintech/), das die App banking voraussetzt. Es steht unter keiner Open-Source-Lizenz, PyPI führt es als „Free To Use But Restricted“. Für EBICS erwirbt ALYF mit dem Abonnement eine Lizenz dafür, siehe die [EBICS-Dokumentation von banking](https://github.com/alyf-de/banking/blob/v16.6.4/banking/docs/en/banking/ebics-integration.md).
+Eine Ausnahme ist das Python-Paket [fintech](https://www.joonis.de/fintech/), das die App banking voraussetzt. Es steht unter keiner Open-Source-Lizenz, PyPI führt es als „Free To Use But Restricted“. Für EBICS erwirbt ALYF mit dem Abonnement eine Lizenz dafür, siehe die [EBICS-Dokumentation von banking](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/ebics-integration.md).
 
 Das Label `org.opencontainers.image.licenses` des Images verbindet als SPDX-Ausdruck die Lizenz des Rezepts mit denen der Apps im Image: `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`. Das Rezept selbst bleibt unter Apache-2.0, das `Containerfile` unter MIT. Die Python-, Node- und Debian-Pakete darunter behalten ihre eigenen Lizenzen, siehe oben.
 
