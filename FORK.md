@@ -5,8 +5,8 @@ für `linux/arm64`, solange upstream das nicht selbst so veröffentlicht. Die Da
 deshalb bei keinem Abgleich.
 
 > **Stillgelegt am 2026-11-24.** Der Betrieb (codeministry/cm-k8s-cluster#260) läuft seit `16.60.0-14` auf
-> `ghcr.io/encircle360-oss/erpnext_germanized`. Upstream baut seit `16.60.0-12` selbst arm64 und kürzt
-> `node_modules` (upstream #39). Punkt 3 unter „Wann der Fork entfallen kann" blieb offen: upstream veröffentlicht
+> `ghcr.io/encircle360-oss/erpnext_germanized`. Upstream baut seit `16.60.0-13` selbst arm64 und kürzt seit
+> `16.60.0-14` `node_modules` (upstream #39). Punkt 3 unter „Wann der Fork entfallen kann" blieb offen: upstream veröffentlicht
 > einen Index aus amd64 und arm64. Der Betrieb pinnt deshalb den arm64-Plattform-Digest, sodass der
 > Schwachstellen-Scanner im Cluster das laufende Artefakt prüft, und scannt amd64 in seiner CI. Der Fork steht auf
 > `v16.60.0-14`. Beide Workflows sind abgeschaltet, das Repository ist archiviert, und die Images `-cm<n>` bleiben in
