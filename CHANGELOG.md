@@ -13,6 +13,18 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 - Die CI baut das Image je Plattform nur noch einmal und schiebt es im selben Build per Digest ohne Tag in die Registry; die Tags bekommt der Digest erst nach dem Site-Test und einer Prüfung, dass er das getestete Image ist. Bisher baute der Push ein zweites Mal und konnte dabei Schichten eines gleichzeitigen Release-Laufs aus dem gemeinsamen Cache nehmen; die Prüfung schlug dann erst fehl, als die Tags schon gesetzt waren.
 
+## [16.60.0-11] - 2026-11-24
+
+### Geändert
+
+- Steuerbote v0.9.0: Zusammenspiel der Jahresmeldungen (E-Bilanz speist Anlage GK Zeile 11 und KSt 1 F Zeilen 17/18 der Körperschaftsteuererklärung, Vergleich von E-Bilanz und festgestelltem Jahresabschluss, Umsatzhinweis der Umsatzsteuererklärung, durchgehend getesteter Jahreslauf), Wirtschaftsjahre des eigenen Unternehmens bevorzugt, Dokumentation und Sicherheitshinweise auf dem Stand aller Belege.
+
+## [16.60.0-10] - 2026-11-24
+
+### Geändert
+
+- Steuerbote v0.8.0: Belege „E-Bilanz“ (Positionen der Taxonomie 6.9, Kontennachweis, Anlagenspiegel, Überleitung, XBRL, Übermittlung als Simulation) und „Jahresabschluss“ (Größenklasse, Feststellung, Vorschau der Offenlegung, XBRL für das Unternehmensregister); Vorgaben der Bilanzzuordnung für SKR03 und SKR04; Seitenleiste in Gruppen mit Icons und Arbeitsbereich mit allen Jahresmeldungen; Jahrgang 2027 für Voranmeldung und USt 1 H (vorläufig); Plattformprüfung der ERiC-Einrichtung; Dokumentation.
+
 ## [16.60.0-9] - 2026-11-23
 
 ### Geändert
