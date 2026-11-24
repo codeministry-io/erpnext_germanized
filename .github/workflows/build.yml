@@ -123,44 +123,50 @@ jobs:
         with:
           local-tag: ${{ env.LOCAL_TAG }}
           build-cache: ${{ env.BUILD_CACHE }}
+          push-to: ${{ env.IMAGE }}
           cache-to: type=registry,ref=${{ env.BUILD_CACHE }},mode=max,ignore-error=true
 
-      - name: Push the image
-        # The same build again; every layer comes from the cache of the build above.
-        id: push
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: Containerfile
-          platforms: linux/amd64
-          secret-files: apps_json=./apps.json
-          build-args: |
-            CACHE_BUST=${{ steps.image.outputs.cache-bust }}
-            VERSION=${{ steps.image.outputs.version }}
-          cache-from: type=registry,ref=${{ env.BUILD_CACHE }}
-          provenance: false
-          push: true
-          tags: ${{ steps.tags.outputs.tags }}
-
       - name: Check that the pushed image is the tested one
-        # A layer the push had to build again would not have been through the site test.
+        # The tags go to the pushed digest only if it is the image that passed the site test.
         env:
-          PUSHED: ${{ env.IMAGE }}@${{ steps.push.outputs.digest }}
+          DIGEST: ${{ steps.image.outputs.digest }}
         run: |
-          tested=$(docker image inspect --format '{{json .RootFS.Layers}}' "$LOCAL_TAG")
-          pushed=$(docker buildx imagetools inspect --format '{{json .Image.RootFS.DiffIDs}}' "$PUSHED")
-          if ! jq --null-input --exit-status --argjson tested "$tested" --argjson pushed "$pushed" \
-            '$tested | length > 0 and . == $pushed' > /dev/null; then
-            echo "::error::$PUSHED has other layers than the tested image."
+          tested=$(docker image inspect --format '{{.Id}}' "$LOCAL_TAG")
+          manifest=$(docker buildx imagetools inspect --raw "$IMAGE@$DIGEST")
+          config=$(jq --raw-output .config.digest <<< "$manifest")
+          # The ID of an image is the digest of its manifest in the containerd image store of Docker and the
+          # digest of its config in the classic one.
+          if [[ $tested != "$DIGEST" && $tested != "$config" ]]; then
+            echo "::error::$IMAGE@$DIGEST is not the tested image $tested."
             exit 1
           fi
+
+      - name: Tag the tested image
+        env:
+          DIGEST: ${{ steps.image.outputs.digest }}
+          TAGS: ${{ steps.tags.outputs.tags }}
+        run: |
+          IFS=, read -ra refs <<< "$TAGS"
+          tag_args=()
+          for ref in "${refs[@]}"; do
+            tag_args+=(--tag "$ref")
+          done
+          # Every tag gets the manifest itself, not an index around it with a digest of its own.
+          docker buildx imagetools create --prefer-index=false "${tag_args[@]}" "$IMAGE@$DIGEST"
+          for ref in "${refs[@]}"; do
+            manifest=$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$ref")
+            if [[ $(jq --raw-output .digest <<< "$manifest") != "$DIGEST" ]]; then
+              echo "::error::$ref does not name the tested image $IMAGE@$DIGEST."
+              exit 1
+            fi
+          done
 
       - name: Attest the build provenance
         if: steps.image.outputs.public == 'true'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-digest: ${{ steps.image.outputs.digest }}
 
       - name: Create the SBOM
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
