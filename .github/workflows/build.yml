@@ -48,7 +48,9 @@ jobs:
     # nothing but the scan.
     if: github.event_name != 'push' || github.repository != 'encircle360-oss/erpnext_germanized'
     # Each platform builds natively on its own runner: under emulation the bench build of one platform takes
-    # hours, and the site test would not show whether the apps run on that platform.
+    # hours, and the site test would not show whether the apps run on that platform. ubuntu-26.04-arm has the
+    # Docker of ubuntu-latest: the check of the pushed image reads the image ID, which depends on the image
+    # store of Docker.
     strategy:
       fail-fast: false
       matrix:
@@ -60,7 +62,7 @@ jobs:
             scan-category: trivy-image
           - arch: arm64
             platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
             build-cache: ghcr.io/encircle360-oss/erpnext_germanized:buildcache-arm64
             scan-category: trivy-image-arm64
     runs-on: ${{ matrix.runner }}
@@ -108,7 +110,7 @@ jobs:
             scan-category: trivy-image
           - arch: arm64
             platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
             build-cache: ghcr.io/encircle360-oss/erpnext_germanized:buildcache-arm64
             scan-category: trivy-image-arm64
     runs-on: ${{ matrix.runner }}
