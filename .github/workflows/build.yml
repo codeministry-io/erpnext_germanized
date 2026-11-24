@@ -148,6 +148,9 @@ jobs:
           build-cache: ${{ matrix.build-cache }}
           push-to: ${{ env.IMAGE }}
           cache-to: type=registry,ref=${{ matrix.build-cache }},mode=max,ignore-error=true
+          # The Debian packages of the stage base come from apt only when it runs; from the cache they would
+          # stay as old as its first build. Every stage built on base runs again with it.
+          no-cache-filters: base
           scan-category: ${{ matrix.scan-category }}
 
       - name: Check that the pushed image is the tested one
