@@ -4,9 +4,21 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Image für `linux/arm64`. Neue Tags nennen einen Index mit einem Image für `linux/amd64` und einem für `linux/arm64`, und Docker wählt das passende; die Tags bis 16.60.0-12 bleiben Images nur für `linux/amd64`. Die CI baut jede Plattform nativ, `linux/arm64` auf `ubuntu-26.04-arm`, und lässt den Site-Test und den Scan auf jeder laufen; veröffentlicht wird erst, wenn beide bestanden haben, und ein Schritt prüft, dass der Index genau die getesteten Images nennt. Die Herkunftsangabe gilt dem Index, jedes Release bekommt eine SBOM je Plattform. ERiC für Steuerbote gibt es nur für Linux x86_64: Prüfen, Testsenden und Senden über ERiC gehen weiter nur mit `linux/amd64`, die Abgabe als XML-Datei über Mein ELSTER braucht ERiC nicht.
+- Der Site-Test erzeugt je ein PDF mit wkhtmltopdf und mit Chromium, dem vorgegebenen Generator von Frappe 16, und setzt dafür `chromium_path` wie das Beispiel für docker compose. Bisher erzeugte er kein PDF, und wkhtmltopdf und Chromium sind auf jeder Plattform eigene Programme.
+
 ### Geändert
 
-- Der Job „Build, test and publish“ baut das Image nur noch einmal und schiebt es im selben Build per Digest ohne Tag in die Registry; die Tags bekommt der Digest erst nach dem Site-Test und einer Prüfung, dass er das getestete Image ist. Bisher baute der Push ein zweites Mal und konnte dabei Schichten eines gleichzeitigen Release-Laufs aus dem gemeinsamen Cache nehmen; die Prüfung schlug dann erst fehl, als die Tags schon gesetzt waren.
+- `examples/compose.yaml` legt keine Plattform mehr fest, Docker wählt das Image passend zum Rechner. Wer ERiC nutzt, betreibt alle Dienste aus dem Image auf `linux/amd64`, in einem Kubernetes-Cluster mit Knoten beider Plattformen per `kubernetes.io/arch: amd64` im `nodeSelector`, siehe [Apps](docs/apps.md#steuerbote).
+- Die CI baut das Image je Plattform nur noch einmal und schiebt es im selben Build per Digest ohne Tag in die Registry; die Tags bekommt der Digest erst nach dem Site-Test und einer Prüfung, dass er das getestete Image ist. Bisher baute der Push ein zweites Mal und konnte dabei Schichten eines gleichzeitigen Release-Laufs aus dem gemeinsamen Cache nehmen; die Prüfung schlug dann erst fehl, als die Tags schon gesetzt waren.
+
+## [16.60.0-12] - 2026-11-24
+
+### Geändert
+
+- Steuerbote v0.10.0: HGB-Taxonomie 6.10 neben 6.9 (Einrichtung beider Pakete, E-Bilanz je Wirtschaftsjahr, Regeln und Arelle-Prüfung, Vorgaben der Bilanzzuordnung für 6.10, „Auf neue Taxonomie heben“, Kontennachweis nach 6.10).
 
 ## [16.60.0-11] - 2026-11-24
 

@@ -51,6 +51,18 @@ bench_output() {
 	"${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint bench bench "$@"
 }
 
+# Run a Python function on the site with bench execute; it must return a PDF. bench prints the bytes it
+# returns as a JSON list of numbers on its last line, and a failure exits nonzero with the traceback.
+expect_pdf() {
+	local function=$1 output pdf
+	output=$(bench_output --site "$SITE" execute "$@") || fail "$function raised an error"
+	pdf=$(tail -n 1 <<<"$output")
+	if [[ $(jq -r '.[0:5] | implode' <<<"$pdf" 2>/dev/null) != "%PDF-" ]]; then
+		fail "$function returned no PDF"
+	fi
+	echo "$function returned a PDF of $(jq length <<<"$pdf") bytes"
+}
+
 # Ask a url from inside a running service until it answers, for up to two minutes.
 wait_for() {
 	local service=$1 url=$2 answer
@@ -129,6 +141,9 @@ in_bench bench set-config -g db_host db
 in_bench bench set-config -g redis_cache redis://redis:6379
 in_bench bench set-config -g redis_queue redis://redis:6379
 in_bench bench set-config -g redis_socketio redis://redis:6379
+# As in examples/compose.yaml: without chromium_path, Frappe downloads a Chromium of its own for the first PDF
+# and the test would prove that download instead of the Chromium of the image.
+in_bench bench set-config -g chromium_path /usr/lib/chromium/chromium-headless-shell
 
 step "creating $SITE with ${names[*]:1}"
 install=()
@@ -152,6 +167,16 @@ done
 
 step "making $SITE the default site"
 in_bench bench use "$SITE"
+
+# Frappe 16 prints with the generator of the print format, else with the one of the print settings: chrome
+# on a new site, wkhtmltopdf where an operator chose it. Each has a binary of its own per platform.
+step "PDF with wkhtmltopdf, page numbers in the footer"
+expect_pdf frappe.utils.pdf.get_pdf \
+	--args '["<h1>PDF test</h1>", {"footer-center": "Page [page] of [topage]"}]'
+
+step "PDF with Chromium, the default generator of the print settings"
+expect_pdf frappe.get_print \
+	--kwargs '{"doctype": "User", "name": "Administrator", "as_pdf": True, "pdf_generator": "chrome"}'
 
 # The default site serves bench and Socket.IO; gunicorn takes the site of a request from its Host header.
 step "backend: gunicorn, the default command of the image"

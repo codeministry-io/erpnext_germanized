@@ -50,6 +50,8 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 
 Das Label `org.opencontainers.image.source` verbindet das Paket in der GitHub Container Registry mit diesem Repository. Die Labels eines Images zeigt `docker image inspect --format '{{json .Config.Labels}}' <image>`.
 
+Neue Tags zeigen auf einen Index mit einem Image je Plattform. Für ein solches Image liest die GitHub Container Registry Beschreibung, Quelle und Lizenz aus den Annotationen des Index, nicht aus den Labels ([Working with the Container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#adding-a-description-to-multi-arch-images)). Der Job „Publish the image“ übernimmt `org.opencontainers.image.description`, `org.opencontainers.image.source` und `org.opencontainers.image.licenses` deshalb aus den Labels in den Index.
+
 ## Was im Image steckt
 
 | Was | Wo oder wie |
@@ -75,7 +77,7 @@ eu_einvoice wandelt ein PDF in PDF/A-3 um, bevor es die XML einer ZUGFeRD-Rechnu
 
 ### Chromium
 
-`INSTALL_CHROMIUM=true` installiert `chromium-headless-shell` aus Debian. Frappe nutzt Chromium, wenn ein Druckformat oder die Druckeinstellungen den PDF-Generator „chrome“ wählen. Den Pfad liest Frappe aus `chromium_path` in `common_site_config.json`. Fehlt der Eintrag, lädt Frappe beim ersten Gebrauch selbst ein Chromium in das Verzeichnis `chromium` der Bench (`find_or_download_chromium_executable` in `frappe/utils/print_utils.py`). Im Container liegt dieses Verzeichnis nicht in einem Volume, und der Download braucht Internetzugang. Das Beispiel für docker compose setzt `chromium_path` deshalb auf `/usr/lib/chromium/chromium-headless-shell`.
+`INSTALL_CHROMIUM=true` installiert `chromium-headless-shell` aus Debian. Frappe nutzt Chromium, wenn ein Druckformat oder die Druckeinstellungen den PDF-Generator „chrome“ wählen. Den Pfad liest Frappe aus `chromium_path` in `common_site_config.json`. Fehlt der Eintrag, lädt Frappe beim ersten Gebrauch selbst ein Chromium in das Verzeichnis `chromium` der Bench (`find_or_download_chromium_executable` in `frappe/utils/print_utils.py`). Im Container liegt dieses Verzeichnis nicht in einem Volume, und der Download braucht Internetzugang. Das Beispiel für docker compose setzt `chromium_path` deshalb auf `/usr/lib/chromium/chromium-headless-shell`. Der Site-Test setzt den Eintrag genauso und erzeugt mit beiden Generatoren je ein PDF: mit wkhtmltopdf über `frappe.utils.pdf.get_pdf`, Seitenzahlen im Footer eingeschlossen, und mit Chromium über `frappe.get_print`, den Weg des Druck-Knopfs.
 
 ## Node.js-Pakete nach dem Build
 
