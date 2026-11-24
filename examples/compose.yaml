@@ -9,6 +9,9 @@
 #
 # The tag 16 moves with every release. For a lasting installation pin a full release tag such as
 # 16.60.0-1 and update on purpose, see docs/versionierung.md and docs/betrieb.md.
+#
+# Docker pulls the image for the platform of this machine, linux/amd64 or linux/arm64. ERiC for Steuerbote
+# runs on linux/amd64 only, see docs/apps.md.
 
 name: erpnext_germanized
 

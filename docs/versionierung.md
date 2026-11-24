@@ -64,7 +64,7 @@ Im Helm-Chart von Frappe entsprechend `image.tag: "16.60.0-1"`. Noch strenger is
 docker buildx imagetools inspect ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1
 ```
 
-Die Ausgabe nennt unter `Digest` den Wert für `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1@sha256:<digest>`.
+Die Ausgabe nennt unter `Digest` den Wert für `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1@sha256:<digest>`. Bei Releases nach 16.60.0-11 ist das der Digest des Index: Er gilt für beide Plattformen, und für ihn legt die CI die Herkunftsangabe ab. Die Digests unter `Manifests` gelten je einer Plattform.
 
 Woher ein veröffentlichtes Image kommt, prüft `gh attestation verify` gegen die Herkunftsangabe (Build Provenance), die die CI dazu ablegt:
 

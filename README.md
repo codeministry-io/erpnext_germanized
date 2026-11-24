@@ -14,7 +14,7 @@ Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://git
 - **Updates durch Tag-Wechsel.** Ein Update ist ein anderes Image-Tag und danach `bench migrate`. Sites, Dateien und Datenbank liegen in Volumes und bleiben erhalten.
 - **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site, erzeugt mit wkhtmltopdf und mit Chromium je ein PDF und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
 - **SBOM und Provenance.** Zu jedem veröffentlichten Image erzeugt die CI eine Stückliste der enthaltenen Pakete (SBOM) und eine signierte Herkunftsangabe (Build Provenance), die `gh attestation verify` prüft.
-- **`linux/amd64` und `linux/arm64`.** Jedes Tag nennt ein Image für beide Plattformen, und Docker wählt das passende. Die CI baut jede Plattform nativ und lässt den Site-Test auf jeder laufen. ERiC für Steuerbote gibt es nur für x86_64, Übermittlungen an ELSTER gehen deshalb nur mit `linux/amd64`, siehe [Steuerbote](docs/apps.md#steuerbote).
+- **`linux/amd64` und `linux/arm64`.** Releases nach 16.60.0-11 und `main` gibt es für beide Plattformen: Ihre Tags nennen einen Index mit je einem Image, und Docker wählt das passende. Die Releases bis 16.60.0-11 gibt es nur für `linux/amd64`. Die CI baut jede Plattform nativ und lässt den Site-Test auf jeder laufen. ERiC für Steuerbote gibt es nur für Linux x86_64: Prüfen, Testsenden und Senden über ERiC gehen nur mit `linux/amd64`, die Abgabe als XML-Datei über Mein ELSTER geht auch mit `linux/arm64`, siehe [Steuerbote](docs/apps.md#steuerbote).
 
 ## Enthaltene Apps
 
@@ -93,6 +93,7 @@ Wer andere Apps oder Versionen braucht, baut das Image selbst. Dafür braucht es
 
    ```bash
    ./build.sh                                     # builds erpnext_germanized:local
+   ./build.sh --platform linux/arm64              # the same for linux/arm64, best on an ARM machine
    ./tests/site/run.sh erpnext_germanized:local   # installs every app on a test site
    ```
 
