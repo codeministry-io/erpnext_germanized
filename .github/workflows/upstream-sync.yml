@@ -2,7 +2,7 @@ name: Upstream sync
 
 # Only in the fork codeministry/erpnext_germanized, never meant for upstream. Once a week (or on demand) it merges
 # the newest release tag of encircle360-oss/erpnext_germanized into the branch sync/upstream and keeps exactly one
-# pull request from there into fork-test-image open. A newer tag moves the same pull request on. CHANGELOG.md and
+# pull request from there into the branch fork open. A newer tag moves the same pull request on. CHANGELOG.md and
 # README.md always take upstream's version: the fork keeps its own notes in FORK.md. Any other conflict fails the
 # run and opens an issue naming the tag and the files. See FORK.md.
 #
@@ -22,7 +22,7 @@ concurrency:
 env:
   UPSTREAM_REPO: https://github.com/encircle360-oss/erpnext_germanized.git
   UPSTREAM_IMAGE: ghcr.io/encircle360-oss/erpnext_germanized
-  BASE: fork-test-image
+  BASE: fork
   SYNC_BRANCH: sync/upstream
   LABEL: upstream-sync
   ASSIGNEE: codeministry

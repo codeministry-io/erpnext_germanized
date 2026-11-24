@@ -7,11 +7,11 @@ name: Fork test image
 # The tag is <upstream version>-cm<n>: the version comes from fork/upstream-tag, which only the upstream sync pull
 # request writes; n counts the builds of that version. Every pushed image gets an annotated git tag cm/<tag> whose
 # message names the run, created only after the push, so the git tags list exactly the published images.
-# A push to fork-test-image builds; so does the weekly schedule, which rebuilds the same state as the next revision
+# A push to the branch fork builds; so does the weekly schedule, which rebuilds the same state as the next revision
 # to pick up the packages the recipe installs.
 on:
   push:
-    branches: [fork-test-image]
+    branches: [fork]
     paths-ignore: [FORK.md, renovate.json]
   schedule:
     - cron: '41 3 * * 1'
