@@ -126,7 +126,7 @@ Kein bestehender Test wird abgeschwächt, übersprungen oder gelöscht, um grün
 6. Der Socket.IO-Server, `node apps/frappe/socketio.js`, startet mit den Node.js-Paketen, die nach dem Build übrig sind, und beantwortet den Handshake von Engine.IO.
 7. Jede `<app>/realtime/handlers.js` im Image lädt mit `node`. Socket.IO lädt sie erst bei einer angemeldeten Verbindung und warnt bei einem Fehler nur.
 8. nginx vor dem Backend beantwortet den Ping ebenfalls, liefert die Assets aus und leitet `/socket.io/` an den Socket.IO-Server weiter.
-9. nginx liefert jede Bibliothek, die die gebauten Assets unter `assets/<app>/node_modules` nennen.
+9. nginx liefert jede Bibliothek, die die gebauten Assets unter `assets/<app>/node_modules` nennen, und jedes Verzeichnis, das sie dort nennen, liegt im Image, etwa `ace-builds/src-noconflict/` für den Code-Editor.
 10. Ein eigenes Website Theme lässt sich speichern: Frappe übersetzt sein SCSS mit `node generate_bootstrap_theme.js`, und nginx liefert das Ergebnis als `text/css` aus.
 
 Zum Schluss entfernt das Skript alle Container und Volumes. Nach 20 Minuten bricht es ab. Die Passwörter der Testsite stehen nur in `tests/site/compose.yaml` und gelten nur für diese Wegwerf-Site.

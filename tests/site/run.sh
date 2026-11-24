@@ -239,6 +239,19 @@ for library in "${libraries[@]}"; do
 	echo "nginx serves $library"
 done
 
+# Some bundles name only a directory and add the file at run time, such as ace-builds for the code editor and
+# occt-import-js for 3D models, so the file search above misses them; each named directory has to be there.
+# shellcheck disable=SC2016 # $ is a literal character of the pattern
+mapfile -t directories < <("${compose[@]}" exec -T frontend sh -c \
+	'grep -rhoE "/?assets/[a-z0-9_]+/node_modules/[^\"'"'"' )\`\${},]+/" /home/frappe/frappe-bench/assets/*/dist' |
+	sed 's#^/*#/#' | sort -u)
+[[ ${#directories[@]} -gt 0 ]] || fail "the built bundles name no directory under node_modules; the search has gone stale"
+for directory in "${directories[@]}"; do
+	"${compose[@]}" exec -T frontend test -d "/home/frappe/frappe-bench$directory" ||
+		fail "the image lacks $directory"
+	echo "the image has $directory"
+done
+
 # Saving a Website Theme compiles its SCSS with node generate_bootstrap_theme.js, which needs sass and the
 # packages the SCSS of the apps imports, such as Bootstrap; the build stage keeps them for this. The custom SCSS
 # uses $primary, a variable of Bootstrap, so the stylesheet only compiles when the import of Bootstrap works.

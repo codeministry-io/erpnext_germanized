@@ -7,7 +7,7 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 ### Geändert
 
 - Das Image enthält nur noch die Node.js-Pakete, die nach dem Build geladen werden: Socket.IO mit seinen Abhängigkeiten, die Bibliotheken, die der Browser aus `/assets/<app>/node_modules` lädt, und was das Speichern eines Website Themes braucht (`sass` und die Pakete, die das SCSS der Apps einbindet, etwa Bootstrap). Die `node_modules` der Oberflächen in den Apps und die Build-Werkzeuge in `node_modules` der Apps fallen weg, rund 2,7 GB, und mit ihnen die Schwachstellen, die Scanner darin melden. `bench build` im Container und Bundles von Frappe Studio gehen damit nicht mehr, siehe [Architektur](docs/architektur.md#nodejs-pakete-nach-dem-build).
-- Der Site-Test startet den Socket.IO-Server, lädt die Realtime-Handler der Apps, prüft, dass nginx die Bibliotheken aus `node_modules` ausliefert, und speichert ein eigenes Website Theme.
+- Der Site-Test startet den Socket.IO-Server, lädt die Realtime-Handler der Apps, prüft, dass nginx die Bibliotheken aus `node_modules` ausliefert und die Verzeichnisse darunter im Image liegen, die die Assets nennen, und speichert ein eigenes Website Theme.
 
 ## [16.60.0-13] - 2026-11-24
 

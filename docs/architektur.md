@@ -100,7 +100,7 @@ Was dadurch nicht mehr geht:
 - **Bundles von Frappe Studio.** Veröffentlicht man eine App aus Frappe Studio, baut Frappe ihr Bundle mit yarn und vite aus `frappe/studio/frontend`; diese Pakete fehlen, und der Build der Studio-App scheitert mit einem Eintrag im Fehlerprotokoll. Der Lauf nach `bench migrate` baut nur bereits veröffentlichte Studio-Apps neu und meldet Fehler nur.
 - **Bibliotheken unter `/assets/<app>/node_modules`, die nirgends wörtlich stehen.** Behalten wird nur, was die Assets oder Quellen einer App als Pfad nennen. Setzt eigener Code den Pfad erst zur Laufzeit zusammen oder steht er nur in der Datenbank, etwa in einem Client Script, einer Web Page oder einem Print Format, antwortet nginx darauf mit 404.
 
-Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` der Apps, ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen, und speichert ein eigenes Website Theme.
+Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` der Apps, ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen, prüft jedes Verzeichnis unter `node_modules`, das sie nennen, und speichert ein eigenes Website Theme.
 
 ## Woher das Deutsche kommt
 
