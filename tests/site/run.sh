@@ -188,6 +188,28 @@ login=$("${compose[@]}" exec -T backend curl -fsS -H "Host: $SITE" http://localh
 grep -qi '<html' <<<"$login" || fail "the login page of the backend is no HTML"
 echo "the login page is HTML"
 
+# Engine.IO answers the opening request of a client with its session before any authentication.
+step "socketio: node socketio.js on the Node.js packages left after the build"
+"${compose[@]}" up --detach --no-deps socketio
+handshake=$(wait_for socketio "http://localhost:9000/socket.io/?EIO=4&transport=polling" -H "Host: $SITE")
+echo "$handshake"
+[[ "$handshake" == '0{"sid":'* ]] || fail "Socket.IO answered the handshake with $handshake"
+
+# Socket.IO loads <app>/realtime/handlers.js only for an authenticated connection, inside a try/catch that merely
+# warns, so a handler that lost a package would fail silently; loading each one directly fails loudly instead.
+step "socketio: the realtime handlers of every app load"
+# shellcheck disable=SC2016 # expanded by the shell inside the container
+docker run --rm --quiet --entrypoint sh --workdir /home/frappe/frappe-bench/apps "$image" -c '
+	found=0
+	for handlers in */realtime/handlers.js; do
+		[ -f "$handlers" ] || continue
+		found=1
+		node -e "require(process.argv[1])" "$PWD/$handlers" || exit 1
+		echo "$handlers loads"
+	done
+	[ "$found" = 1 ] || echo "no app has realtime handlers"
+' || fail "the realtime handlers of an app do not load"
+
 step "frontend: nginx in front of the backend"
 "${compose[@]}" up --detach --no-deps frontend
 pong=$(wait_for frontend http://localhost:8080/api/method/ping -H "Host: $SITE")
@@ -197,3 +219,51 @@ bundle=$("${compose[@]}" exec -T frontend jq -r '[.[]][0]' /home/frappe/frappe-b
 "${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$bundle" ||
 	fail "nginx does not serve the asset $bundle"
 echo "nginx serves $bundle"
+handshake=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" \
+	"http://localhost:8080/socket.io/?EIO=4&transport=polling")
+[[ "$handshake" == '0{"sid":'* ]] || fail "nginx does not pass /socket.io/ to Socket.IO: $handshake"
+echo "nginx passes /socket.io/ to Socket.IO"
+
+# The desk loads some libraries at run time from node_modules, such as qz-tray for printing; the build stage
+# keeps exactly those, so every such path in the built bundles has to answer.
+step "frontend: the libraries the browser loads from node_modules"
+# The character class leaves out the quotes, backticks, $, { and } of template literals, which name no file.
+# shellcheck disable=SC2016 # $ is a literal character of the pattern
+mapfile -t libraries < <("${compose[@]}" exec -T frontend sh -c \
+	'grep -rhoE "/?assets/[a-z0-9_]+/node_modules/[^\"'"'"' )\`\${},]+\.(js|css)" /home/frappe/frappe-bench/assets/*/dist' |
+	sed 's#^/*#/#' | sort -u)
+[[ ${#libraries[@]} -gt 0 ]] || fail "the built bundles name no library under node_modules; the search has gone stale"
+for library in "${libraries[@]}"; do
+	"${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$library" ||
+		fail "nginx does not serve $library"
+	echo "nginx serves $library"
+done
+
+# Some bundles name only a directory and add the file at run time, such as ace-builds for the code editor and
+# occt-import-js for 3D models, so the file search above misses them; each named directory has to be there.
+# shellcheck disable=SC2016 # $ is a literal character of the pattern
+mapfile -t directories < <("${compose[@]}" exec -T frontend sh -c \
+	'grep -rhoE "/?assets/[a-z0-9_]+/node_modules/[^\"'"'"' )\`\${},]+/" /home/frappe/frappe-bench/assets/*/dist' |
+	sed 's#^/*#/#' | sort -u)
+[[ ${#directories[@]} -gt 0 ]] || fail "the built bundles name no directory under node_modules; the search has gone stale"
+for directory in "${directories[@]}"; do
+	"${compose[@]}" exec -T frontend test -d "/home/frappe/frappe-bench$directory" ||
+		fail "the image lacks $directory"
+	echo "the image has $directory"
+done
+
+# Saving a Website Theme compiles its SCSS with node generate_bootstrap_theme.js, which needs sass and the
+# packages the SCSS of the apps imports, such as Bootstrap; the build stage keeps them for this. The custom SCSS
+# uses $primary, a variable of Bootstrap, so the stylesheet only compiles when the import of Bootstrap works.
+step "Website Theme: a custom theme compiles and nginx serves it"
+# shellcheck disable=SC2016 # $primary is SCSS, not a shell variable
+theme=$(bench_output --site "$SITE" execute frappe.client.insert \
+	--args '[{"doctype": "Website Theme", "theme": "Site Test", "custom": 1,
+		"custom_scss": ".site-test { color: $primary; }"}]' 2>&1) ||
+	fail "saving a Website Theme raised an error: $theme"
+theme_url=$(tail -n 1 <<<"$theme" | jq -r '.theme_url // empty')
+[[ "$theme_url" == /files/website_theme/*.css ]] || fail "the Website Theme has no compiled stylesheet: $theme"
+stylesheet=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" "http://localhost:8080$theme_url") ||
+	fail "nginx does not serve $theme_url"
+[[ "$stylesheet" == *".site-test{color:"* ]] || fail "the stylesheet $theme_url lacks the rule of the custom SCSS"
+echo "nginx serves $theme_url with the custom SCSS compiled against Bootstrap"

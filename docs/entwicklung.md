@@ -12,6 +12,7 @@ erpnext_germanized/            Repository
 ├── germanized/                Werkzeuge in Python, nur Standardbibliothek, python -m germanized
 │   ├── apps.py                apps.json lesen und gegen die Regeln des Images prüfen
 │   ├── containerfile.py       Pins aus den Vorgaben der ARGs und das erste FROM des Containerfile mit Digest lesen
+│   ├── node_modules.py        Node.js-Pakete einer Bench auf das kürzen, was nach dem Build noch geladen wird
 │   ├── tags.py                Image-Tags aus Git-Ref, Commit und vorhandenen Releases, Prüfung der Release-Tags
 │   ├── versions.py            neueste Releases auf GitHub nachsehen, Pins anheben und schreiben
 │   ├── readme.py              Tabelle „Enthaltene Apps“ im README prüfen und ihre Versionen setzen
@@ -64,6 +65,7 @@ Alle Befehle laufen im Wurzelverzeichnis des Repositories und lesen `apps.json`,
 | `python -m germanized bump [--write]` | zeigt, welche Pins sich anheben lassen; mit `--write` schreibt es `apps.json` und `FRAPPE_BRANCH` im `Containerfile` |
 | `python -m germanized readme --check` | prüft die Tabelle „Enthaltene Apps“ im README gegen die Pins |
 | `python -m germanized readme --write` | setzt die Spalte Version dieser Tabelle auf die Pins |
+| `python -m germanized prune-node-modules BENCH` | entfernt die Node.js-Pakete einer Bench, die nach dem Build niemand lädt; läuft im Build in der Stufe `builder`, siehe [Architektur](architektur.md#nodejs-pakete-nach-dem-build) |
 
 `check-versions` und `bump` fragen die API von GitHub ab. Ohne Token lässt GitHub nur 60 Anfragen in der Stunde zu; ist die Umgebungsvariable `GITHUB_TOKEN` gesetzt, schicken die Werkzeuge das Token mit.
 
@@ -121,7 +123,11 @@ Kein bestehender Test wird abgeschwächt, übersprungen oder gelöscht, um grün
 3. MariaDB 11.8 und Redis starten aus `tests/site/compose.yaml`.
 4. In einem Container des Images legt `bench new-site` die Site `test.localhost` mit allen Apps an, und `bench --site test.localhost list-apps` nennt jede davon.
 5. gunicorn, der Standardbefehl des Images, beantwortet `/api/method/ping` mit `pong` und liefert die Anmeldeseite als HTML.
-6. nginx vor dem Backend beantwortet den Ping ebenfalls und liefert die Assets aus.
+6. Der Socket.IO-Server, `node apps/frappe/socketio.js`, startet mit den Node.js-Paketen, die nach dem Build übrig sind, und beantwortet den Handshake von Engine.IO.
+7. Jede `<app>/realtime/handlers.js` im Image lädt mit `node`. Socket.IO lädt sie erst bei einer angemeldeten Verbindung und warnt bei einem Fehler nur.
+8. nginx vor dem Backend beantwortet den Ping ebenfalls, liefert die Assets aus und leitet `/socket.io/` an den Socket.IO-Server weiter.
+9. nginx liefert jede Bibliothek, die die gebauten Assets unter `assets/<app>/node_modules` nennen, und jedes Verzeichnis, das sie dort nennen, liegt im Image, etwa `ace-builds/src-noconflict/` für den Code-Editor.
+10. Ein eigenes Website Theme lässt sich speichern: Frappe übersetzt sein SCSS mit `node generate_bootstrap_theme.js`, und nginx liefert das Ergebnis als `text/css` aus.
 
 Zum Schluss entfernt das Skript alle Container und Volumes. Nach 20 Minuten bricht es ab. Die Passwörter der Testsite stehen nur in `tests/site/compose.yaml` und gelten nur für diese Wegwerf-Site.
 

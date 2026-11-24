@@ -1,5 +1,5 @@
 # Services of tests/site/run.sh: MariaDB and Redis for the test site, and the image under test as one-off
-# bench containers, gunicorn backend and nginx frontend that share the sites volume.
+# bench containers, gunicorn backend, Socket.IO server and nginx frontend that share the sites volume.
 # The passwords exist only for this throwaway site.
 name: erpnext-germanized-site-test
 
@@ -49,13 +49,18 @@ services:
   backend:
     <<: *image-under-test
 
+  # The Socket.IO server runs on the Node.js packages that are left after the build stage removed the rest.
+  socketio:
+    <<: *image-under-test
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+
   frontend:
     <<: *image-under-test
     command: ["nginx-entrypoint.sh"]
     environment:
       BACKEND: backend:8000
-      # nginx resolves every upstream at start; the test does not use Socket.IO, so the backend stands in.
-      SOCKETIO: backend:9000
+      # nginx resolves every upstream at start, so socketio runs before the frontend starts.
+      SOCKETIO: socketio:9000
 
 volumes:
   sites:
