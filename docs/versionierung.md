@@ -64,12 +64,13 @@ Im Helm-Chart von Frappe entsprechend `image.tag: "16.60.0-1"`. Noch strenger is
 docker buildx imagetools inspect ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1
 ```
 
-Die Ausgabe nennt unter `Digest` den Wert für `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1@sha256:<digest>`. Bei Releases nach 16.60.0-12 ist das der Digest des Index: Er gilt für beide Plattformen, und für ihn legt die CI die Herkunftsangabe ab. Die Digests unter `Manifests` gelten je einer Plattform.
+Die Ausgabe nennt unter `Digest` den Wert für `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1@sha256:<digest>`. Bei Releases nach 16.60.0-12 ist das der Digest des Index, der für beide Plattformen gilt; die Digests unter `Manifests` gelten je einer Plattform.
 
-Woher ein veröffentlichtes Image kommt, prüft `gh attestation verify` gegen die Herkunftsangabe (Build Provenance), die die CI dazu ablegt:
+Woher ein veröffentlichtes Image kommt, prüft `gh attestation verify` gegen die Herkunftsangabe (Build Provenance), die die CI dazu ablegt. Bei Releases nach 16.60.0-12 nennt sie den Index und die Images beider Plattformen, die Prüfung geht also mit dem Tag wie mit dem Digest einer Plattform:
 
 ```bash
 gh attestation verify oci://ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-1 --repo encircle360-oss/erpnext_germanized
+gh attestation verify oci://ghcr.io/encircle360-oss/erpnext_germanized@sha256:<digest> --repo encircle360-oss/erpnext_germanized
 ```
 
 Ein Update ist dann ein bewusster Wechsel auf ein neues volles Tag, gefolgt von `bench migrate`.
