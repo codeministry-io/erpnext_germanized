@@ -49,7 +49,7 @@ Für Deutschland bringt HRMS keinen eigenen Teil mit; `hrms/regional` enthält n
 
 ## erpnext_germany
 
-- **Repository:** [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) von der ALYF GmbH, Lizenz GPL-3.0
+- **Repository:** [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) von der ALYF GmbH, Lizenz GPL-3.0; im Image vorübergehend aus dem Fork [encircle360-oss/erpnext_germany](https://github.com/encircle360-oss/erpnext_germany), siehe unten
 - **Name in bench:** `erpnext_germany`
 
 Die App sammelt regionale Anpassungen für Deutschland:
@@ -65,6 +65,8 @@ Die App sammelt regionale Anpassungen für Deutschland:
 - **GDPdU-Export** für die Übergabe von Daten an das Finanzamt nach § 147 Abs. 6 AO und den GoBD: je DocType eine CSV-Datei, auf Wunsch mit den Anhängen, dazu `index.xml` und die DTD, als ZIP-Datei am Export. Welche DocTypes dazugehören, entscheidet die App nicht, das klärt die Firma mit ihrer Steuerberatung.
 
 Die DTD `gdpdu-01-03-2019.dtd` gehört nicht zur App, sie ist von der CaseWare Germany GmbH und liegt unverändert bei. Mehr steht im [README von erpnext_germany](https://github.com/alyf-de/erpnext_germany/blob/v16.2.2/README.md).
+
+**Fork.** In v16.2.2 schlägt der geplante Job der Prüfung der USt-IdNr. fehl und wird alle paar Minuten wiederholt. Die Korrektur steht als [alyf-de/erpnext_germany#148](https://github.com/alyf-de/erpnext_germany/pull/148) beim Projekt. Bis ein Release sie enthält, baut das Image die App aus dem Tag `v16.2.2-encircle360.5` des Forks: v16.2.2 mit dieser Korrektur und sonst unverändert. Sobald ein Release die Korrektur enthält, zeigt `apps.json` wieder auf alyf-de/erpnext_germany mit dessen Release-Tag.
 
 ## erpnext_datev
 
@@ -124,6 +126,25 @@ Die App holt Kontoauszüge als Banktransaktionen (Bank Transaction) in ERPNext u
 
 Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
 
+## Briefbote
+
+- **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
+- **Name in bench:** `briefbote`
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.0/docs) im Repository
+
+Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/roadmap.md).
+
+**Status: in Entwicklung, noch nicht einsatzfähig.**
+
+Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/einrichtung.md).
+
+Im Image:
+
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium gleich; es gilt der Generator der Druckeinstellungen. Der Site-Test druckt jedes Format mit beiden.
+- **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
+
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/haftungsausschluss.md).
+
 ## Steuerbote
 
 - **Repository:** [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote), Lizenz AGPL-3.0-or-later
@@ -150,6 +171,8 @@ Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github
 - **banking und erpnext_germany:** erpnext_germany ergänzt die Eingangsrechnung um „Dienstreise“, „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“. Das letzte Feld markiert eine Rechnung, die ein Mitarbeiter vorgestreckt hat, mit oder ohne Dienstreise. Sind „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“ gesetzt, geht ein SEPA-Zahlungsauftrag dazu an den Mitarbeiter statt an den Lieferanten; banking zeigt dann statt „Lieferanten-Bankkonto“ das Feld „Mitarbeiter-Bankkonto“.
 - **banking und HRMS:** Banktransaktionen lassen sich gegen offene Spesenabrechnungen abgleichen, und aus einer genehmigten Spesenabrechnung entsteht direkt ein SEPA-Zahlungsauftrag.
 - **ERPNext und Steuerbote:** Die Vorgaben von Steuerbote für SKR03 und SKR04 kennen die Kontonummern der SKR-Vorlagen von ERPNext.
+- **Briefbote und erpnext_germany:** Briefbote nimmt die Registerangaben des Unternehmens aus erpnext_germany, wenn die Einstellungen Geschäftspost keine haben, und den Grund einer Steuerbefreiung aus dem Feld `tax_exemption_reason` der Ausgangsrechnung, wenn der Steuerfall keinen nennt.
+- **Briefbote, eu_einvoice und erpnext_pdf-on-submit:** eu_einvoice bettet sein XML auch in das PDF eines Druckformats von Briefbote ein, wenn es über den PDF-Download entsteht. PDF on Submit hängt beim Buchen ein PDF mit dem Druckformat seiner Einstellungen an; mit „Rechnung“ entsteht so das PDF, das aufbewahrt wird.
 
 ## Nicht im Image
 

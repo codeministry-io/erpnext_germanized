@@ -25,7 +25,7 @@
 # The recipe itself, the repository erpnext_germanized, is Apache-2.0, apart from this Containerfile, which
 # stays MIT like its upstream. The label org.opencontainers.image.licenses joins that license with those of
 # the software in the image: Frappe (MIT), ERPNext, HRMS, erpnext_germany, erpnext_datev and banking
-# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later) and Steuerbote
+# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later), Steuerbote and Briefbote
 # (AGPL-3.0-or-later). The Python, Node.js and Debian packages underneath keep their own licenses.
 
 # The stages switch to the frappe user (uid 1000, gid 0) by name like the frappe images do, so the image

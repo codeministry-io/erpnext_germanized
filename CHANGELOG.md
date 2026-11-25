@@ -4,10 +4,17 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Briefbote v0.1.0, Druckformate für Geschäftsdokumente nach DIN 5008: Rechnung, Rechnungskorrektur, Stornorechnung und kaufmännische Gutschrift aus der Ausgangsrechnung, Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und Leistungsnachweis, siehe [Apps](docs/apps.md#briefbote). Briefbote kommt in `apps.json` vor Steuerbote; neue Sites bekommen es mit `--install-app briefbote` aus dem Beispiel, bestehende Sites mit `bench --site <site> install-app briefbote` nach dem Update.
+- Der Site-Test prüft, dass nginx die Icons und Logos ausliefert, die die Hooks der Apps nennen, und druckt jedes Druckformat von Briefbote mit wkhtmltopdf und mit Chromium; jedes PDF muss den Beleg nennen und seine Schriften einbetten, in der eingebetteten Schrift Inter.
+- Die Werkzeuge kennen Forks (`FORKS` in `germanized/apps.py`) mit Tags der Form `v16.2.2-encircle360.5`: `validate` und `release-check` nehmen sie an, `bump` lässt sie stehen, `check-versions` vergleicht sie mit den Releases des Originals, `readme --check` verlangt in ihrer Zeile einen Link auf das Original, und `summary` nennt sie in den Release-Notes. Eine App mit eigenen Versionsnummern darf vor ihrem ersten Release auf einen Branch zeigen; `release-check` lehnt das ab, und `bump` setzt den Branch auf das erste Release.
+
 ### Geändert
 
 - Die Labels des Images nennen Hersteller (`vendor`), Autoren (`authors`), Projektseite (`url`) und Dokumentation (`documentation`).
 - Das README fasst den Haftungsausschluss kürzer, mit Verweis auf die Abschnitte 7 und 8 der Apache License 2.0, Software Dritter, Betrieb und Datenschutz, nennt die Marken mit einem eigenen Hinweis und verweist unter „Maintainer“ auf encircle360.com.
+- erpnext_germany kommt vorübergehend aus dem Fork [encircle360-oss/erpnext_germany](https://github.com/encircle360-oss/erpnext_germany), Tag `v16.2.2-encircle360.5`: v16.2.2 mit der Korrektur aus [alyf-de/erpnext_germany#148](https://github.com/alyf-de/erpnext_germany/pull/148), ohne die der geplante Job der Prüfung der USt-IdNr. fehlschlägt und alle paar Minuten wiederholt wird. Sobald ein Release von erpnext_germany die Korrektur enthält, zeigt `apps.json` wieder auf alyf-de/erpnext_germany. Der Name in bench bleibt `erpnext_germany`; bestehende Sites brauchen nach dem Update wie immer `bench migrate`.
 
 ## [16.60.0-15] - 2026-11-25
 

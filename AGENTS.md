@@ -4,7 +4,7 @@ Der Einsatz von Coding-Agenten ist in diesem Projekt ausdrücklich erlaubt, für
 
 ## Was ein Agent wissen muss
 
-- **Projekt:** ein Rezept für ein Container-Image, keine Frappe-App. Das Image enthält Frappe und ERPNext 16, HRMS, die Apps von ALYF und Steuerbote und entsteht aus `apps.json` mit dem `Containerfile` aus frappe_docker v4.2.0.
+- **Projekt:** ein Rezept für ein Container-Image, keine Frappe-App. Das Image enthält Frappe und ERPNext 16, HRMS, die Apps von ALYF, Steuerbote und Briefbote und entsteht aus `apps.json` mit dem `Containerfile` aus frappe_docker v4.2.0.
 - **Struktur:** `apps.json` listet die Apps mit ihren Tags, `Containerfile` ist das Rezept, `build.sh` baut lokal. `germanized/` enthält die Werkzeuge (Python 3.14, nur Standardbibliothek, Tabs, `ruff`), `tests/` ihre Tests mit `pytest` und 100 % Abdeckung, `tests/site/` den Site-Test des Images. Die Workflows liegen unter `.github/workflows/`, die gemeinsamen Schritte der Image-Jobs (Build, Site-Test, Scan) als Composite-Action unter `.github/actions/build-and-test/`, die Dokumentation unter `docs/`.
 - **Sprache:** Code, Kommentare, Meldungen, Namen von Workflow-Schritten und Commit-Nachrichten englisch. Dokumentation, Issues und Pull Requests deutsch.
 - **Quellen:** Aussagen über eine App stammen aus ihrem README und ihrer Dokumentation zum gepinnten Tag, Optionen von bench aus dem Quelltext von Frappe 16. Was dort nicht steht, wird nicht aus dem Gedächtnis ergänzt, sondern nachgeschlagen und belegt.
@@ -17,7 +17,7 @@ Der Einsatz von Coding-Agenten ist in diesem Projekt ausdrücklich erlaubt, für
 4. **Alles gepinnt.** Actions per Commit-SHA mit der Version als Kommentar, Apps per Release-Tag, Images per Tag, Entwicklungswerkzeuge exakt. Jeder Pin wird an seiner Quelle geprüft, etwa am Tag auf GitHub, nicht geraten.
 5. **Ein Pull Request, ein Thema.** Dokumentation und Changelog im selben Pull Request. Kleine Schritte.
 6. **Nichts Ungeprüftes nach `main`.** Die CI muss grün sein, und ein Maintainer prüft vor dem Merge. Neue Apps, neue Hauptversionen und Änderungen am Rezept brauchen dieses Review immer.
-7. **Upstream zuerst.** Keine Patches an Apps im Image. Ein Fehler einer App wird beim Projekt gemeldet.
+7. **Upstream zuerst.** Keine Patches an Apps im Image. Ein Fehler einer App wird beim Projekt gemeldet. Wiegt er im Betrieb schwer, darf das Image die App vorübergehend aus einem Fork in `FORKS` bauen, der genau die Korrektur trägt, die beim Projekt als Pull Request liegt, bis ein Release sie enthält.
 8. **Keine neuen Abhängigkeiten ohne Grund.** Die Werkzeuge bleiben bei der Standardbibliothek. Was für die Entwicklung dazukommt, wird exakt gepinnt und begründet.
 9. **Fremder Code nur mit Herkunft und Lizenz.** Übernommene Dateien nennen ihre Quelle und behalten ihre Lizenz unter `LICENSES/`.
 10. **Prüfen, was sicher prüfbar ist:** `pre-commit run --all-files`, `pytest`, `python -m germanized validate`, `python -m germanized readme --check`, bei Änderungen am Image `./build.sh` und `./tests/site/run.sh erpnext_germanized:local`.

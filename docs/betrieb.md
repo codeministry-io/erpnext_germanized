@@ -81,6 +81,7 @@ jobs:
       - eu_einvoice
       - pdf_on_submit
       - banking
+      - briefbote
       - steuerbote
 ```
 
