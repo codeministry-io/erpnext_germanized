@@ -15,6 +15,11 @@ of the bundled apps have written their documents: `steuerbote.tests.e2e.seed.run
 - **Briefbote.** Each print format of Briefbote prints the first German document of Briefbote's proof directly with
   both generators, the way its proof does. Each PDF must hold the name of its document and set its text only in
   fonts that are embedded in the PDF: Inter wherever the settings of the company ask for the embedded font.
+- **Draft mark.** Where Briefbote's proof has a draft, its invoice prints as a draft with both generators and goes
+  through the conversion to PDF/A-3 with Ghostscript that eu_einvoice applies to every PDF of a Sales Invoice it
+  embeds its XML in. The converted PDF must still say "ENTWURF" and paint the mark across the page, on every page
+  with Chromium and on the first with wkhtmltopdf, measured with the band, grey and share of Briefbote's proof on the
+  page rendered by Ghostscript.
 - **Glyph advances.** In the PDFs of Chromium, the distance from each digit to the next digit must equal the advance
   width that the font gives the first digit at the printed size, as the PDF records it, within ADVANCE_TOLERANCE.
   Digits have no kerning, so any larger difference means the glyphs were moved, for example to whole pixels by font
@@ -27,6 +32,8 @@ import http.cookiejar
 import io
 import os
 import re
+import shutil
+import subprocess
 import sys
 import urllib.parse
 import urllib.request
@@ -173,7 +180,12 @@ def briefbote_cases() -> list:
 	cases = []
 	for print_format in sorted(formats):
 		case = next(
-			(case for case in CASES if case.print_format == print_format and case.language == "de"), None
+			(
+				case
+				for case in CASES
+				if case.print_format == print_format and case.language == "de" and plain(case)
+			),
+			None,
 		)
 		if case is None:
 			raise AssertionError(
@@ -191,7 +203,11 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 	from briefbote.tests.print_proof import CASES, render
 
 	system_font = next(
-		(case for case in CASES if case.language == "de" and not theme.embeds(company_font(case, printing))),
+		(
+			case
+			for case in CASES
+			if case.language == "de" and plain(case) and not theme.embeds(company_font(case, printing))
+		),
 		None,
 	)
 	for case in [*briefbote_cases(), *([system_font] if system_font else [])]:
@@ -208,6 +224,81 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 				return line
 
 			yield f"briefbote: {case.print_format}, {case.name}, {engine}", check
+	draft = next(
+		(case for case in CASES if getattr(case, "docstatus", None) == 0 and case.language == "de"), None
+	)
+	if draft:
+		for engine in ENGINES:
+			yield (
+				f"briefbote: {draft.print_format}, {draft.name} as draft, {engine}, PDF/A",
+				lambda engine=engine: draft_mark(draft, engine, render),
+			)
+
+
+def plain(case) -> bool:
+	"""A case of Briefbote's proof that prints its document as stored, under the stored settings."""
+	return (
+		getattr(case, "docstatus", None) is None
+		and not getattr(case, "settings", None)
+		and not getattr(case, "variant", "")
+		and not getattr(case, "incomplete", False)
+	)
+
+
+def draft_mark(case, engine: str, render) -> str:
+	"""The mark of a draft survives the image's conversion to PDF/A-3 and is painted across its pages."""
+	from briefbote.proof import raster
+	from briefbote.tests.print_proof import MARK_BAND, MARK_GREY, MARK_SHARE
+	from eu_einvoice.european_e_invoice.einvoice import _convert_pdf_to_pdfa
+	from frappe.model.docstatus import DocStatus
+
+	frappe.db.set_single_value("Print Settings", "allow_print_for_draft", 1)
+	doc = frappe.get_doc(case.doctype, case.name)
+	doc.docstatus = DocStatus(0)
+	with print_language(case.language):
+		pdf = _convert_pdf_to_pdfa(render(doc, case.print_format, engine, own_paper=True))
+	reader = PdfReader(io.BytesIO(pdf))
+	if b"pdfaid:part" not in pdf:
+		raise AssertionError("the conversion gave no PDF/A")
+	marked = range(len(reader.pages)) if engine == "chrome" else range(1)
+	problems = []
+	for index in marked:
+		if "ENTWURF" not in reader.pages[index].extract_text():
+			problems.append(f"page {index + 1} lacks the word ENTWURF")
+		image = raster.read_pgm(page_image(pdf, index + 1), 50)
+		share = raster.share(image, MARK_BAND, *MARK_GREY)
+		if share < MARK_SHARE:
+			problems.append(f"page {index + 1}: the mark across the page is not painted ({share:.1%} grey)")
+	if problems:
+		raise AssertionError("; ".join(problems))
+	return f"{len(reader.pages)} pages as PDF/A, the mark on {len(marked)} of them"
+
+
+def page_image(pdf: bytes, number: int) -> bytes:
+	"""One page of a PDF as a greyscale PGM at 50 dpi, rendered by the Ghostscript of the image."""
+	gs = shutil.which("gs") or "gs"
+	return subprocess.run(  # noqa: S603 - the Ghostscript of the image on a PDF this test printed
+		[
+			gs,
+			"-q",
+			"-sstdout=%stderr",
+			"-dBATCH",
+			"-dNOPAUSE",
+			"-dSAFER",
+			"-sDEVICE=pgmraw",
+			"-r50",
+			"-dTextAlphaBits=4",
+			"-dGraphicsAlphaBits=4",
+			f"-dFirstPage={number}",
+			f"-dLastPage={number}",
+			"-sOutputFile=-",
+			"-",
+		],
+		input=pdf,
+		capture_output=True,
+		check=True,
+		timeout=120,
+	).stdout
 
 
 def company_font(case, printing) -> str | None:
