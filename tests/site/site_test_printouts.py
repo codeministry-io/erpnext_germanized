@@ -4,7 +4,7 @@
 
 with this directory on PYTHONPATH, run in a container of the image on the network of the site test, after the seeds
 of the bundled apps have written their documents: `steuerbote.tests.e2e.seed.run` and
-`briefbote.tests.print_documents.run`. `<url>` is the site as its users reach it, such as http://test.localhost.
+`briefbote.tests.print_documents.run` with its siblings for sales, dunning, payment and purchase. `<url>` is the site as its users reach it, such as http://test.localhost.
 
 - **Download.** One document of ERPNext's own print format of the Sales Invoice, one of each print format of Briefbote
   and one of each print format of Steuerbote are downloaded through nginx as a logged-in user, with wkhtmltopdf and
@@ -29,6 +29,7 @@ Every check runs, and the test fails at the end when one of them failed.
 """
 
 import http.cookiejar
+import importlib
 import io
 import os
 import re
@@ -46,6 +47,15 @@ from pypdf import PdfReader
 from pypdf.generic import ArrayObject, DictionaryObject
 
 ENGINES = ("wkhtmltopdf", "chrome")
+# The modules of Briefbote's proof with the cases of its print formats: invoices, then sales, dunning, payment and
+# purchase, which Briefbote has from v0.2.0 on.
+BRIEFBOTE_PROOFS = (
+	"print_proof",
+	"print_proof_sales",
+	"print_proof_dunning",
+	"print_proof_payment",
+	"print_proof_purchase",
+)
 # The apps whose print formats promise the same pages with both generators.
 SAME_PAGES = frozenset({"briefbote", "steuerbote"})
 EMBEDDED_FONT = "Inter"
@@ -123,7 +133,8 @@ def samples() -> list[Sample]:
 	) or frappe.get_all("Sales Invoice", order_by="creation", limit=1, pluck="name")
 	if not invoice:
 		raise AssertionError("the site has no Sales Invoice to print")
-	standard = frappe.get_meta("Sales Invoice").default_print_format or "Standard"
+	# The default of the DocType itself: Briefbote's seed makes its Rechnung the default through a Property Setter.
+	standard = frappe.db.get_value("DocType", "Sales Invoice", "default_print_format") or "Standard"
 	found.append(Sample("erpnext", "Sales Invoice", invoice[0], standard))
 	if "briefbote" in installed:
 		found += [
@@ -172,8 +183,6 @@ def download(
 
 def briefbote_cases() -> list:
 	"""The first German document of Briefbote's proof for each of its print formats."""
-	from briefbote.tests.print_proof import CASES
-
 	formats = frappe.get_all("Print Format", filters={"module": "Briefbote", "disabled": 0}, pluck="name")
 	if not formats:
 		raise AssertionError("the site has no print format of the module Briefbote")
@@ -182,7 +191,7 @@ def briefbote_cases() -> list:
 		case = next(
 			(
 				case
-				for case in CASES
+				for case in briefbote_proof_cases()
 				if case.print_format == print_format and case.language == "de" and plain(case)
 			),
 			None,
@@ -200,12 +209,12 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 	the system as well, for the glyph advances."""
 	from briefbote.briefbote import printing
 	from briefbote.layout import theme
-	from briefbote.tests.print_proof import CASES, render
+	from briefbote.tests.print_proof import render
 
 	system_font = next(
 		(
 			case
-			for case in CASES
+			for case in briefbote_proof_cases()
 			if case.language == "de" and plain(case) and not theme.embeds(company_font(case, printing))
 		),
 		None,
@@ -225,7 +234,12 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 
 			yield f"briefbote: {case.print_format}, {case.name}, {engine}", check
 	draft = next(
-		(case for case in CASES if getattr(case, "docstatus", None) == 0 and case.language == "de"), None
+		(
+			case
+			for case in briefbote_proof_cases()
+			if getattr(case, "docstatus", None) == 0 and case.language == "de"
+		),
+		None,
 	)
 	if draft:
 		for engine in ENGINES:
@@ -233,6 +247,17 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 				f"briefbote: {draft.print_format}, {draft.name} as draft, {engine}, PDF/A",
 				lambda engine=engine: draft_mark(draft, engine, render),
 			)
+
+
+def briefbote_proof_cases() -> list:
+	"""The cases of every module of Briefbote's proof that the installed version has, in their order."""
+	cases = []
+	for module in BRIEFBOTE_PROOFS:
+		try:
+			cases += importlib.import_module(f"briefbote.tests.{module}").CASES
+		except ModuleNotFoundError:
+			continue
+	return cases
 
 
 def plain(case) -> bool:
