@@ -158,15 +158,15 @@ Für Einführung, Betrieb, Updates, Anpassungen oder Schulung rund um ERPNext un
 
 ## Haftungsausschluss
 
-erpnext_germanized wird „wie besehen“ („AS IS“) und ohne jede Gewährleistung bereitgestellt, weder ausdrücklich noch stillschweigend, einschließlich, aber nicht beschränkt auf die Gewährleistung der Marktgängigkeit, der Eignung für einen bestimmten Zweck und der Nichtverletzung von Rechten Dritter. Das gilt für das Image ebenso wie für Rezept, Werkzeuge und Beispiele.
+Rezept, Werkzeuge und Beispiele stehen unter der [Apache License 2.0](LICENSE) und werden ohne jede Gewährleistung bereitgestellt, „wie besehen“ (Abschnitt 7 der Lizenz). Die Maintainer, die encircle360 GmbH und alle Mitwirkenden haften nicht für Schäden aus der Nutzung, etwa Datenverlust, Ausfallzeiten, Steuernachzahlungen oder Bußgelder, soweit das Gesetz es erlaubt (Abschnitt 8 der Lizenz).
 
-erpnext_germanized ist Software, keine Steuer- oder Rechtsberatung. Mit der Nutzung erkennst du an:
+- **Software Dritter.** Das Image enthält Frappe, ERPNext, HRMS, die Apps von ALYF, Steuerbote und ihre Pakete. Für sie gelten ihre eigenen Lizenzen, Gewährleistungsausschlüsse und Hinweise, siehe [Lizenz](#lizenz); für Steuerbote etwa dessen [Haftungsausschluss](https://github.com/encircle360-oss/steuerbote#haftungsausschluss).
+- **Betrieb und Datenschutz.** Wer das Image betreibt, ist für Betrieb, Sicherungen, Updates, die Sicherheit der Installation und den Datenschutz verantwortlich.
+- **Keine Steuer- oder Rechtsberatung.** Ein grüner Site-Test zeigt, dass sich alle Apps installieren lassen, PDFs entstehen und das Backend antwortet, nicht, dass jede Funktion richtig rechnet. Lass Kontenrahmen, Steuereinstellungen und Abläufe von deiner Steuerberatung prüfen.
 
-- Du nutzt Image und Rezept auf eigenes Risiko. Für Betrieb, Sicherungen, Updates und die Sicherheit deiner Installation bist du selbst verantwortlich.
-- Die Buchhaltungs- und Steuerfunktionen kommen aus den enthaltenen Apps. Für sie gelten die Hinweise und Haftungsausschlüsse der jeweiligen Projekte, für Steuerbote etwa dessen [Haftungsausschluss](https://github.com/encircle360-oss/steuerbote#haftungsausschluss).
-- Ein grüner Site-Test zeigt, dass sich alle Apps installieren lassen, PDFs entstehen und das Backend antwortet. Er zeigt nicht, dass jede Funktion richtig rechnet. Lass Kontenrahmen, Steuereinstellungen und Abläufe von deiner Steuerberatung prüfen.
-- Die Maintainer, die encircle360 GmbH und alle Mitwirkenden haften nicht für Schäden oder Verluste jeder Art, die aus der Nutzung oder der Unmöglichkeit der Nutzung entstehen, insbesondere nicht für Datenverlust, Ausfallzeiten, Steuernachzahlungen, Zinsen, Verspätungs- oder Säumniszuschläge, Bußgelder oder die Kosten einer Nachbearbeitung. Das gilt, soweit ein Haftungsausschluss gesetzlich zulässig ist.
-- erpnext_germanized ist weder ein Angebot der Frappe Technologies Pvt. Ltd. noch der ALYF GmbH. ERPNext ist eine Marke der Frappe Technologies Pvt. Ltd., DATEV eine Marke der DATEV eG. erpnext_germanized steht mit keinem davon in Verbindung.
+### Marken
+
+ERPNext und Frappe sind Marken der Frappe Technologies Pvt. Ltd., DATEV ist eine Marke der DATEV eG. erpnext_germanized ist ein unabhängiges Projekt der encircle360 GmbH, steht mit der Frappe Technologies Pvt. Ltd., der ALYF GmbH und der DATEV eG nicht in Verbindung und wird von ihnen weder unterstützt noch empfohlen. Der Name ERPNext beschreibt hier nur, welche Software das Image enthält.
 
 Für den Einsatz mit zugesichertem Support und Reaktionszeiten sprich uns an: **hello@encircle360.com**
 
@@ -182,7 +182,7 @@ Das Label `org.opencontainers.image.licenses` des Images verbindet als SPDX-Ausd
 
 ## Maintainer
 
-erpnext_germanized wird von der **[encircle360 GmbH](https://encircle360.com)** entwickelt und gepflegt.
+erpnext_germanized wird von der **[encircle360 GmbH](https://encircle360.com/?ref=github-erpnext-germanized)** entwickelt und gepflegt, zusammen mit allen Mitwirkenden. Für Einführung, Hosting, Betrieb und Unterstützung ist die encircle360 GmbH unter [encircle360.com](https://encircle360.com/?ref=github-erpnext-germanized) erreichbar, ohne Gewähr wie unter [Haftungsausschluss](#haftungsausschluss) beschrieben.
 
 ## Credits
 

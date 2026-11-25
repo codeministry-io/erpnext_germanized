@@ -14,7 +14,8 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/encircle360-oss/erpnext_germanized"
 Repository = "https://github.com/encircle360-oss/erpnext_germanized.git"
-"Bug Reports" = "https://github.com/encircle360-oss/erpnext_germanized/issues"
+Documentation = "https://github.com/encircle360-oss/erpnext_germanized#readme"
+Issues = "https://github.com/encircle360-oss/erpnext_germanized/issues"
 
 [tool.ruff]
 line-length = 110
