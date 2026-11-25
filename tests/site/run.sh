@@ -252,6 +252,24 @@ for directory in "${directories[@]}"; do
 	echo "the image has $directory"
 done
 
+# The desk loads the icons of every app and shows its logo on the apps screen from the paths the hooks of the app
+# name, such as /assets/briefbote/images/briefbote-logo.svg; each has to answer through nginx.
+step "frontend: the icons and logos the hooks of the apps name"
+hook_values() {
+	bench_output --site "$SITE" execute frappe.get_hooks --args "[\"$1\"]" | sed -n '/^\[/p' | tail -n 1
+}
+mapfile -t images < <(
+	hook_values app_include_icons | jq -r '.[]'
+	hook_values add_to_apps_screen | jq -r '.[].logo // empty'
+)
+mapfile -t images < <(printf '%s\n' "${images[@]}" | grep '^/assets/' | sort -u)
+[[ ${#images[@]} -gt 0 ]] || fail "the hooks of the apps name no icon or logo under /assets; the search has gone stale"
+for image in "${images[@]}"; do
+	"${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$image" ||
+		fail "nginx does not serve $image"
+	echo "nginx serves $image"
+done
+
 # Saving a Website Theme compiles its SCSS with node generate_bootstrap_theme.js, which needs sass and the
 # packages the SCSS of the apps imports, such as Bootstrap; the build stage keeps them for this. The custom SCSS
 # uses $primary, a variable of Bootstrap, so the stylesheet only compiles when the import of Bootstrap works.
@@ -267,3 +285,17 @@ stylesheet=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" "http:/
 	fail "nginx does not serve $theme_url"
 [[ "$stylesheet" == *".site-test{color:"* ]] || fail "the stylesheet $theme_url lacks the rule of the custom SCSS"
 echo "nginx serves $theme_url with the custom SCSS compiled against Bootstrap"
+
+# Briefbote prints its formats with both generators of Frappe and sets them in Inter, which it embeds as a data URL
+# instead of relying on the fonts of a server. Its own proof of the printouts writes the documents they print; the
+# step comes last because those documents complete the setup of the site.
+if [[ " ${names[*]} " == *" briefbote "* ]]; then
+	step "Briefbote: every print format as PDF with wkhtmltopdf and Chromium, set in the embedded font"
+	documents=$(bench_output --site "$SITE" execute briefbote.tests.print_documents.run 2>&1) ||
+		fail "the documents of the proof of Briefbote could not be written: $documents"
+	printouts=$("${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint bench \
+		--volume "$here:/opt/site-test:ro" --env PYTHONPATH=/opt/site-test --env PYTHONDONTWRITEBYTECODE=1 \
+		bench --site "$SITE" execute site_test_briefbote.print_formats 2>&1) ||
+		fail "a print format of Briefbote failed: $printouts"
+	tail -n 1 <<<"$printouts" | jq -r '.[]'
+fi
