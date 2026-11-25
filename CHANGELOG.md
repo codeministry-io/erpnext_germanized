@@ -4,6 +4,10 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Insights v3.50.3, das Werkzeug für Auswertungen von Frappe: Abfrage-Builder, Diagramme und Dashboards über die Daten der Site, siehe [Apps](docs/apps.md#insights). Insights führt eigene Versionen und steht deshalb neben Steuerbote in den unabhängig versionierten Apps. Bestehende Sites bekommen Insights erst mit `bench --site <site> install-app insights`.
+
 ## [16.60.0-15] - 2026-11-25
 
 ### Geändert

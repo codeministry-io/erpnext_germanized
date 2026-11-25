@@ -124,6 +124,21 @@ Die App holt Kontoauszüge als Banktransaktionen (Bank Transaction) in ERPNext u
 
 Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
 
+## Insights
+
+- **Repository:** [frappe/insights](https://github.com/frappe/insights), Lizenz AGPL-3.0
+- **Name in bench:** `insights`
+- **Dokumentation:** [docs.frappe.io/insights](https://docs.frappe.io/insights)
+
+Insights wertet die Daten der Site aus, ohne dass jemand SQL schreibt: Abfragen entstehen im Abfrage-Builder mit Tabellen, Verknüpfungen, Filtern und Berechnungen, daraus Diagramme und Dashboards mit Filtern. Außer der eigenen Site kennt Insights MySQL und MariaDB, PostgreSQL, DuckDB, BigQuery sowie hochgeladene Tabellendateien als Quellen ([README v3.50.3](https://github.com/frappe/insights/blob/v3.50.3/README.md)). Insights steht im Apps-Bildschirm unter `/apps` und läuft unter `/insights`.
+
+Insights führt eigene Versionen (v3.x), nicht die von Frappe; `[tool.bench.frappe-dependencies]` in seiner `pyproject.toml` erlaubt Frappe `>=15.0.0,<18.0.0`.
+
+Im Betrieb:
+
+- **Zugriff.** Die Datenquelle der Site sieht jede Tabelle, auch Personal- und Lohndaten aus HRMS. Wer Insights öffnen darf, regeln die Rollen Insights Admin und Insights User.
+- **Hintergrundjobs.** Der Scheduler gleicht Tabellen jede Minute ab (`insights.api.data_store.sync_tables`) und schickt täglich Telemetrie (`insights.telemetry_scan.run_site_scan`), sofern die Telemetrie von Frappe eingeschaltet ist.
+
 ## Steuerbote
 
 - **Repository:** [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote), Lizenz AGPL-3.0-or-later

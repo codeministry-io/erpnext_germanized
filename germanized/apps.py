@@ -11,7 +11,9 @@ GITHUB = "https://github.com/"
 FRAPPE_URL = "https://github.com/frappe/frappe"
 ERPNEXT_URL = "https://github.com/frappe/erpnext"
 # Apps with a version line of their own instead of Frappe's major version.
-INDEPENDENTLY_VERSIONED = frozenset({"https://github.com/encircle360-oss/steuerbote"})
+INDEPENDENTLY_VERSIONED = frozenset(
+	{"https://github.com/encircle360-oss/steuerbote", "https://github.com/frappe/insights"}
+)
 
 _TAG = re.compile(r"v([0-9]+)\.([0-9]+)\.([0-9]+)")
 _REPOSITORY_URL = re.compile(r"https://github\.com/[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?/[A-Za-z0-9._-]+")

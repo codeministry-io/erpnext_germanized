@@ -28,6 +28,10 @@
     "branch": "v16.7.0"
   },
   {
+    "url": "https://github.com/frappe/insights",
+    "branch": "v3.50.3"
+  },
+  {
     "url": "https://github.com/encircle360-oss/steuerbote",
     "branch": "v0.14.0"
   }

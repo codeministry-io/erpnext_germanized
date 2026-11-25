@@ -19,6 +19,7 @@ from germanized.apps import (
 ERPNEXT = App("https://github.com/frappe/erpnext", "v16.60.0")
 HRMS = App("https://github.com/frappe/hrms", "v16.60.0")
 STEUERBOTE = App("https://github.com/encircle360-oss/steuerbote", "v0.1.1")
+INSIGHTS = App("https://github.com/frappe/insights", "v3.50.3")
 
 
 def write(path: Path, text: str) -> Path:
@@ -159,6 +160,11 @@ def test_apps_are_on_the_major_version_of_frappe():
 def test_steuerbote_keeps_its_own_version_numbers():
 	assert STEUERBOTE.url in INDEPENDENTLY_VERSIONED
 	assert validate((ERPNEXT, STEUERBOTE), "v16.60.2") == []
+
+
+def test_insights_keeps_its_own_version_numbers():
+	assert INSIGHTS.url in INDEPENDENTLY_VERSIONED
+	assert validate((ERPNEXT, INSIGHTS), "v16.60.2") == []
 
 
 def test_frappe_is_pinned_to_a_release_tag():
