@@ -49,7 +49,7 @@ Für Deutschland bringt HRMS keinen eigenen Teil mit; `hrms/regional` enthält n
 
 ## erpnext_germany
 
-- **Repository:** [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) von der ALYF GmbH, Lizenz GPL-3.0
+- **Repository:** [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) von der ALYF GmbH, Lizenz GPL-3.0; im Image vorübergehend aus dem Fork [encircle360-oss/erpnext_germany](https://github.com/encircle360-oss/erpnext_germany), siehe unten
 - **Name in bench:** `erpnext_germany`
 
 Die App sammelt regionale Anpassungen für Deutschland:
@@ -65,6 +65,8 @@ Die App sammelt regionale Anpassungen für Deutschland:
 - **GDPdU-Export** für die Übergabe von Daten an das Finanzamt nach § 147 Abs. 6 AO und den GoBD: je DocType eine CSV-Datei, auf Wunsch mit den Anhängen, dazu `index.xml` und die DTD, als ZIP-Datei am Export. Welche DocTypes dazugehören, entscheidet die App nicht, das klärt die Firma mit ihrer Steuerberatung.
 
 Die DTD `gdpdu-01-03-2019.dtd` gehört nicht zur App, sie ist von der CaseWare Germany GmbH und liegt unverändert bei. Mehr steht im [README von erpnext_germany](https://github.com/alyf-de/erpnext_germany/blob/v16.2.2/README.md).
+
+**Fork.** In v16.2.2 kommt der geplante Job der Prüfung der USt-IdNr. nicht mehr voran, sobald ein Kunde oder Lieferant eine USt-IdNr. hat, die sich nicht lesen lässt: Er bricht ab und fragt alle paar Minuten dieselben Partner erneut ab. Die Korrektur steht als [alyf-de/erpnext_germany#148](https://github.com/alyf-de/erpnext_germany/pull/148) beim Projekt. Bis ein Release sie enthält, baut das Image die App aus dem Tag `v16.2.2-encircle360.5` des Forks: v16.2.2 mit dieser Korrektur und sonst unverändert. Sobald ein Release die Korrektur enthält, zeigt `apps.json` wieder auf alyf-de/erpnext_germany mit dessen Release-Tag.
 
 ## erpnext_datev
 
@@ -139,24 +141,43 @@ Im Betrieb:
 - **Zugriff.** Die Datenquelle der Site sieht jede Tabelle, auch Personal- und Lohndaten aus HRMS. Wer Insights öffnen darf, regeln die Rollen Insights Admin und Insights User.
 - **Hintergrundjobs.** Der Scheduler gleicht Tabellen jede Minute ab (`insights.api.data_store.sync_tables`) und schickt täglich Telemetrie (`insights.telemetry_scan.run_site_scan`), sofern die Telemetrie von Frappe eingeschaltet ist.
 
+## Briefbote
+
+- **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
+- **Name in bench:** `briefbote`
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.0/docs) im Repository
+
+Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/roadmap.md).
+
+**Status: in Entwicklung, noch nicht einsatzfähig.**
+
+Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/einrichtung.md).
+
+Im Image:
+
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium gleich; es gilt der Generator der Druckeinstellungen. Der Site-Test druckt jedes Format mit beiden.
+- **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
+
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/haftungsausschluss.md).
+
 ## Steuerbote
 
 - **Repository:** [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `steuerbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/steuerbote/tree/v0.14.0/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/steuerbote/tree/v0.15.0/docs) im Repository
 
 Steuerbote bringt Steuermeldungen aus ERPNext an ELSTER: die Umsatzsteuer-Voranmeldung, die Dauerfristverlängerung mit Sondervorauszahlung und die Zusammenfassende Meldung, dazu die Jahresmeldungen, also Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung und E-Bilanz, und den Jahresabschluss mit der XBRL-Datei für die Offenlegung im Unternehmensregister. Prüfen, Testsenden und Senden über ERiC gehen nur mit `linux/amd64`, siehe unten. Die Voranmeldung rechnet es aus dem Hauptbuch und vergleicht Beleg für Beleg die gebuchte Steuer mit der Steuer, die sich aus der Bemessungsgrundlage ergibt. Die Vorgaben für SKR03 und SKR04 enthalten auch die Kontonummern der SKR-Vorlagen von ERPNext.
 
-**Status: in Entwicklung, nicht einsatzfähig.** Ohne eigene Hersteller-ID läuft jede Übermittlung über ERiC nur als Simulation. Bis dahin geht die Voranmeldung als XML-Datei und die Zusammenfassende Meldung als CSV-Datei über den Import in Mein ELSTER, siehe [Abgabe über Mein ELSTER](https://github.com/encircle360-oss/steuerbote/blob/v0.14.0/docs/abgabe-mein-elster.md) und [Zusammenfassende Meldung](https://github.com/encircle360-oss/steuerbote/blob/v0.14.0/docs/zm.md). Den Vordruck USt 1 H und die Erklärungen trägt man nach dem Druckformat in Mein ELSTER von Hand ein; eine E-Bilanz nimmt Mein ELSTER nicht an, ihre XBRL-Datei geht an die Steuerberatung.
+**Status: in Entwicklung, nicht einsatzfähig.** Ohne eigene Hersteller-ID läuft jede Übermittlung über ERiC nur als Simulation. Bis dahin geht die Voranmeldung als XML-Datei und die Zusammenfassende Meldung als CSV-Datei über den Import in Mein ELSTER, siehe [Abgabe über Mein ELSTER](https://github.com/encircle360-oss/steuerbote/blob/v0.15.0/docs/abgabe-mein-elster.md) und [Zusammenfassende Meldung](https://github.com/encircle360-oss/steuerbote/blob/v0.15.0/docs/zm.md). Den Vordruck USt 1 H und die Erklärungen trägt man nach dem Druckformat in Mein ELSTER von Hand ein; eine E-Bilanz nimmt Mein ELSTER nicht an, ihre XBRL-Datei geht an die Steuerberatung.
 
 Im Image:
 
-- **ERiC ist nicht dabei.** ERiC, die Bibliothek der Finanzverwaltung für die Übermittlung, darf nur als Teil des eigenen Produkts weitergegeben werden. Jeder Betreiber lädt ERiC für Linux x86_64 selbst aus dem ELSTER-Entwicklerbereich und richtet es in den ERiC-Einstellungen ein, siehe [ERiC](https://github.com/encircle360-oss/steuerbote/blob/v0.14.0/docs/eric.md).
+- **ERiC ist nicht dabei.** ERiC, die Bibliothek der Finanzverwaltung für die Übermittlung, darf nur als Teil des eigenen Produkts weitergegeben werden. Jeder Betreiber lädt ERiC für Linux x86_64 selbst aus dem ELSTER-Entwicklerbereich und richtet es in den ERiC-Einstellungen ein, siehe [ERiC](https://github.com/encircle360-oss/steuerbote/blob/v0.15.0/docs/eric.md).
 - **Plattform.** ERiC braucht Linux x86_64 mit glibc ab 2.28 und mindestens 5 GiB freien Speicher. Das Image für `linux/amd64` ist auf Debian trixie gebaut, das glibc 2.41 mitbringt. Im Image für `linux/arm64` ist Steuerbote installiert, ERiC läuft dort aber nicht; was ERiC braucht, also Prüfen, Testsenden und Senden an ELSTER, geht nur mit `linux/amd64`. Wer ERiC nutzt, betreibt deshalb alle Dienste aus dem Image auf `linux/amd64`, in einem Kubernetes-Cluster mit Knoten beider Plattformen per `kubernetes.io/arch: amd64` im `nodeSelector` jedes Dienstes und Jobs des Charts. Die Abgabe als XML-Datei über Mein ELSTER braucht ERiC nicht und geht auf beiden Plattformen.
 - **Ablage.** Die eingerichtete Laufzeit liegt außerhalb jeder Site in `sites/eric` der Bench, im Container also im Volume `sites`. Sie bleibt bei einem Wechsel des Images erhalten, `bench backup` sichert sie aber nicht. `steuerbote_eric_root` in `common_site_config.json` legt ein anderes Verzeichnis fest.
 - **Worker.** Die Einrichtung von ERiC sowie Prüfen, Testsenden und Senden laufen als Hintergrundjobs in der Queue `long`, im Beispiel also im Dienst `queue-long`. Das Archiv von ERiC muss deshalb in diesem Container liegen; am einfachsten im Volume `sites`, das alle Dienste teilen.
 
-Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/v0.14.0/README.md#haftungsausschluss).
+Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/v0.15.0/README.md#haftungsausschluss).
 
 ## Zusammenspiel der Apps
 
@@ -165,6 +186,8 @@ Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github
 - **banking und erpnext_germany:** erpnext_germany ergänzt die Eingangsrechnung um „Dienstreise“, „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“. Das letzte Feld markiert eine Rechnung, die ein Mitarbeiter vorgestreckt hat, mit oder ohne Dienstreise. Sind „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“ gesetzt, geht ein SEPA-Zahlungsauftrag dazu an den Mitarbeiter statt an den Lieferanten; banking zeigt dann statt „Lieferanten-Bankkonto“ das Feld „Mitarbeiter-Bankkonto“.
 - **banking und HRMS:** Banktransaktionen lassen sich gegen offene Spesenabrechnungen abgleichen, und aus einer genehmigten Spesenabrechnung entsteht direkt ein SEPA-Zahlungsauftrag.
 - **ERPNext und Steuerbote:** Die Vorgaben von Steuerbote für SKR03 und SKR04 kennen die Kontonummern der SKR-Vorlagen von ERPNext.
+- **Briefbote und erpnext_germany:** Briefbote nimmt die Registerangaben des Unternehmens aus erpnext_germany, wenn die Einstellungen Geschäftspost keine haben, und den Grund einer Steuerbefreiung aus dem Feld `tax_exemption_reason` der Ausgangsrechnung, wenn der Steuerfall keinen nennt.
+- **Briefbote, eu_einvoice und erpnext_pdf-on-submit:** eu_einvoice bettet sein XML auch in das PDF eines Druckformats von Briefbote ein, wenn es über den PDF-Download entsteht. PDF on Submit hängt beim Buchen ein PDF mit dem Druckformat seiner Einstellungen an; mit „Rechnung“ entsteht so das PDF, das aufbewahrt wird.
 
 ## Nicht im Image
 

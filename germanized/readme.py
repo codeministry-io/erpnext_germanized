@@ -3,7 +3,8 @@
 The table is the first one under the heading `## Enthaltene Apps` with the columns App, Version, Zweck and
 Lizenz. It has one row for Frappe and then one row per app in the order of apps.json. The App cell links the
 repository under its name, `[erpnext](https://github.com/frappe/erpnext)`, and the Version cell holds the
-pinned tag, `v16.60.0`. Zweck and Lizenz are written by hand and never touched by the tools.
+pinned tag, `v16.60.0`. Zweck and Lizenz are written by hand and never touched by the tools; the row of a fork
+links its upstream repository there, so that the table names where the app comes from.
 """
 
 import itertools
@@ -138,6 +139,11 @@ def check(readme_text: str, apps: Sequence[App], frappe_tag: str) -> list[str]:
 		if cells[1] != app.tag:
 			source = "the Containerfile" if app.url == FRAPPE_URL else "apps.json"
 			problems.append(f"{row.where}: {app.name} has the version {cells[1]!r}, {source} pins {app.tag}")
+		if app.upstream and not _links(row.text, app.upstream):
+			problems.append(
+				f"{row.where}: {app.name} is pinned to the fork {app.url}, "
+				f"so its row must link the upstream repository {app.upstream}"
+			)
 	missing = [app for app in expected if app.url not in listed]
 	problems += [f"README.md has no row for {app.name} ({app.url})" for app in missing]
 	if complete and not missing and listed != [app.url for app in expected]:
@@ -145,6 +151,13 @@ def check(readme_text: str, apps: Sequence[App], frappe_tag: str) -> list[str]:
 			"the rows of the app table must list frappe first and then the apps in the order of apps.json"
 		)
 	return problems
+
+
+def _links(text: str, repository: str) -> bool:
+	"""Whether a text links a repository or a page inside it, such as a pull request."""
+	return any(
+		link["url"] == repository or link["url"].startswith(repository + "/") for link in _LINK.finditer(text)
+	)
 
 
 def update(readme_text: str, apps: Sequence[App], frappe_tag: str) -> str:

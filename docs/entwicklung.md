@@ -59,10 +59,10 @@ Alle Befehle laufen im Wurzelverzeichnis des Repositories und lesen `apps.json`,
 |---|---|
 | `python -m germanized validate` | prüft `apps.json` gegen die Regeln unten |
 | `python -m germanized tags --ref REF --sha SHA [--existing TAGS]` | gibt die Image-Tags eines Git-Refs aus, durch Kommas getrennt; `--existing` nimmt die Release-Tags des Repositories, wie `git tag -l 'v*'` sie ausgibt, damit bewegliche Tags nur vorwärts gehen, siehe [Versionierung](versionierung.md#image-tags) |
-| `python -m germanized release-check --ref REF` | prüft ein Release-Tag wie `refs/tags/v16.60.0-1` gegen das Tag von ERPNext in `apps.json` |
+| `python -m germanized release-check --ref REF` | prüft ein Release-Tag wie `refs/tags/v16.60.0-1` gegen das Tag von ERPNext in `apps.json` und lehnt es ab, solange eine App auf einen Branch zeigt |
 | `python -m germanized summary [--tags a,b]` | gibt Pins, Apps und Tags eines Builds als Markdown aus, für die Zusammenfassung eines Workflow-Laufs und die Release-Notes |
-| `python -m germanized check-versions` | stellt jedem Pin das neueste Release auf seiner Hauptversion gegenüber |
-| `python -m germanized bump [--write]` | zeigt, welche Pins sich anheben lassen; mit `--write` schreibt es `apps.json` und `FRAPPE_BRANCH` im `Containerfile` |
+| `python -m germanized check-versions` | stellt jedem Pin das neueste Release auf seiner Hauptversion gegenüber, einem Fork das neueste Release des Originals |
+| `python -m germanized bump [--write]` | zeigt, welche Pins sich anheben lassen; mit `--write` schreibt es `apps.json` und `FRAPPE_BRANCH` im `Containerfile`. Einen Fork lässt es stehen, einen Branch setzt es auf das neueste Release |
 | `python -m germanized readme --check` | prüft die Tabelle „Enthaltene Apps“ im README gegen die Pins |
 | `python -m germanized readme --write` | setzt die Spalte Version dieser Tabelle auf die Pins |
 | `python -m germanized prune-node-modules BENCH` | entfernt die Node.js-Pakete einer Bench, die nach dem Build niemand lädt; läuft im Build in der Stufe `builder`, siehe [Architektur](architektur.md#nodejs-pakete-nach-dem-build) |
@@ -74,11 +74,13 @@ Regeln für `apps.json`, die `validate` prüft:
 - ein JSON-Array aus Einträgen mit genau den Schlüsseln `url` und `branch`, nicht leer,
 - `url` hat die Form `https://github.com/<owner>/<repo>`, ohne `/` am Ende und ohne `.git`,
 - keine App doppelt,
-- `branch` ist ein Release-Tag der Form `vX.Y.Z`,
+- `branch` ist ein Release-Tag der Form `vX.Y.Z`, für einen Fork aus `FORKS` in `germanized/apps.py` auch ein Tag der Form `vX.Y.Z-encircle360.N`: das Release des Originals, auf dem er aufsetzt, und ein Zähler des Forks,
+- eine App in `INDEPENDENTLY_VERSIONED` darf vor ihrem ersten Release auf einen Branch zeigen, etwa `main`, damit ein Pull Request sie schon bauen und testen kann; `validate` nennt das als Hinweis, `release-check` lehnt ein Release damit ab, und `bump --write` setzt den Branch auf das erste Release,
+- ein Fork und sein Original stehen nicht beide in `apps.json`,
 - der erste Eintrag ist `https://github.com/frappe/erpnext`,
-- jede App hat dieselbe Hauptversion wie Frappe, außer den Apps in `INDEPENDENTLY_VERSIONED` in `germanized/apps.py`, bisher nur Steuerbote.
+- jede App hat dieselbe Hauptversion wie Frappe, außer den Apps in `INDEPENDENTLY_VERSIONED` in `germanized/apps.py`, Steuerbote und Briefbote; ein Fork zählt mit der Hauptversion des Releases, auf dem er aufsetzt.
 
-Die Tabelle im README hat die Spalten `| App | Version | Zweck | Lizenz |`, zuerst eine Zeile für `[frappe](https://github.com/frappe/frappe)`, dann eine Zeile je App in der Reihenfolge von `apps.json`. In der Spalte App steht ein Link mit dem Namen des Repositories, in der Spalte Version das Tag. `readme --write` ändert nur die Spalte Version; Zweck und Lizenz werden von Hand gepflegt.
+Die Tabelle im README hat die Spalten `| App | Version | Zweck | Lizenz |`, zuerst eine Zeile für `[frappe](https://github.com/frappe/frappe)`, dann eine Zeile je App in der Reihenfolge von `apps.json`. In der Spalte App steht ein Link mit dem Namen des Repositories, in der Spalte Version das Tag. Die Zeile eines Forks verlinkt in der Spalte Zweck zusätzlich das Original oder eine Seite darin, etwa den Pull Request mit der Korrektur. `readme --write` ändert nur die Spalte Version; Zweck und Lizenz werden von Hand gepflegt.
 
 ## Tests
 
@@ -127,7 +129,9 @@ Kein bestehender Test wird abgeschwächt, übersprungen oder gelöscht, um grün
 7. Jede `<app>/realtime/handlers.js` im Image lädt mit `node`. Socket.IO lädt sie erst bei einer angemeldeten Verbindung und warnt bei einem Fehler nur.
 8. nginx vor dem Backend beantwortet den Ping ebenfalls, liefert die Assets aus und leitet `/socket.io/` an den Socket.IO-Server weiter.
 9. nginx liefert jede Bibliothek, die die gebauten Assets unter `assets/<app>/node_modules` nennen, und jedes Verzeichnis, das sie dort nennen, liegt im Image, etwa `ace-builds/src-noconflict/` für den Code-Editor.
-10. Ein eigenes Website Theme lässt sich speichern: Frappe übersetzt sein SCSS mit `node generate_bootstrap_theme.js`, und nginx liefert das Ergebnis als `text/css` aus.
+10. nginx liefert jedes Icon und Logo unter `/assets`, das die Hooks der Apps nennen (`app_include_icons`, `add_to_apps_screen`).
+11. Ein eigenes Website Theme lässt sich speichern: Frappe übersetzt sein SCSS mit `node generate_bootstrap_theme.js`, und nginx liefert das Ergebnis als `text/css` aus.
+12. Ist Briefbote im Image, schreibt `briefbote.tests.print_documents.run` die Belege des Nachweises von Briefbote, und `tests/site/site_test_briefbote.py` druckt mit jedem Druckformat von Briefbote einen davon mit wkhtmltopdf und mit Chromium. Jedes PDF muss den Namen des Belegs enthalten und alle Schriften einbetten, in Inter, wo die Einstellungen die eingebettete Schrift wählen. Der Schritt läuft zuletzt, weil diese Belege die Einrichtung der Site abschließen.
 
 Zum Schluss entfernt das Skript alle Container und Volumes. Nach 20 Minuten bricht es ab. Die Passwörter der Testsite stehen nur in `tests/site/compose.yaml` und gelten nur für diese Wegwerf-Site.
 

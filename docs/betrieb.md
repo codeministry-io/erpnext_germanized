@@ -82,6 +82,7 @@ jobs:
       - pdf_on_submit
       - banking
       - insights
+      - briefbote
       - steuerbote
 ```
 

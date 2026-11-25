@@ -8,8 +8,8 @@
     "branch": "v16.60.0"
   },
   {
-    "url": "https://github.com/alyf-de/erpnext_germany",
-    "branch": "v16.2.2"
+    "url": "https://github.com/encircle360-oss/erpnext_germany",
+    "branch": "v16.2.2-encircle360.5"
   },
   {
     "url": "https://github.com/alyf-de/erpnext_datev",
@@ -32,7 +32,11 @@
     "branch": "v3.50.3"
   },
   {
+    "url": "https://github.com/encircle360-oss/briefbote",
+    "branch": "v0.1.0"
+  },
+  {
     "url": "https://github.com/encircle360-oss/steuerbote",
-    "branch": "v0.14.0"
+    "branch": "v0.15.0"
   }
 ]

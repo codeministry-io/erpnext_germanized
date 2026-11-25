@@ -14,11 +14,12 @@ Wir bestätigen den Eingang so schnell wie möglich, in der Regel innerhalb weni
 
 ## Lücken in der enthaltenen Software
 
-Das Image enthält Software anderer Projekte: Frappe, ERPNext, HRMS, die Apps von ALYF, Steuerbote, die Python- und Node-Pakete der Apps und das Basis-Image `python:3.14-slim-trixie` mit seinen Debian-Paketen. Lücken darin bitte direkt beim jeweiligen Projekt melden:
+Das Image enthält Software anderer Projekte: Frappe, ERPNext, HRMS, die Apps von ALYF, Steuerbote, Briefbote, die Python- und Node-Pakete der Apps und das Basis-Image `python:3.14-slim-trixie` mit seinen Debian-Paketen. Lücken darin bitte direkt beim jeweiligen Projekt melden:
 
 - **Frappe, ERPNext und HRMS** über [frappe.io/security](https://frappe.io/security), wie es die Sicherheitsrichtlinien von Frappe und ERPNext vorsehen.
 - **Apps von ALYF** über das jeweilige Repository unter [github.com/alyf-de](https://github.com/alyf-de). erpnext_germany und eu_einvoice nehmen Meldungen über die private Meldefunktion von GitHub an.
 - **Steuerbote** wie in seiner [SECURITY.md](https://github.com/encircle360-oss/steuerbote/blob/main/SECURITY.md) beschrieben.
+- **Briefbote** wie in seiner [SECURITY.md](https://github.com/encircle360-oss/briefbote/blob/main/SECURITY.md) beschrieben.
 - **Debian-Pakete des Basis-Images** an das [Sicherheitsteam von Debian](https://www.debian.org/security/), **Python** an das [Python Security Response Team](https://www.python.org/dev/security/).
 
 Ist eine Korrektur veröffentlicht, wird das Image neu gebaut und als neue Revision veröffentlicht. Neue Versionen der Apps findet der wöchentliche Workflow App versions, ein neues Basis-Image schlägt Dependabot vor. Korrekturen aus Debian kommen mit jedem neuen Build ins Image; wann einer fällig ist, zeigt der wöchentliche Scan des Images `latest` für beide Plattformen.

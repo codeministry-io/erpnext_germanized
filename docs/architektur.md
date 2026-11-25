@@ -43,6 +43,10 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 | Label | Inhalt |
 |---|---|
 | `org.opencontainers.image.source` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.url` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.documentation` | `https://github.com/encircle360-oss/erpnext_germanized#readme` |
+| `org.opencontainers.image.vendor` | `encircle360 GmbH` |
+| `org.opencontainers.image.authors` | `encircle360 GmbH and contributors <oss@encircle360.com>` |
 | `org.opencontainers.image.title` | `erpnext_germanized` |
 | `org.opencontainers.image.description` | eine Zeile auf Englisch |
 | `org.opencontainers.image.licenses` | `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`: das Rezept (Apache-2.0, das `Containerfile` MIT) und die Apps im Image; Einzelheiten nennt das [README](../README.md#lizenz) |
@@ -109,7 +113,7 @@ Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` de
 
 erpnext_germanized übersetzt nichts selbst und ändert keine App. Die deutschen Teile kommen aus Frappe, ERPNext und den Apps:
 
-- **Oberfläche.** Frappe, ERPNext und HRMS bringen ihre deutsche Übersetzung als `locale/de.po` mit. Sie entsteht in der Community über [Crowdin](https://crowdin.com/project/frappe). Die Apps von ALYF haben eigene Dateien `locale/de.po`, Steuerbote `steuerbote/translations/de.csv`. Die Sprache gilt für die ganze Site in den Systemeinstellungen und kann je Benutzer abweichen.
+- **Oberfläche.** Frappe, ERPNext und HRMS bringen ihre deutsche Übersetzung als `locale/de.po` mit. Sie entsteht in der Community über [Crowdin](https://crowdin.com/project/frappe). Die Apps von ALYF haben eigene Dateien `locale/de.po`, Steuerbote `steuerbote/translations/de.csv` und Briefbote `briefbote/translations/de.csv`. Die Sprache gilt für die ganze Site in den Systemeinstellungen und kann je Benutzer abweichen.
 - **Formate.** Wählt man im Einrichtungsassistenten das Land Deutschland, übernimmt Frappe dessen Vorgaben: Datum `dd.mm.yyyy`, Uhrzeit `HH:mm`, Zahlen `#.###,##`, Währung EUR und Zeitzone Europe/Berlin (`frappe/geo/country_info.json`).
 - **Kontenrahmen und Steuervorlagen.** ERPNext bringt die Vorlagen „SKR03 mit Kontonummern“ und „SKR04 mit Kontonummern“ mit und legt beim Anlegen einer Firma mit dem Land Deutschland passende Steuervorlagen an, siehe [Apps](apps.md#erpnext).
-- **Deutsche Funktionen.** Registerangaben, USt-IdNr.-Prüfung, Summen- und Saldenliste, DATEV, E-Rechnungen, EBICS und ELSTER kommen aus den Apps erpnext_germany, erpnext_datev, eu_einvoice, banking und Steuerbote, siehe [Apps](apps.md).
+- **Deutsche Funktionen.** Registerangaben, USt-IdNr.-Prüfung, Summen- und Saldenliste, DATEV, E-Rechnungen, EBICS, ELSTER und Druckformate nach DIN 5008 kommen aus den Apps erpnext_germany, erpnext_datev, eu_einvoice, banking, Steuerbote und Briefbote, siehe [Apps](apps.md).

@@ -114,6 +114,7 @@ services:
             --install-app pdf_on_submit \
             --install-app banking \
             --install-app insights \
+            --install-app briefbote \
             --install-app steuerbote \
             --set-default "$$SITE_NAME";
         fi;

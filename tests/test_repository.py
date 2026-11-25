@@ -64,3 +64,29 @@ def test_apps_json_has_the_format_that_bump_writes(tmp_path):
 	rewritten = tmp_path / "apps.json"
 	write_apps(rewritten, load_apps(APPS_JSON))
 	assert rewritten.read_text(encoding="utf-8") == APPS_JSON.read_text(encoding="utf-8")
+
+
+def image_labels() -> dict[str, str]:
+	"""The labels of the LABEL instruction of the Containerfile, by key without the prefix of the OCI annotations."""
+	text = CONTAINERFILE.read_text(encoding="utf-8")
+	(instruction,) = re.findall(r"^LABEL ((?:.*\\\n)*.*)$", text, re.MULTILINE)
+	return {
+		key.removeprefix("org.opencontainers.image."): value
+		for key, value in re.findall(r'(\S+)="([^"]*)"', instruction)
+	}
+
+
+def test_the_labels_name_the_image_its_maker_and_where_to_read_about_it():
+	repository = "https://github.com/encircle360-oss/erpnext_germanized"
+	labels = image_labels()
+	assert {
+		key: labels.get(key) for key in ("title", "vendor", "authors", "url", "source", "documentation")
+	} == {
+		"title": "erpnext_germanized",
+		"vendor": "encircle360 GmbH",
+		"authors": "encircle360 GmbH and contributors <oss@encircle360.com>",
+		"url": repository,
+		"source": repository,
+		"documentation": f"{repository}#readme",
+	}
+	assert labels["description"].startswith("ERPNext 16 for German companies")

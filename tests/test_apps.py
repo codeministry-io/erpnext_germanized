@@ -6,13 +6,18 @@ import pytest
 
 from germanized.apps import (
 	ERPNEXT_URL,
+	FORKS,
 	FRAPPE_URL,
 	INDEPENDENTLY_VERSIONED,
 	App,
+	fork_base,
 	frappe_app,
+	is_branch,
+	is_fork_tag,
 	is_release_tag,
 	load_apps,
 	parse_tag,
+	pin_note,
 	validate,
 )
 
@@ -20,6 +25,9 @@ ERPNEXT = App("https://github.com/frappe/erpnext", "v16.60.0")
 HRMS = App("https://github.com/frappe/hrms", "v16.60.0")
 STEUERBOTE = App("https://github.com/encircle360-oss/steuerbote", "v0.1.1")
 INSIGHTS = App("https://github.com/frappe/insights", "v3.50.3")
+BRIEFBOTE = App("https://github.com/encircle360-oss/briefbote", "v0.1.0")
+GERMANY_URL = "https://github.com/alyf-de/erpnext_germany"
+GERMANY_FORK = App("https://github.com/encircle360-oss/erpnext_germany", "v16.2.2-encircle360.4")
 
 
 def write(path: Path, text: str) -> Path:
@@ -62,6 +70,51 @@ def test_release_tags_compare_by_number():
 def test_the_major_version_needs_a_release_tag():
 	with pytest.raises(ValueError, match="'version-16' is not a release tag"):
 		_ = App(ERPNEXT_URL, "version-16").major
+
+
+def test_a_fork_tag_is_an_upstream_release_with_a_counter_of_the_fork():
+	assert is_fork_tag("v16.2.2-encircle360.4")
+	assert fork_base("v16.2.2-encircle360.4") == "v16.2.2"
+	assert not is_release_tag("v16.2.2-encircle360.4")
+
+
+@pytest.mark.parametrize(
+	"tag",
+	[
+		"v16.2.2",
+		"v16.2.2-encircle360",
+		"v16.2.2-encircle360.0",
+		"v16.2.2-encircle360.01",
+		"v16.2.2-beta.1",
+		"v16.2-encircle360.1",
+		"16.2.2-encircle360.1",
+		"main",
+	],
+)
+def test_other_tags_are_no_fork_tags(tag):
+	assert not is_fork_tag(tag)
+	with pytest.raises(ValueError, match=re.escape("is not a fork tag like v16.2.2-encircle360.1")):
+		fork_base(tag)
+
+
+def test_a_fork_knows_its_upstream_and_the_major_version_of_its_base():
+	assert FORKS[GERMANY_FORK.url] == GERMANY_URL
+	assert GERMANY_FORK.upstream == GERMANY_URL
+	assert GERMANY_FORK.name == "erpnext_germany"
+	assert GERMANY_FORK.major == 16
+	assert App(GERMANY_URL, "v16.2.2").upstream is None
+
+
+@pytest.mark.parametrize("branch", ["main", "develop", "version-16", "feature/print-formats"])
+def test_branch_names(branch):
+	assert is_branch(branch)
+
+
+@pytest.mark.parametrize(
+	"branch", ["", "-main", "main branch", "main..x", "main/", "v1.0.0", "v16.2.2-encircle360.1"]
+)
+def test_tags_and_malformed_names_are_no_branches(branch):
+	assert not is_branch(branch)
 
 
 def test_load_apps_keeps_the_order_of_the_file(tmp_path):
@@ -165,6 +218,56 @@ def test_steuerbote_keeps_its_own_version_numbers():
 def test_insights_keeps_its_own_version_numbers():
 	assert INSIGHTS.url in INDEPENDENTLY_VERSIONED
 	assert validate((ERPNEXT, INSIGHTS), "v16.60.2") == []
+
+
+def test_briefbote_keeps_its_own_version_numbers():
+	assert BRIEFBOTE.url in INDEPENDENTLY_VERSIONED
+	assert validate((ERPNEXT, BRIEFBOTE), "v16.60.2") == []
+
+
+def test_an_app_with_its_own_version_numbers_may_be_pinned_to_a_branch_before_its_first_release():
+	assert validate((ERPNEXT, App(BRIEFBOTE.url, "main")), "v16.60.2") == []
+
+
+def test_an_app_with_its_own_version_numbers_needs_a_branch_name_or_a_release_tag():
+	assert validate((ERPNEXT, App(BRIEFBOTE.url, "-main")), "v16.60.2") == [
+		"https://github.com/encircle360-oss/briefbote: '-main' is not a release tag like v16.60.0"
+	]
+
+
+def test_a_fork_is_pinned_to_a_fork_tag_of_the_major_version_of_frappe():
+	assert validate((ERPNEXT, GERMANY_FORK), "v16.60.2") == []
+	assert validate((ERPNEXT, App(GERMANY_FORK.url, "v15.24.1-encircle360.1")), "v16.60.2") == [
+		"https://github.com/encircle360-oss/erpnext_germany: v15.24.1-encircle360.1 is not on major version 16 of Frappe"
+	]
+
+
+def test_a_fork_may_also_be_pinned_to_a_release_tag():
+	assert validate((ERPNEXT, App(GERMANY_FORK.url, "v16.2.2")), "v16.60.2") == []
+
+
+def test_only_a_fork_in_forks_takes_a_fork_tag():
+	assert validate((ERPNEXT, App(GERMANY_URL, "v16.2.2-encircle360.4")), "v16.60.2") == [
+		"https://github.com/alyf-de/erpnext_germany: v16.2.2-encircle360.4 is a fork tag, "
+		"but the repository is no fork in FORKS"
+	]
+
+
+def test_a_fork_and_its_upstream_are_the_same_app():
+	assert validate((ERPNEXT, App(GERMANY_URL, "v16.2.2"), GERMANY_FORK), "v16.60.2") == [
+		"https://github.com/encircle360-oss/erpnext_germany: a fork of https://github.com/alyf-de/erpnext_germany, "
+		"which apps.json lists as well"
+	]
+
+
+def test_a_pin_note_describes_a_fork_and_a_branch():
+	assert pin_note(GERMANY_FORK) == (
+		"erpnext_germany: v16.2.2-encircle360.4 of the fork encircle360-oss/erpnext_germany, "
+		"based on v16.2.2 of alyf-de/erpnext_germany"
+	)
+	assert pin_note(App(BRIEFBOTE.url, "main")) == "briefbote: the branch main, not a release"
+	assert pin_note(BRIEFBOTE) is None
+	assert pin_note(App(GERMANY_FORK.url, "v16.2.2")) is None
 
 
 def test_frappe_is_pinned_to_a_release_tag():
