@@ -4,6 +4,12 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.60.0-15] - 2026-11-25
+
+### Geändert
+
+- Steuerbote v0.14.0: Die Umsatzsteuer-Voranmeldung ordnet Ausgangsrechnungen nach ihrem Leistungsdatum dem Zeitraum zu, ein Patch setzt das als Vorgabe in vorhandenen Einstellungen, und Belege für abgegebene Zeiträume erscheinen in „Nach der Abgabe geändert“; Erwerbe und Leistungen nach § 13b UStG auf Aufwandskonten bekommen ihre Bemessungsgrundlage, § 13b-Leistungen gehen nach dem Sitz des Leistenden in Kz 46 oder Kz 84; Start mit Steuerbote im laufenden Betrieb mit dem neuen Beleg „Voranmeldung vor Steuerbote“. Nach `bench migrate` bekommt die Kontenzuordnung Umsatzsteuer die neuen Spalten über „Vorgaben aktualisieren“.
+
 ## [16.60.0-14] - 2026-11-24
 
 ### Geändert
