@@ -4,7 +4,7 @@
 
 with this directory on PYTHONPATH, run in a container of the image on the network of the site test, after the seeds
 of the bundled apps have written their documents: `steuerbote.tests.e2e.seed.run` and
-`briefbote.tests.print_documents.run`. `<url>` is the nginx in front of the site, such as http://frontend:8080.
+`briefbote.tests.print_documents.run`. `<url>` is the site as its users reach it, such as http://test.localhost.
 
 - **Download.** One document of ERPNext's own print format of the Sales Invoice, one of each print format of Briefbote
   and one of each print format of Steuerbote are downloaded through nginx as a logged-in user, with wkhtmltopdf and
@@ -124,7 +124,7 @@ def login(site: str, url: str) -> urllib.request.OpenerDirector:
 	"""An opener with the session of Administrator, whose password the bench service of the test has."""
 	opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 	body = urllib.parse.urlencode({"usr": "Administrator", "pwd": os.environ["ADMIN_PASSWORD"]}).encode()
-	request = urllib.request.Request(f"{url}/api/method/login", data=body, headers={"Host": site})  # noqa: S310 - the nginx of the site test
+	request = urllib.request.Request(f"{url}/api/method/login", data=body, headers={"Host": site})  # noqa: S310 - the site under test
 	with opener.open(request, timeout=60):
 		pass
 	return opener
