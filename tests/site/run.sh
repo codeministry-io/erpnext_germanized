@@ -286,15 +286,22 @@ stylesheet=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" "http:/
 [[ "$stylesheet" == *".site-test{color:"* ]] || fail "the stylesheet $theme_url lacks the rule of the custom SCSS"
 echo "nginx serves $theme_url with the custom SCSS compiled against Bootstrap"
 
-# Briefbote prints its formats with both generators of Frappe and sets them in Inter, which it embeds as a data URL
-# instead of relying on the fonts of a server. Its own proof of the printouts writes the documents they print; the
-# step comes last because those documents complete the setup of the site.
+# What users print: ERPNext's own format of the Sales Invoice and every format of Briefbote and Steuerbote, downloaded
+# through nginx with both generators, the way the print view does it; the formats of Briefbote also directly, with
+# their fonts and the glyph advances of Chromium measured (tests/site/site_test_printouts.py). The seeds of the apps
+# write the documents; the step comes last because they complete the setup of the site. wkhtmltopdf loads the print
+# stylesheet of Frappe from host_name, which points at nginx, as the public address of a site does.
+step "printouts: ERPNext, Briefbote and Steuerbote as PDF with wkhtmltopdf and Chromium"
+in_bench bench --site "$SITE" set-config host_name http://frontend:8080
+if [[ " ${names[*]} " == *" steuerbote "* ]]; then
+	seed=$(bench_output --site "$SITE" execute steuerbote.tests.e2e.seed.run 2>&1) ||
+		fail "the seed of Steuerbote could not be written: $seed"
+fi
 if [[ " ${names[*]} " == *" briefbote "* ]]; then
-	step "Briefbote: every print format as PDF with wkhtmltopdf and Chromium, set in the embedded font"
 	documents=$(bench_output --site "$SITE" execute briefbote.tests.print_documents.run 2>&1) ||
 		fail "the documents of the proof of Briefbote could not be written: $documents"
-	"${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint /home/frappe/frappe-bench/env/bin/python \
-		--workdir /home/frappe/frappe-bench/sites --volume "$here:/opt/site-test:ro" \
-		--env PYTHONPATH=/opt/site-test --env PYTHONDONTWRITEBYTECODE=1 \
-		bench -m site_test_briefbote "$SITE" || fail "a print format of Briefbote failed"
 fi
+"${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint /home/frappe/frappe-bench/env/bin/python \
+	--workdir /home/frappe/frappe-bench/sites --volume "$here:/opt/site-test:ro" \
+	--env PYTHONPATH=/opt/site-test --env PYTHONDONTWRITEBYTECODE=1 \
+	bench -m site_test_printouts "$SITE" http://frontend:8080 || fail "a printout failed"
