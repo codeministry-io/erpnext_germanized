@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+### Behoben
+
+- PDFs mit Chromium setzen Text ohne Font-Hinting. Bisher rundete `chromium-headless-shell` die Breite jedes Zeichens einer eingebetteten Schrift auf ganze Pixel, und die Buchstaben standen ungleichmäßig weit auseinander, bei Inter in den Formaten von Briefbote um bis zu rund 5 %. Das Image startet Chromium jetzt mit `--font-render-hinting=none`, über ein Skript am bisherigen Pfad; `chromium_path` bleibt `/usr/lib/chromium/chromium-headless-shell`, siehe [Architektur](docs/architektur.md#chromium). wkhtmltopdf ist nicht betroffen.
+
+### Geändert
+
+- Der Site-Test druckt, was Benutzer drucken: eine Ausgangsrechnung im Standard-Druckformat von ERPNext und je einen Beleg jedes Druckformats von Briefbote und Steuerbote, über nginx heruntergeladen mit wkhtmltopdf und mit Chromium, und misst in den PDFs von Chromium die Abstände der Zeichen. Bisher druckte er nur Briefbote und hätte weder die ungleichmäßigen Abstände noch den Fehler 500 der Druckformate von Steuerbote v0.15.0 mit Chromium auf Frappe v16.60.2 gefunden.
+
 ## [16.60.0-16] - 2026-11-25
 
 ### Hinzugefügt
