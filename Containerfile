@@ -15,6 +15,8 @@
 # - the wkhtmltopdf package of each architecture is checked against its SHA-256 from
 #   WKHTMLTOPDF_SHA256_AMD64 or WKHTMLTOPDF_SHA256_ARM64
 # - OCI labels
+# - a RUN of its own in the base stage starts Chromium without font hinting: the binary moves aside for a script that
+#   adds --font-render-hinting=none and the parent-death signal
 # - a RUN of its own in the builder stage removes the Node.js packages that nothing loads after the build: the
 #   node_modules of the frontends inside the apps and the build tools in node_modules of each app, among them
 #   the esbuild binaries; Socket.IO with what it requires, the libraries the browser loads from
@@ -143,6 +145,21 @@ RUN useradd -u 1000 -g 0 -d /home/frappe -ms /bin/bash frappe \
     && chmod 755 /usr/local/bin/nginx-entrypoint.sh \
     && chmod 644 /templates/nginx/frappe.conf.template
 
+# Not in frappe_docker: headless Chromium lays text out with font hinting unless told otherwise, which moves every
+# glyph of an embedded web font such as Inter to whole pixels and spaces the letters of a PDF unevenly. Frappe starts
+# the binary of chromium_path with flags of its own and takes no others, so the binary moves aside (dpkg-divert) for
+# a script at its path that adds --font-render-hinting=none. setpriv gives Chromium the parent-death signal: Frappe
+# finds the Chromium of a dead worker by the path of chromium_path, which now names the script.
+# hadolint ignore=SC2016
+RUN if [ -e /usr/lib/chromium/chromium-headless-shell ]; then \
+      dpkg-divert --quiet --local --rename --add \
+        --divert /usr/lib/chromium/chromium-headless-shell.real /usr/lib/chromium/chromium-headless-shell \
+      && printf '%s\n' '#!/bin/sh' \
+        'exec setpriv --pdeathsig KILL /usr/lib/chromium/chromium-headless-shell.real --font-render-hinting=none "$@"' \
+        > /usr/lib/chromium/chromium-headless-shell \
+      && chmod 755 /usr/lib/chromium/chromium-headless-shell; \
+    fi
+
 
 FROM base AS builder
 
@@ -181,7 +198,7 @@ RUN apt-get update \
 
 USER frappe
 
-ARG FRAPPE_BRANCH=v16.60.2
+ARG FRAPPE_BRANCH=v16.61.0
 ARG FRAPPE_PATH=https://github.com/frappe/frappe
 ARG CACHE_BUST=""
 

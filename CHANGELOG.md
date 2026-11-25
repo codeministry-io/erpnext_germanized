@@ -4,6 +4,18 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-1] - 2026-11-25
+
+### Behoben
+
+- PDFs mit Chromium setzen Text ohne Font-Hinting. Bisher rundete `chromium-headless-shell` die Breite jedes Zeichens einer eingebetteten Schrift auf ganze Pixel, und die Buchstaben standen ungleichmäßig weit auseinander: In den Formaten von Briefbote wich der Abstand zweier Ziffern um bis zu 5,11 % von der Breite ab, die die Schrift vorgibt, jetzt um 0,03 %, auf `linux/amd64` wie auf `linux/arm64`. Eine Einstellung in fontconfig wirkt darauf nicht, nur der Schalter `--font-render-hinting=none`, und Frappe nimmt keine eigenen Schalter an. Das Image legt deshalb an den Pfad von Chromium ein Skript, das das Programm mit diesem Schalter startet; `chromium_path` bleibt `/usr/lib/chromium/chromium-headless-shell`, siehe [Architektur](docs/architektur.md#chromium). Seitenzahlen der Formate von Briefbote ändern sich nicht, wkhtmltopdf ist nicht betroffen.
+- Die Druckformate von Steuerbote v0.15.0 schlugen mit dem Generator Chromium auf Frappe v16.60.2 mit Fehler 500 fehl; ab dieser Revision drucken sie, weil Frappe v16.61.0 den Fehler behebt.
+
+### Geändert
+
+- Frappe v16.61.0 und ERPNext v16.61.0; HRMS bleibt auf v16.60.0, seinem neuesten Release. Mit der neuen ERPNext-Version beginnt die Revision wieder bei 1. Frappe v16.61.0 behebt unter anderem den Fehler 500 beim Drucken mit Chromium, wenn ein Druckformat `header-spacing` als Text setzt (Commit 26a97a00). Im Wartungsmodus lässt eine Site jetzt Lesen zu und lehnt nur Änderungen ab; `bench --site <site> set-config -p allow_reads_during_maintenance 0` stellt das bisherige Verhalten wieder her, siehe [Betrieb](docs/betrieb.md#updates). Alle Änderungen nennen die Release-Notes von [Frappe](https://github.com/frappe/frappe/releases/tag/v16.61.0) und [ERPNext](https://github.com/frappe/erpnext/releases/tag/v16.61.0).
+- Der Site-Test druckt, was Benutzer drucken: Ein angemeldeter Benutzer lädt über nginx eine Ausgangsrechnung im Standard-Druckformat von ERPNext und je einen Beleg jedes Druckformats von Briefbote und Steuerbote als PDF herunter, mit wkhtmltopdf und mit Chromium. In den PDFs von Chromium misst er die Abstände zwischen Ziffern gegen die Breiten der Schrift, erlaubt sind 0,5 %. Bisher druckte er nur Briefbote und hätte weder die ungleichmäßigen Abstände noch den Fehler 500 von Steuerbote gefunden; beides zeigt er auf dem Stand von 16.60.0-16 an, siehe [Entwicklung](docs/entwicklung.md#lokaler-build-und-site-test).
+
 ## [16.60.0-16] - 2026-11-25
 
 ### Hinzugefügt

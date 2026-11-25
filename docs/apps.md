@@ -26,7 +26,7 @@ Einrichtung:
 - **Repository:** [frappe/erpnext](https://github.com/frappe/erpnext), Lizenz GPL-3.0
 - **Dokumentation:** [docs.frappe.io/erpnext](https://docs.frappe.io/erpnext/)
 
-ERPNext ist das ERP-System: Buchhaltung von der Buchung bis zu den Berichten, Auftragsabwicklung mit Verkauf, Einkauf und Lager, Fertigung, Anlagenverwaltung und Projekte mit Aufgaben und Zeiterfassung. ERPNext ist eine Marke der Frappe Technologies Pvt. Ltd., siehe deren [Logo and Trademark Policy](https://github.com/frappe/erpnext/blob/v16.60.0/TRADEMARK_POLICY.md).
+ERPNext ist das ERP-System: Buchhaltung von der Buchung bis zu den Berichten, Auftragsabwicklung mit Verkauf, Einkauf und Lager, Fertigung, Anlagenverwaltung und Projekte mit Aufgaben und Zeiterfassung. ERPNext ist eine Marke der Frappe Technologies Pvt. Ltd., siehe deren [Logo and Trademark Policy](https://github.com/frappe/erpnext/blob/v16.61.0/TRADEMARK_POLICY.md).
 
 Für Deutschland:
 

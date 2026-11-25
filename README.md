@@ -2,7 +2,7 @@
 
 ERPNext für deutsche Unternehmen als fertiges Container-Image: Frappe, ERPNext und HRMS mit den deutschen Apps von ALYF, Steuerbote und Briefbote in einem versionierten Image für die GitHub Container Registry.
 
-> **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.60.0-16` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
+> **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.61.0-1` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
 
 Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://github.com/encircle360-oss/steuerbote): Umsatzsteuer-Voranmeldung, Dauerfristverlängerung und Zusammenfassende Meldung, Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung und E-Bilanz, dazu den Jahresabschluss mit der Offenlegung für das Unternehmensregister. Die Übermittlung über ERiC geht nur mit `linux/amd64`. Steuerbote verweist in seinem README umgekehrt auf dieses Image.
 
@@ -14,7 +14,7 @@ Druckformate für Geschäftsdokumente nach DIN 5008 bringt die enthaltene App [B
 - **Deutsche Apps.** Registerangaben, Prüfung der USt-IdNr., Summen- und Saldenliste, DATEV-Export, E-Rechnungen nach XRechnung und ZUGFeRD, Bankanbindung, die Steuermeldungen an ELSTER von der Umsatzsteuer-Voranmeldung bis zur E-Bilanz und Druckformate nach DIN 5008 kommen als eigene Apps dazu, siehe [Enthaltene Apps](#enthaltene-apps).
 - **Versionen aus `apps.json`.** Jede App ist auf ein Release-Tag gepinnt, nie auf einen Branch; erpnext_germany vorübergehend auf ein Tag eines Forks, siehe unten. `apps.json` ist die einzige Liste der Apps. Das Tag von Frappe steht als Vorgabe von `FRAPPE_BRANCH` im `Containerfile`.
 - **Updates durch Tag-Wechsel.** Ein Update ist ein anderes Image-Tag und danach `bench migrate`. Sites, Dateien und Datenbank liegen in Volumes und bleiben erhalten.
-- **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site, erzeugt mit wkhtmltopdf und mit Chromium je ein PDF und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
+- **Site-Test in der CI.** Vor jeder Veröffentlichung installiert die CI alle Apps auf einer frischen Site, druckt mit wkhtmltopdf und mit Chromium die Formate von ERPNext, Briefbote und Steuerbote und prüft, dass das Backend antwortet. Ein Image, das den Test nicht besteht, wird nicht veröffentlicht.
 - **SBOM und Provenance.** Zu jedem veröffentlichten Image erzeugt die CI eine Stückliste der enthaltenen Pakete (SBOM) und eine signierte Herkunftsangabe (Build Provenance), die `gh attestation verify` prüft.
 - **`linux/amd64` und `linux/arm64`.** Releases nach 16.60.0-12 und `main` gibt es für beide Plattformen: Ihre Tags nennen einen Index mit je einem Image, und Docker wählt das passende. Die Releases bis 16.60.0-12 gibt es nur für `linux/amd64`. Die CI baut jede Plattform nativ und lässt den Site-Test auf jeder laufen. ERiC für Steuerbote gibt es nur für Linux x86_64: Prüfen, Testsenden und Senden über ERiC gehen nur mit `linux/amd64`, die Abgabe als XML-Datei über Mein ELSTER geht auch mit `linux/arm64`, siehe [Steuerbote](docs/apps.md#steuerbote).
 
@@ -24,8 +24,8 @@ Frappe ist das Framework unter allen Apps. Die Apps stehen in der Reihenfolge vo
 
 | App | Version | Zweck | Lizenz |
 |---|---|---|---|
-| [frappe](https://github.com/frappe/frappe) | v16.60.2 | Full-Stack-Webframework mit Python und MariaDB, auf dem ERPNext und alle anderen Apps laufen. | MIT |
-| [erpnext](https://github.com/frappe/erpnext) | v16.60.0 | ERP-System mit Buchhaltung, Auftragsabwicklung und Lager, Fertigung, Anlagenverwaltung und Projekten. | GPL-3.0 |
+| [frappe](https://github.com/frappe/frappe) | v16.61.0 | Full-Stack-Webframework mit Python und MariaDB, auf dem ERPNext und alle anderen Apps laufen. | MIT |
+| [erpnext](https://github.com/frappe/erpnext) | v16.61.0 | ERP-System mit Buchhaltung, Auftragsabwicklung und Lager, Fertigung, Anlagenverwaltung und Projekten. | GPL-3.0 |
 | [hrms](https://github.com/frappe/hrms) | v16.60.0 | Personal und Lohn (Frappe HR) mit Mitarbeiterverwaltung, Urlaub und Anwesenheit, Spesen, Leistungsbeurteilung und Gehaltsabrechnung. | GPL-3.0 |
 | [erpnext_germany](https://github.com/encircle360-oss/erpnext_germany) | v16.2.2-encircle360.5 | Deutsche Anpassungen wie Summen- und Saldenliste, Zusammenfassende Meldung, Registerangaben, Prüfung der USt-IdNr., Geschäftsbriefe, Dienstreisen und GDPdU-Export; vorübergehend aus einem Fork: v16.2.2 von [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) mit der Korrektur aus [#148](https://github.com/alyf-de/erpnext_germany/pull/148). | GPL-3.0 |
 | [erpnext_datev](https://github.com/alyf-de/erpnext_datev) | v16.0.2 | Schickt Belege beim Buchen per E-Mail an DATEV Unternehmen Online und exportiert Buchungen im DATEV-CSV-Format. | GPL-3.0 |
