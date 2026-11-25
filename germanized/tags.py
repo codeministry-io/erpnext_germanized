@@ -12,7 +12,7 @@ import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
-from germanized.apps import ERPNEXT_URL, App
+from germanized.apps import ERPNEXT_URL, App, is_branch
 
 IMAGE = "ghcr.io/encircle360-oss/erpnext_germanized"
 MAIN = "refs/heads/main"
@@ -80,7 +80,8 @@ def image_tags(ref: str, sha: str, existing: Iterable[str] = (), image: str = IM
 
 
 def release_check(tag: str, apps: Sequence[App]) -> list[str]:
-	"""The problems of a release tag: it must name the ERPNext version that apps.json pins."""
+	"""The problems of a release tag: it must name the ERPNext version that apps.json pins, and no app may be
+	pinned to a branch."""
 	try:
 		release = parse_release(tag)
 	except ValueError as error:
@@ -88,6 +89,15 @@ def release_check(tag: str, apps: Sequence[App]) -> list[str]:
 	erpnext = next((app for app in apps if app.url == ERPNEXT_URL), None)
 	if erpnext is None:
 		return [f"apps.json has no app {ERPNEXT_URL}"]
+	problems = []
 	if release.erpnext != erpnext.tag.removeprefix("v"):
-		return [f"the release {tag} names ERPNext {release.erpnext}, but apps.json pins {erpnext.tag}"]
-	return []
+		problems.append(
+			f"the release {tag} names ERPNext {release.erpnext}, but apps.json pins {erpnext.tag}"
+		)
+	problems += [
+		f"{app.name} is pinned to the branch {app.tag}, not to a release; "
+		"python -m germanized bump --write moves it to its newest release"
+		for app in apps
+		if is_branch(app.tag)
+	]
+	return problems

@@ -313,3 +313,89 @@ def test_the_package_runs_as_a_module(repo, monkeypatch, capsys):
 		runpy.run_module("germanized", run_name="__main__")
 	assert exit_info.value.code == 0
 	assert capsys.readouterr().out.startswith("apps.json is valid")
+
+
+FORK_AND_BRANCH = APPS_JSON.replace(
+	"\n]\n",
+	',\n  {\n    "url": "https://github.com/encircle360-oss/erpnext_germany",\n'
+	'    "branch": "v16.2.2-encircle360.4"\n  },\n'
+	'  {\n    "url": "https://github.com/encircle360-oss/briefbote",\n    "branch": "main"\n  }\n]\n',
+)
+FORK_NOTE = (
+	"erpnext_germany: v16.2.2-encircle360.4 of the fork encircle360-oss/erpnext_germany, "
+	"based on v16.2.2 of alyf-de/erpnext_germany"
+)
+
+
+@pytest.fixture
+def fork_and_branch(repo: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+	(repo / "apps.json").write_text(FORK_AND_BRANCH, encoding="utf-8")
+	releases = {
+		"frappe/frappe": [release("v16.60.2")],
+		"frappe/erpnext": [release("v16.60.0")],
+		"frappe/hrms": [release("v16.59.0")],
+		"encircle360-oss/steuerbote": [release("v0.1.1")],
+		"alyf-de/erpnext_germany": [release("v16.3.0"), release("v16.2.2")],
+		"encircle360-oss/briefbote": [release("v0.1.0")],
+	}
+	monkeypatch.setattr(urllib.request, "urlopen", FakeReleases(releases))
+	return repo
+
+
+def test_validate_notes_a_fork_and_a_branch(fork_and_branch, capsys):
+	assert main(["validate"]) == 0
+	assert capsys.readouterr().out == (
+		"apps.json is valid: 5 apps on Frappe v16.60.2\n"
+		f"note: {FORK_NOTE}\n"
+		"note: briefbote: the branch main, not a release\n"
+	)
+
+
+def test_release_check_refuses_a_branch(fork_and_branch, capsys):
+	assert main(["release-check", "--ref", "refs/tags/v16.60.0-1"]) == 1
+	assert capsys.readouterr().err == (
+		"refs/tags/v16.60.0-1 cannot be released:\n"
+		"- briefbote is pinned to the branch main, not to a release; "
+		"python -m germanized bump --write moves it to its newest release\n"
+	)
+
+
+def test_release_check_notes_a_fork(fork_and_branch, capsys):
+	(fork_and_branch / "apps.json").write_text(
+		FORK_AND_BRANCH.replace('"branch": "main"', '"branch": "v0.1.0"'), encoding="utf-8"
+	)
+	assert main(["release-check", "--ref", "refs/tags/v16.60.0-1"]) == 0
+	assert capsys.readouterr().out == (
+		f"v16.60.0-1 is a release of ERPNext v16.60.0 as apps.json pins it\nnote: {FORK_NOTE}\n"
+	)
+
+
+def test_check_versions_compares_a_fork_with_upstream_and_a_branch_with_every_release(
+	fork_and_branch, capsys
+):
+	assert main(["check-versions"]) == 0
+	out = capsys.readouterr().out
+	assert (
+		"| erpnext_germany | v16.2.2-encircle360.4 | v16.3.0 | "
+		"fork of alyf-de/erpnext_germany v16.2.2, upstream has a newer release |\n"
+		"| briefbote | main | v0.1.0 | branch, a release is available |\n"
+	) in out
+
+
+def test_bump_moves_a_branch_to_its_release_and_keeps_a_fork(fork_and_branch, capsys):
+	assert main(["bump", "--write"]) == 0
+	assert capsys.readouterr().out == (
+		"erpnext_germany: v16.2.2-encircle360.4 stays, bump never moves a fork; "
+		"check-versions compares it with alyf-de/erpnext_germany\n"
+		"briefbote: main -> v0.1.0\n"
+		"wrote apps.json\n"
+	)
+	assert (fork_and_branch / "apps.json").read_text(encoding="utf-8") == FORK_AND_BRANCH.replace(
+		'"branch": "main"', '"branch": "v0.1.0"'
+	)
+	assert main(["bump", "--write"]) == 0
+	assert capsys.readouterr().out == (
+		"erpnext_germany: v16.2.2-encircle360.4 stays, bump never moves a fork; "
+		"check-versions compares it with alyf-de/erpnext_germany\n"
+		"every pin is on the newest release of its major version\n"
+	)

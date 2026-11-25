@@ -1,7 +1,9 @@
 """Compare the pinned versions with the releases on GitHub and move the pins to the newest release.
 
-Every pin stays on its major version: Frappe and the apps that follow it on Frappe's, Steuerbote on its own.
-Moving to a new major version is a decision for a person, not for a weekly job.
+Every pin stays on its major version: Frappe and the apps that follow it on Frappe's, Steuerbote and Briefbote on
+their own. Moving to a new major version is a decision for a person, not for a weekly job. A fork stays on its fork
+tag and is compared with the releases of its upstream repository; a branch, the pin of an app before its first
+release, moves to the newest release of any major version.
 """
 
 import json
@@ -12,7 +14,16 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from germanized.apps import App, frappe_app, is_release_tag, parse_tag
+from germanized.apps import (
+	GITHUB,
+	App,
+	fork_base,
+	frappe_app,
+	is_branch,
+	is_fork_tag,
+	is_release_tag,
+	parse_tag,
+)
 from germanized.containerfile import set_arg_default
 
 GITHUB_API = "https://api.github.com/"
@@ -40,8 +51,8 @@ def fetch_github(url: str) -> bytes:
 		raise OSError(f"GET {url} failed: {error}") from error
 
 
-def latest_release(owner_repo: str, major: int, fetch: Fetch = fetch_github) -> str | None:
-	"""The newest published release of a repository on one major version, or None when there is none."""
+def latest_release(owner_repo: str, major: int | None, fetch: Fetch = fetch_github) -> str | None:
+	"""The newest published release of a repository on one major version, or on any for None; None when there is none."""
 	releases = json.loads(fetch(f"{GITHUB_API}repos/{owner_repo}/releases?per_page=30"))
 	if not isinstance(releases, list):
 		raise ValueError(f"unexpected answer from GitHub for {owner_repo}")
@@ -51,22 +62,33 @@ def latest_release(owner_repo: str, major: int, fetch: Fetch = fetch_github) -> 
 		if not release["prerelease"]
 		and not release["draft"]
 		and is_release_tag(release["tag_name"])
-		and parse_tag(release["tag_name"])[0] == major
+		and major in (None, parse_tag(release["tag_name"])[0])
 	]
 	return max(tags, key=parse_tag, default=None)
 
 
 @dataclass(frozen=True)
 class Row:
-	"""A pinned version next to the newest release on its major version."""
+	"""A pinned version next to the newest release on its major version, of the upstream repository for a fork."""
 
 	name: str
 	pinned: str
 	latest: str | None
+	upstream: str = ""
 
 	@property
 	def status(self) -> str:
 		"""Whether the pin is behind the newest release."""
+		if is_branch(self.pinned):
+			return "branch, no release yet" if self.latest is None else "branch, a release is available"
+		if self.upstream:
+			base = fork_base(self.pinned)
+			fork = f"fork of {self.upstream} {base}"
+			if self.latest is None:
+				return f"{fork}, upstream has no release on major version {parse_tag(base)[0]}"
+			if parse_tag(self.latest) > parse_tag(base):
+				return f"{fork}, upstream has a newer release"
+			return f"{fork}, the newest upstream release"
 		if self.latest is None:
 			return f"no release on major version {parse_tag(self.pinned)[0]}"
 		if parse_tag(self.latest) > parse_tag(self.pinned):
@@ -76,10 +98,16 @@ class Row:
 
 def check(apps: Sequence[App], frappe_tag: str, fetch: Fetch = fetch_github) -> list[Row]:
 	"""Frappe and every app with its pin and the newest release on the same major version."""
-	return [
-		Row(app.name, app.tag, latest_release(app.owner_repo, app.major, fetch))
-		for app in (frappe_app(frappe_tag), *apps)
-	]
+	return [_row(app, fetch) for app in (frappe_app(frappe_tag), *apps)]
+
+
+def _row(app: App, fetch: Fetch) -> Row:
+	if is_branch(app.tag):
+		return Row(app.name, app.tag, latest_release(app.owner_repo, None, fetch))
+	if is_fork_tag(app.tag) and app.upstream:
+		upstream = app.upstream.removeprefix(GITHUB)
+		return Row(app.name, app.tag, latest_release(upstream, app.major, fetch), upstream)
+	return Row(app.name, app.tag, latest_release(app.owner_repo, app.major, fetch))
 
 
 def table(rows: Sequence[Row]) -> str:
@@ -90,11 +118,18 @@ def table(rows: Sequence[Row]) -> str:
 
 
 def bump(apps: Sequence[App], frappe_tag: str, fetch: Fetch = fetch_github) -> tuple[tuple[App, ...], str]:
-	"""The apps and the Frappe tag, each moved to the newest release on its major version, never back."""
+	"""The apps and the Frappe tag, each moved to the newest release on its major version, never back.
+
+	A fork stays on its tag. A branch moves to the newest release of any major version once there is one.
+	"""
 	return tuple(App(app.url, _newest(app, fetch)) for app in apps), _newest(frappe_app(frappe_tag), fetch)
 
 
 def _newest(app: App, fetch: Fetch) -> str:
+	if is_fork_tag(app.tag):
+		return app.tag
+	if is_branch(app.tag):
+		return latest_release(app.owner_repo, None, fetch) or app.tag
 	latest = latest_release(app.owner_repo, app.major, fetch)
 	if latest is not None and parse_tag(latest) > parse_tag(app.tag):
 		return latest
