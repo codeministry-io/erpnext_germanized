@@ -130,20 +130,38 @@ Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Op
 
 - **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `briefbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.1/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.2.0/docs) im Repository
 
-Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/roadmap.md).
+Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt, zehn in v0.2.0:
 
-**Status: in Entwicklung, noch nicht einsatzfähig.**
+| Druckformat | Beleg (DocType) | Wofür |
+|---|---|---|
+| [Rechnung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/rechnung.md) | Ausgangsrechnung (Sales Invoice) | Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift, je nach Beleg |
+| [Gutschrift](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/gutschrift.md) | Eingangsrechnung (Purchase Invoice) | Gutschrift im Gutschriftsverfahren |
+| [Leistungsnachweis](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/leistungsnachweis.md) | Ausgangsrechnung (Sales Invoice) | die Stunden einer Rechnung aus ihren Stundenzetteln |
+| [Angebot](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/angebot.md) | Angebot (Quotation) | Angebot mit „Gültig bis“ und Alternativpositionen |
+| [Auftragsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/auftragsbestaetigung.md) | Kundenauftrag (Sales Order) | Bestätigung mit Liefertermin und Zahlungsbedingungen |
+| [Lieferschein](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/lieferschein.md) | Lieferschein (Delivery Note) | an die Lieferanschrift, mit Empfangsbestätigung, Preise nur nach Einstellung |
+| [Mahnung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/mahnung.md) | Mahnung (Dunning) | Zahlungserinnerung und Mahnung nach Mahnstufe, Verzugszinsen und Pauschale nur, wo sie rechtmäßig sind |
+| [Zahlungsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Bestätigung eines gebuchten Zahlungseingangs |
+| [Quittung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Quittung nach § 368 BGB mit Linien für die Unterschrift |
+| [Bestellung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/bestellung.md) | Bestellung (Purchase Order) | Bestellschein mit Lieferterminen und Lieferanschrift |
 
-Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/einrichtung.md).
+**Status: Alpha, in Entwicklung, noch nicht einsatzfähig.** Die rechtlichen Texte und Regeln von Mahnung, Zahlungsbestätigung und Quittung hat laut Briefbote noch keine Steuerberatung und keine Rechtsanwältin geprüft; diese Dokumente vor dem echten Einsatz prüfen lassen.
+
+Einrichtung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/einrichtung.md):
+
+- Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten, Steuerfällen, Basiszinssätzen, Mahnstufen und den Einstellungen des Lieferscheins.
+- **Standard-Druckformate setzt die App nicht.** Wer die Formate von Briefbote als Standard will, setzt sie je DocType über „Customize Form“ (Feld Default Print Format).
+- **Mahnarten ohne Zinsen und Gebühr.** Briefbote empfiehlt, in jeder Mahnart (Dunning Type) Zinssatz und Mahngebühr auf 0 zu setzen. Dann bucht ERPNext keine Zinsen ab Fälligkeit, und jede Mahnung erinnert an die offenen Rechnungen; Verzugszinsen und die Pauschale von 40 Euro druckt die Mahnung nur, wo sie rechtmäßig sind.
+- **Basiszinssätze.** Ein Patch trägt bei `bench migrate` die Basiszinssätze der Bundesbank in bestehende Einstellungen ein; zum 1. Januar und 1. Juli kommt der neue Satz von Hand dazu.
 
 Im Image:
 
-- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium dieselben Seiten; es gilt der Generator der Druckeinstellungen. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden und prüft das Zeichen eines Entwurfs nach der Wandlung.
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest; es gilt der Generator der Druckeinstellungen. Beide drucken dieselben Seiten, mit einer bekannten Ausnahme: Mit Chromium kann der Schlusssatz eines Dokuments allein auf einer letzten Seite stehen, wo wkhtmltopdf ihn noch unter den Summen unterbringt. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden Generatoren und prüft das Zeichen eines Entwurfs nach der Wandlung.
 - **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
 
-Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/haftungsausschluss.md).
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/haftungsausschluss.md).
 
 ## Steuerbote
 

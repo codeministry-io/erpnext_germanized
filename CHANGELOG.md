@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-3] - 2026-11-25
+
+### Geändert
+
+- [Briefbote v0.2.0](https://github.com/encircle360-oss/briefbote/releases/tag/v0.2.0): sieben neue Druckformate, „Angebot“, „Auftragsbestätigung“, „Lieferschein“, „Mahnung“ (Zahlungserinnerung und Mahnung), „Zahlungsbestätigung“, „Quittung“ und „Bestellung“, im selben Gestaltungssystem nach DIN 5008, als Entwurf mit „ENTWURF“ und storniert mit „STORNIERT“ auf jeder Seite. Die Mahnung prüft je Rechnung, seit wann Verzug besteht, und druckt Verzugszinsen und die Pauschale von 40 Euro nur, wo sie rechtmäßig sind. Neue Tabellen der Einstellungen Geschäftspost für Basiszinssätze und Mahnstufen; ein Patch trägt bei `bench migrate` die Basiszinssätze der Bundesbank ein. Briefbote setzt keine Standard-Druckformate und empfiehlt Mahnarten ohne Zinsen und Gebühr, siehe [Apps](docs/apps.md#briefbote). Briefbote ist Alpha: Die rechtlichen Texte und Regeln von Mahnung, Zahlungsbestätigung und Quittung hat noch keine Steuerberatung und keine Rechtsanwältin geprüft. Bekannte Grenze: Mit Chromium kann der Schlusssatz eines Dokuments allein auf einer letzten Seite stehen, wo wkhtmltopdf ihn noch unter den Summen unterbringt; dann unterscheidet sich die Seitenzahl um eine. Nach dem Update die Liste „Nach der Aktualisierung“ der Release-Notes abarbeiten.
+- Steuerbote v0.15.2: ausstehend, der Eintrag folgt mit dem Release.
+- Der Site-Test druckt jedes Druckformat von Briefbote, auch die neuen, mit beiden Generatoren, mit den Belegen aus den Nachweisen von Briefbote für Verkauf, Mahnwesen, Zahlungseingang und Einkauf. Die Ausgangsrechnung im Standard-Druckformat von ERPNext nimmt er jetzt aus dem DocType selbst, weil der Nachweis von Briefbote „Rechnung“ als Standard setzt.
+
 ## [16.61.0-2] - 2026-11-25
 
 ### Geändert
