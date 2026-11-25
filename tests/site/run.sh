@@ -301,6 +301,12 @@ fi
 if [[ " ${names[*]} " == *" briefbote "* ]]; then
 	documents=$(bench_output --site "$SITE" execute briefbote.tests.print_documents.run 2>&1) ||
 		fail "the documents of the proof of Briefbote could not be written: $documents"
+	# The documents of sales, dunning, payment and purchase, which Briefbote prints from v0.2.0 on.
+	for part in sales dunning payment purchase; do
+		in_bench test -f "apps/briefbote/briefbote/tests/print_documents_$part.py" || continue
+		documents=$(bench_output --site "$SITE" execute "briefbote.tests.print_documents_$part.run" 2>&1) ||
+			fail "the documents of the proof of Briefbote for $part could not be written: $documents"
+	done
 fi
 "${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint /home/frappe/frappe-bench/env/bin/python \
 	--workdir /home/frappe/frappe-bench/sites --volume "$here:/opt/site-test:ro" \
