@@ -4,6 +4,11 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+### Geändert
+
+- Die Labels des Images nennen Hersteller (`vendor`), Autoren (`authors`), Projektseite (`url`) und Dokumentation (`documentation`).
+- Das README fasst den Haftungsausschluss kürzer, mit Verweis auf die Abschnitte 7 und 8 der Apache License 2.0, Software Dritter, Betrieb und Datenschutz, nennt die Marken mit einem eigenen Hinweis und verweist unter „Maintainer“ auf encircle360.com.
+
 ## [16.60.0-15] - 2026-11-25
 
 ### Geändert
