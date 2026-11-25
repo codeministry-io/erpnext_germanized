@@ -155,7 +155,7 @@ Ein Update ist ein Wechsel des Image-Tags. Die Daten bleiben in den Volumes, `be
 
 1. **Lesen**, was sich ändert: den Abschnitt im [Changelog](../CHANGELOG.md), die Release-Notes des Releases und bei neuen Versionen von ERPNext oder den Apps deren Release-Notes.
 2. **Sichern:** `docker compose exec backend bench --site <site> backup --with-files` und die Sicherung aus dem Volume kopieren, siehe oben.
-3. **Wartungsmodus einschalten:** `docker compose exec backend bench --site <site> set-maintenance-mode on`. Die Site nimmt dann keine Anfragen an, und der Scheduler lässt sie aus.
+3. **Wartungsmodus einschalten:** `docker compose exec backend bench --site <site> set-maintenance-mode on`. Die Site lässt dann nur noch Lesen zu und lehnt Änderungen ab, und der Scheduler lässt sie aus. Soll sie gar keine Anfragen annehmen wie vor Frappe v16.61.0, setzt `bench --site <site> set-config -p allow_reads_during_maintenance 0` das (`frappe/app.py`).
 4. **Neues Tag eintragen** unter `x-erpnext` in `compose.yaml`, dann:
 
    ```bash

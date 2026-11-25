@@ -198,7 +198,7 @@ RUN apt-get update \
 
 USER frappe
 
-ARG FRAPPE_BRANCH=v16.60.2
+ARG FRAPPE_BRANCH=v16.61.0
 ARG FRAPPE_PATH=https://github.com/frappe/frappe
 ARG CACHE_BUST=""
 

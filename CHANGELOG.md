@@ -10,6 +10,7 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ### Geändert
 
+- Frappe v16.61.0 und ERPNext v16.61.0, HRMS bleibt auf v16.60.0, dem neuesten Release. Damit beginnt die Revision wieder bei 1. Frappe v16.61.0 behebt unter anderem den Fehler 500 beim Drucken mit Chromium, wenn ein Druckformat `header-spacing` als Text setzt (Commit 26a97a00), und lässt im Wartungsmodus Lesen zu, siehe [Betrieb](docs/betrieb.md#updates). Die Release-Notes von [Frappe](https://github.com/frappe/frappe/releases/tag/v16.61.0) und [ERPNext](https://github.com/frappe/erpnext/releases/tag/v16.61.0) nennen alle Änderungen.
 - Der Site-Test druckt, was Benutzer drucken: eine Ausgangsrechnung im Standard-Druckformat von ERPNext und je einen Beleg jedes Druckformats von Briefbote und Steuerbote, über nginx heruntergeladen mit wkhtmltopdf und mit Chromium, und misst in den PDFs von Chromium die Abstände der Zeichen. Bisher druckte er nur Briefbote und hätte weder die ungleichmäßigen Abstände noch den Fehler 500 der Druckformate von Steuerbote v0.15.0 mit Chromium auf Frappe v16.60.2 gefunden.
 
 ## [16.60.0-16] - 2026-11-25
