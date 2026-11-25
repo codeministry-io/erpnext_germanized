@@ -21,11 +21,11 @@
   },
   {
     "url": "https://github.com/alyf-de/erpnext_pdf-on-submit",
-    "branch": "v16.3.1"
+    "branch": "v16.4.0"
   },
   {
     "url": "https://github.com/alyf-de/banking",
-    "branch": "v16.7.0"
+    "branch": "v16.8.0"
   },
   {
     "url": "https://github.com/encircle360-oss/briefbote",
@@ -33,6 +33,6 @@
   },
   {
     "url": "https://github.com/encircle360-oss/steuerbote",
-    "branch": "v0.15.0"
+    "branch": "v0.15.1"
   }
 ]

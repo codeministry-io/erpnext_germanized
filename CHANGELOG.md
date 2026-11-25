@@ -4,6 +4,17 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-2] - 2026-11-25
+
+### Geändert
+
+- Steuerbote v0.15.1: Die Druckformate drucken auch auf älterem Frappe mit Chromium, weil das Stylesheet kein `header-spacing` mehr setzt, und mit beiden Generatoren dieselben Seiten mit Kopf, erster Zeile und Fuß an derselben Stelle; „Drucken“ in der Druckansicht druckt dasselbe PDF wie „PDF“. Die Prüfung der Steuernummer mit ERiC beim Speichern läuft jetzt tatsächlich, Korrekturen aus der Zeit vor 0.15.0 tragen „Grundlage unbekannt“ und halten ihren Beleg an, bis sie bestätigt sind, und Kz 500 zeigt den Wortlaut des Vordrucks. Für Holdings kennzeichnet Steuerbote die Konten der Anteile und hält die Körperschaftsteuererklärung bei Erträgen aus Beteiligungen ohne Kategorie an. Nach `bench migrate` sind die Schritte der Liste „Nach `bench migrate`“ in den [Release-Notes von Steuerbote v0.15.1](https://github.com/encircle360-oss/steuerbote/releases/tag/v0.15.1) zu erledigen.
+- Briefbote v0.1.1: ausstehend, der Eintrag folgt mit dem Release.
+- erpnext_pdf-on-submit v16.4.0: bettet die XML der E-Rechnung in die PDFs aller Belegarten ein, die das unterstützen, und kann das PDF in ein gewähltes Anhangfeld schreiben ([Release-Notes](https://github.com/alyf-de/erpnext_pdf-on-submit/releases/tag/v16.4.0)).
+- banking v16.8.0: zeigt EBICS-Registrierungen ohne passenden EBICS-Benutzer und lässt sie entfernen, behebt Skonto-Beträge im Bankabgleich Beta und die Registrierung von EBICS-Benutzern nach Änderungen ([Release-Notes](https://github.com/alyf-de/banking/releases/tag/v16.8.0)).
+- Der Site-Test verlangt für jeden Beleg von Briefbote und Steuerbote mit wkhtmltopdf und mit Chromium gleich viele Seiten.
+- [Betrieb](docs/betrieb.md#updates): Nach einem Update, sobald alle Dienste aus dem neuen Image laufen, `bench --site <site> clear-cache`. Während Dienste beider Images laufen, können die Namen der Asset-Bündel im gemeinsamen Cache auf die Dateien des anderen Images zeigen; der PDF-Generator auf Chromium-Basis meldet dann „Attempted Unauthorized File Access in PDF Generator“, und dem PDF fehlt das Druck-Stylesheet von Frappe. In dieser Zeit keine Belege anlegen.
+
 ## [16.61.0-1] - 2026-11-25
 
 ### Behoben
