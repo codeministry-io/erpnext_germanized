@@ -9,7 +9,9 @@ of the bundled apps have written their documents: `steuerbote.tests.e2e.seed.run
 - **Download.** One document of ERPNext's own print format of the Sales Invoice, one of each print format of Briefbote
   and one of each print format of Steuerbote are downloaded through nginx as a logged-in user, with wkhtmltopdf and
   with Chromium, the way the print view of the desk downloads them (`frappe.utils.print_format.download_pdf`, which
-  runs the hooks of the apps, such as the e-invoice of eu_einvoice). Each answer must be a PDF.
+  runs the hooks of the apps, such as the e-invoice of eu_einvoice). Each answer must be a PDF. Briefbote and
+  Steuerbote print the same pages with both generators, so a document of theirs must have as many pages with
+  Chromium as with wkhtmltopdf.
 - **Briefbote.** Each print format of Briefbote prints the first German document of Briefbote's proof directly with
   both generators, the way its proof does. Each PDF must hold the name of its document and set its text only in
   fonts that are embedded in the PDF: Inter wherever the settings of the company ask for the embedded font.
@@ -37,6 +39,8 @@ from pypdf import PdfReader
 from pypdf.generic import ArrayObject, DictionaryObject
 
 ENGINES = ("wkhtmltopdf", "chrome")
+# The apps whose print formats promise the same pages with both generators.
+SAME_PAGES = frozenset({"briefbote", "steuerbote"})
 EMBEDDED_FONT = "Inter"
 FONT_FILES = ("/FontFile", "/FontFile2", "/FontFile3")
 # Unhinted layout leaves rounding noise of about 0.05 %; hinting to whole pixels moves glyphs by several per cent.
@@ -78,15 +82,22 @@ def run(site: str, url: str) -> tuple[list[str], list[str]]:
 	failures: list[str] = []
 	opener = login(site, url)
 	for sample in samples():
+		pages: dict[str, int] = {}
 		for engine in ENGINES:
 			label = f"download {sample.app}: {sample.print_format}, {sample.name}, {engine}"
 			try:
 				pdf = download(opener, site, url, sample, engine)
 				if not pdf.startswith(b"%PDF-"):
 					raise AssertionError(f"no PDF but {pdf[:80]!r}")
-				lines.append(f"{label}: {len(PdfReader(io.BytesIO(pdf)).pages)} pages")
+				pages[engine] = len(PdfReader(io.BytesIO(pdf)).pages)
+				lines.append(f"{label}: {pages[engine]} pages")
 			except Exception as error:
 				failures.append(f"{label}: {error}")
+		if sample.app in SAME_PAGES and len(pages) == len(ENGINES) and len(set(pages.values())) > 1:
+			counts = ", ".join(f"{engine} {count}" for engine, count in pages.items())
+			failures.append(
+				f"download {sample.app}: {sample.print_format}, {sample.name}: different page counts ({counts})"
+			)
 	if "briefbote" in frappe.get_installed_apps():
 		for label, check in briefbote_checks():
 			try:
