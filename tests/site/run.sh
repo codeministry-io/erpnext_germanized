@@ -293,9 +293,8 @@ if [[ " ${names[*]} " == *" briefbote "* ]]; then
 	step "Briefbote: every print format as PDF with wkhtmltopdf and Chromium, set in the embedded font"
 	documents=$(bench_output --site "$SITE" execute briefbote.tests.print_documents.run 2>&1) ||
 		fail "the documents of the proof of Briefbote could not be written: $documents"
-	printouts=$("${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint bench \
-		--volume "$here:/opt/site-test:ro" --env PYTHONPATH=/opt/site-test --env PYTHONDONTWRITEBYTECODE=1 \
-		bench --site "$SITE" execute site_test_briefbote.print_formats 2>&1) ||
-		fail "a print format of Briefbote failed: $printouts"
-	tail -n 1 <<<"$printouts" | jq -r '.[]'
+	"${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint /home/frappe/frappe-bench/env/bin/python \
+		--workdir /home/frappe/frappe-bench/sites --volume "$here:/opt/site-test:ro" \
+		--env PYTHONPATH=/opt/site-test --env PYTHONDONTWRITEBYTECODE=1 \
+		bench -m site_test_briefbote "$SITE" || fail "a print format of Briefbote failed"
 fi

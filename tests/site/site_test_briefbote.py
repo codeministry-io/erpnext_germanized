@@ -1,6 +1,6 @@
 """The print formats of Briefbote with the PDF generators of the image, for tests/site/run.sh:
 
-	bench --site <site> execute site_test_briefbote.print_formats
+	cd sites && ../env/bin/python -m site_test_briefbote <site>
 
 with this directory on PYTHONPATH, after `bench --site <site> execute briefbote.tests.print_documents.run` has written
 the documents of Briefbote's own proof of its printouts. Every print format of the module Briefbote prints the first
@@ -10,6 +10,7 @@ settings of the company ask for the embedded font, so that a printout looks the 
 """
 
 import io
+import sys
 
 import frappe
 from briefbote.briefbote import printing
@@ -22,6 +23,18 @@ from pypdf.generic import DictionaryObject
 ENGINES = ("wkhtmltopdf", "chrome")
 EMBEDDED_FONT = "Inter"
 FONT_FILES = ("/FontFile", "/FontFile2", "/FontFile3")
+
+
+def main(site: str) -> None:
+	"""Print the formats on a site and write one line per printout. bench execute refuses a module of no installed
+	app, so the test connects to the site itself, from the sites directory as bench does."""
+	frappe.init(site=site, sites_path=".")
+	try:
+		frappe.connect()
+		lines = print_formats()
+	finally:
+		frappe.destroy()
+	sys.stdout.write("\n".join(lines) + "\n")
 
 
 def print_formats() -> list[str]:
@@ -87,3 +100,7 @@ def collect_fonts(resources, fonts: dict[str, bool], depth: int = 0) -> None:
 		xobject = xobject.get_object()
 		if xobject.get("/Subtype") == "/Form":
 			collect_fonts(xobject.get("/Resources"), fonts, depth + 1)
+
+
+if __name__ == "__main__":
+	main(sys.argv[1])
