@@ -43,6 +43,10 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 | Label | Inhalt |
 |---|---|
 | `org.opencontainers.image.source` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.url` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.documentation` | `https://github.com/encircle360-oss/erpnext_germanized#readme` |
+| `org.opencontainers.image.vendor` | `encircle360 GmbH` |
+| `org.opencontainers.image.authors` | `encircle360 GmbH and contributors <oss@encircle360.com>` |
 | `org.opencontainers.image.title` | `erpnext_germanized` |
 | `org.opencontainers.image.description` | eine Zeile auf Englisch |
 | `org.opencontainers.image.licenses` | `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`: das Rezept (Apache-2.0, das `Containerfile` MIT) und die Apps im Image; Einzelheiten nennt das [README](../README.md#lizenz) |
