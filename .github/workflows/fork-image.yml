@@ -65,8 +65,9 @@ jobs:
             echo "::error::fork/upstream-tag says $upstream, but CHANGELOG.md is at v$changelog. Merge upstream only through upstream-sync.yml (FORK.md)."
             exit 1
           fi
-          last=$(git tag -l "cm/$version-cm*" | sed 's/.*-cm//' | sort -n | tail -n 1)
-          tag="$version-cm$(( ${last:-0} + 1 ))"
+          # Probe branch (cm-k8s-cluster spec 018): its images carry their own suffix so that no -cm<n> tag, which
+          # the fork's numbering reads, ever points at a build with Insights.
+          tag="$version-insights-probe.$GITHUB_RUN_NUMBER"
           {
             echo "cache-bust=$(sha256sum apps.json | cut -c1-16)"
             echo "version=$tag"
