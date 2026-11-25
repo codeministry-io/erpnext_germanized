@@ -130,20 +130,20 @@ Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Op
 
 - **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `briefbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.0/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.1/docs) im Repository
 
-Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/roadmap.md).
+Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/roadmap.md).
 
 **Status: in Entwicklung, noch nicht einsatzfähig.**
 
-Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/einrichtung.md).
+Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/einrichtung.md).
 
 Im Image:
 
-- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium gleich; es gilt der Generator der Druckeinstellungen. Der Site-Test druckt jedes Format mit beiden.
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium dieselben Seiten; es gilt der Generator der Druckeinstellungen. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden und prüft das Zeichen eines Entwurfs nach der Wandlung.
 - **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
 
-Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/haftungsausschluss.md).
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/haftungsausschluss.md).
 
 ## Steuerbote
 
