@@ -10,7 +10,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from germanized import readme, versions
-from germanized.apps import APPS_JSON, App, frappe_app, load_apps, validate
+from germanized.apps import APPS_JSON, GITHUB, App, frappe_app, is_fork_tag, load_apps, pin_note, validate
 from germanized.containerfile import CONTAINERFILE, frappe_tag, pins
 from germanized.node_modules import prune
 from germanized.summary import markdown
@@ -31,6 +31,12 @@ def _report(headline: str, problems: Sequence[str]) -> int:
 	return 1
 
 
+def _notes(apps: Sequence[App]) -> None:
+	for app in apps:
+		if note := pin_note(app):
+			print(f"note: {note}")
+
+
 def _valid_pins() -> tuple[tuple[App, ...], str]:
 	apps, tag = load_apps(), frappe_tag()
 	if problems := validate(apps, tag):
@@ -43,6 +49,7 @@ def _validate(args: argparse.Namespace) -> int:
 	if problems := validate(apps, tag):
 		return _report("apps.json breaks the rules of the image:", problems)
 	print(f"apps.json is valid: {len(apps)} apps on Frappe {tag}")
+	_notes(apps)
 	return 0
 
 
@@ -55,9 +62,11 @@ def _release_check(args: argparse.Namespace) -> int:
 	if not args.ref.startswith(TAG_PREFIX):
 		raise ValueError(f"{args.ref} is not a tag ref like refs/tags/v16.60.0-1")
 	tag = args.ref.removeprefix(TAG_PREFIX)
-	if problems := release_check(tag, load_apps()):
+	apps = load_apps()
+	if problems := release_check(tag, apps):
 		return _report(f"{args.ref} cannot be released:", problems)
 	print(f"{tag} is a release of ERPNext v{parse_release(tag).erpnext} as apps.json pins it")
+	_notes(apps)
 	return 0
 
 
@@ -77,6 +86,12 @@ def _bump(args: argparse.Namespace) -> int:
 	new_apps, new_tag = versions.bump(apps, tag)
 	before, after = (frappe_app(tag), *apps), (frappe_app(new_tag), *new_apps)
 	changes = [(old, new) for old, new in zip(before, after, strict=True) if old.tag != new.tag]
+	for app in apps:
+		if is_fork_tag(app.tag) and app.upstream:
+			print(
+				f"{app.name}: {app.tag} stays, bump never moves a fork; "
+				f"check-versions compares it with {app.upstream.removeprefix(GITHUB)}"
+			)
 	if not changes:
 		print("every pin is on the newest release of its major version")
 		return 0

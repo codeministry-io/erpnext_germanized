@@ -21,6 +21,8 @@ from germanized.versions import (
 ERPNEXT = App("https://github.com/frappe/erpnext", "v16.60.0")
 HRMS = App("https://github.com/frappe/hrms", "v16.59.0")
 STEUERBOTE = App("https://github.com/encircle360-oss/steuerbote", "v0.1.1")
+BRIEFBOTE = App("https://github.com/encircle360-oss/briefbote", "main")
+GERMANY_FORK = App("https://github.com/encircle360-oss/erpnext_germany", "v16.2.2-encircle360.4")
 RELEASES_URL = "https://api.github.com/repos/frappe/frappe/releases?per_page=30"
 
 
@@ -54,6 +56,8 @@ def github() -> FakeGitHub:
 				release("v16.59.0"),
 			],
 			"encircle360-oss/steuerbote": [],
+			"encircle360-oss/briefbote": [release("v1.0.0-rc.1", prerelease=True), release("v0.1.0")],
+			"alyf-de/erpnext_germany": [release("v16.2.2"), release("v15.24.1")],
 		}
 	)
 
@@ -86,6 +90,11 @@ def test_latest_release_takes_only_release_tags_of_that_major():
 
 def test_latest_release_is_none_without_releases(github):
 	assert latest_release("encircle360-oss/steuerbote", 0, github) is None
+
+
+def test_latest_release_of_any_major_version():
+	github = FakeGitHub({"o/r": [release("v0.9.0"), release("v1.2.0"), release("v1.10.0", draft=True)]})
+	assert latest_release("o/r", None, github) == "v1.2.0"
 
 
 def test_latest_release_expects_a_list_of_releases():
@@ -177,6 +186,37 @@ def test_check_compares_frappe_and_every_app_with_its_newest_release(github):
 	]
 
 
+def test_check_compares_a_fork_with_the_releases_of_its_upstream(github):
+	assert check((ERPNEXT, GERMANY_FORK), "v16.60.2", github)[2] == Row(
+		"erpnext_germany", "v16.2.2-encircle360.4", "v16.2.2", "alyf-de/erpnext_germany"
+	)
+	assert (
+		"https://api.github.com/repos/encircle360-oss/erpnext_germany/releases?per_page=30" not in github.urls
+	)
+
+
+def test_check_compares_a_branch_with_the_releases_of_every_major_version(github):
+	assert check((ERPNEXT, BRIEFBOTE), "v16.60.2", github)[2] == Row("briefbote", "main", "v0.1.0")
+
+
+def test_a_row_of_a_fork_says_whether_upstream_has_a_newer_release():
+	fork = "alyf-de/erpnext_germany"
+	assert Row("erpnext_germany", "v16.2.2-encircle360.4", "v16.2.2", fork).status == (
+		"fork of alyf-de/erpnext_germany v16.2.2, the newest upstream release"
+	)
+	assert Row("erpnext_germany", "v16.2.2-encircle360.4", "v16.3.0", fork).status == (
+		"fork of alyf-de/erpnext_germany v16.2.2, upstream has a newer release"
+	)
+	assert Row("erpnext_germany", "v16.2.2-encircle360.4", None, fork).status == (
+		"fork of alyf-de/erpnext_germany v16.2.2, upstream has no release on major version 16"
+	)
+
+
+def test_a_row_of_a_branch_says_whether_a_release_exists():
+	assert Row("briefbote", "main", "v0.1.0").status == "branch, a release is available"
+	assert Row("briefbote", "main", None).status == "branch, no release yet"
+
+
 def test_a_row_says_whether_an_update_is_available():
 	assert Row("hrms", "v16.59.0", "v16.60.0").status == "update available"
 	assert Row("erpnext", "v16.60.0", "v16.60.0").status == "up to date"
@@ -208,6 +248,23 @@ def test_bump_keeps_frappe_on_its_major_version(github):
 def test_bump_never_moves_a_pin_back(github):
 	newer = App(ERPNEXT.url, "v16.62.0")
 	assert bump((newer,), "v16.62.0", github) == ((newer,), "v16.62.0")
+
+
+def test_bump_never_moves_a_fork(github):
+	github.releases["alyf-de/erpnext_germany"] = [release("v16.3.0")]
+	apps, _ = bump((ERPNEXT, GERMANY_FORK), "v16.60.2", github)
+	assert apps == (ERPNEXT, GERMANY_FORK)
+
+
+def test_bump_moves_a_branch_to_the_newest_release(github):
+	apps, _ = bump((ERPNEXT, BRIEFBOTE), "v16.60.2", github)
+	assert apps == (ERPNEXT, App(BRIEFBOTE.url, "v0.1.0"))
+
+
+def test_bump_keeps_a_branch_without_a_release(github):
+	github.releases["encircle360-oss/briefbote"] = []
+	apps, _ = bump((ERPNEXT, BRIEFBOTE), "v16.60.2", github)
+	assert apps == (ERPNEXT, BRIEFBOTE)
 
 
 def test_write_apps_keeps_the_format_of_apps_json(tmp_path):
