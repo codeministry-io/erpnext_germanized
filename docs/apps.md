@@ -109,41 +109,41 @@ Die App [Compendium](https://github.com/alyf-de/compendium), die die Dokumentati
 
 Die App erzeugt beim Buchen eines Belegs ein PDF und hängt es an den Beleg. Das geht für jeden DocType, der sich drucken und buchen lässt.
 
-Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für“ steht eine Zeile je DocType, auf Wunsch mit eigenem Druckformat, Briefkopf, Muster für den Dateinamen und Filtern, etwa für eigene PDFs von Gutschriften. „PDF im Hintergrund erstellen“ ist vorgegeben an: Das PDF entsteht dann in einem Hintergrundjob, also nur mit laufenden Workern. Das PDF entsteht in der Sprache aus dem Feld Sprache des Belegs; an Kunden und Lieferanten lässt sich dafür eine eigene Drucksprache (Print Language) wählen.
+Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für“ steht eine Zeile je DocType, auf Wunsch mit eigenem Druckformat, Briefkopf, Muster für den Dateinamen und Filtern, etwa für eigene PDFs von Gutschriften. „PDF im Hintergrund erstellen“ ist vorgegeben an: Das PDF entsteht dann in einem Hintergrundjob, also nur mit laufenden Workern. Das PDF entsteht in der Sprache aus dem Feld Sprache des Belegs; an Kunden und Lieferanten lässt sich dafür eine eigene Drucksprache (Print Language) wählen. Seit v16.4.0 kann eine Zeile mit „Attach To Field“ das PDF zusätzlich in ein gewähltes Anhangfeld des Belegs schreiben, und die App bettet die XML der E-Rechnung in die PDFs aller Belegarten ein, die das unterstützen, nicht mehr nur der Ausgangsrechnung ([Release-Notes](https://github.com/alyf-de/erpnext_pdf-on-submit/releases/tag/v16.4.0)).
 
 ## banking
 
 - **Repository:** [alyf-de/banking](https://github.com/alyf-de/banking) (ALYF Banking) von der ALYF GmbH, Lizenz GPL-3.0
 - **Name in bench:** `banking`
-- **Dokumentation:** [Banking Wiki](https://github.com/alyf-de/banking/wiki) und [banking/docs](https://github.com/alyf-de/banking/tree/v16.7.0/banking/docs/en/banking) im Repository
+- **Dokumentation:** [Banking Wiki](https://github.com/alyf-de/banking/wiki) und [banking/docs](https://github.com/alyf-de/banking/tree/v16.8.0/banking/docs/en/banking) im Repository
 
 Die App holt Kontoauszüge als Banktransaktionen (Bank Transaction) in ERPNext und hilft, sie mit Belegen abzugleichen.
 
 - **Abgleich** im Bankabgleich Beta (Bank Reconciliation Tool Beta): Banktransaktionen gegen Zahlungen und Buchungssätze oder gegen offene Ausgangs- und Eingangsrechnungen, für die der Abgleich die Zahlung selbst anlegt, mit HRMS auch gegen Spesenabrechnungen. Der Abgleich ist kostenlos und arbeitet auch mit Umsätzen aus anderen Quellen.
 - **Import von Hand:** CAMT-Dateien (camt.052, camt.053) und MT940-Dateien, hochgeladen im Bankabgleich Beta.
 - **EBICS:** Abruf der Umsätze direkt bei der Bank, für Banken in Deutschland, Österreich, Frankreich und der Schweiz. EBICS braucht ein kostenpflichtiges Abonnement bei ALYF ([banking.alyf.de](https://banking.alyf.de/banking-pricing)) und einen EBICS-Zugang der Bank. Für diesen Zugang empfiehlt die Dokumentation die Signaturklasse T: Damit ruft ERPNext Umsätze ab, kann aber keine Zahlungen auslösen.
-- **SEPA-Zahlungsaufträge** (SEPA Payment Order) im Format pain.001 für Zahlungen an Lieferanten und Mitarbeiter, aus Eingangsrechnungen und mit HRMS aus Spesenabrechnungen. Einen gebuchten Auftrag lädt man unter „Aktionen“ mit „Als XML herunterladen“ herunter und dann selbst bei der Bank hoch. Das Senden per EBICS ist in banking v16.7.0 abgeschaltet, siehe [SEPA Payment Order](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/sepa-payment-order.md#send-via-ebics-currently-disabled).
+- **SEPA-Zahlungsaufträge** (SEPA Payment Order) im Format pain.001 für Zahlungen an Lieferanten und Mitarbeiter, aus Eingangsrechnungen und mit HRMS aus Spesenabrechnungen. Einen gebuchten Auftrag lädt man unter „Aktionen“ mit „Als XML herunterladen“ herunter und dann selbst bei der Bank hoch. Das Senden per EBICS ist in banking v16.8.0 abgeschaltet, siehe [SEPA Payment Order](https://github.com/alyf-de/banking/blob/v16.8.0/banking/docs/en/banking/sepa-payment-order.md#send-via-ebics-currently-disabled).
 
-Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
+Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.8.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
 
 ## Briefbote
 
 - **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `briefbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.0/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.1.1/docs) im Repository
 
-Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/roadmap.md).
+Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt: „Rechnung“ für die Ausgangsrechnung, die je nach Beleg als Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift druckt, „Gutschrift“ für die Gutschrift im Gutschriftsverfahren aus der Eingangsrechnung und „Leistungsnachweis“ mit den Stunden einer Rechnung aus ihren Stundenzetteln. Weitere Dokumente nennt die [Roadmap von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/roadmap.md).
 
 **Status: in Entwicklung, noch nicht einsatzfähig.**
 
-Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/einrichtung.md).
+Einrichtung: Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten und Steuerfällen. Briefbote macht sich nicht von selbst zum Standard-Druckformat; das setzt man über „Customize Form“ der Ausgangs- oder Eingangsrechnung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/einrichtung.md).
 
 Im Image:
 
-- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium gleich; es gilt der Generator der Druckeinstellungen. Der Site-Test druckt jedes Format mit beiden.
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest und drucken mit wkhtmltopdf und mit Chromium dieselben Seiten; es gilt der Generator der Druckeinstellungen. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden und prüft das Zeichen eines Entwurfs nach der Wandlung.
 - **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
 
-Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.0/docs/haftungsausschluss.md).
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.1.1/docs/haftungsausschluss.md).
 
 ## Steuerbote
 
