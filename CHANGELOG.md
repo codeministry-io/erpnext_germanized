@@ -4,6 +4,15 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-5] - 2026-11-26
+
+> **Warnung: Die Umsatzsteuer einer Anzahlung steht in ERPNext doppelt in den Büchern.** Das betrifft jede Site mit ERPNext 16.61, auch ohne Briefbote: Ein Zahlungseingang mit „Advance Taxes and Charges“ bucht die Umsatzsteuer der Anzahlung beim Eingang, die Ausgangsrechnung über die ganze Leistung bucht sie noch einmal, und das Zuordnen der Anzahlung bucht am Steuerkonto nichts um. Bis eine Korrektur gebucht ist, steht die Steuer der Anzahlung zweimal im Hauptbuch, und eine Umsatzsteuer-Voranmeldung aus dem Hauptbuch zählt sie doppelt. Wie zu korrigieren ist, klärt die Steuerberatung. Gefunden und beschrieben hat das Briefbote, siehe [Anzahlungsrechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.0/docs/anzahlungsrechnung.md).
+
+### Geändert
+
+- [Briefbote v0.3.0](https://github.com/encircle360-oss/briefbote/releases/tag/v0.3.0): sieben neue Druckformate, „Geschäftsbrief“ für den Business Letter von erpnext_germany, „Anzahlungsrechnung“ und „Proforma-Rechnung“ aus der Proforma-Rechnung von ERPNext 16, „Zahlungsavis“ für einen Zahlungsausgang an einen Lieferanten, „Anfrage“, „Lieferantenrücksendung“ und „Packliste“, dazu die Schlussrechnung, die „Rechnung“ druckt, wenn eine Ausgangsrechnung Anzahlungen zuordnet; damit siebzehn Formate. Das Format „Geschäftsbrief“ und seine Einträge im Menü legt Briefbote nur an, wo erpnext_germany installiert ist, im Image also immer. Briefbote sagt gleiche Seitenzahlen mit beiden Generatoren nicht mehr zu: Mit wkhtmltopdf kann eine lange Tabelle eine Seite mehr brauchen als mit Chromium, der Referenz für das Druckbild. Briefbote ist Alpha; die rechtlichen Texte und Regeln der Dokumente hat noch keine Steuerberatung und keine Rechtsanwältin geprüft. Nach dem Update gilt die Liste „Nach der Aktualisierung“ der Release-Notes: `bench migrate`, Standard-Druckformate nach Wunsch, vor Anzahlungsrechnungen die Warnung lesen und „Enable Proforma Invoice“ einschalten, einmal „Einstellungen prüfen“. Einrichtung und alle Formate in [Apps](docs/apps.md#briefbote).
+- Der Site-Test druckt jedes Druckformat von Briefbote mit beiden Generatoren aus den Fällen seiner Nachweise, auch die neuen, eine Proforma-Rechnung als die Kopie ihres Kundenauftrags, die ERPNext druckt, dazu die Schlussrechnung RE-2026-0401 mit ihrer Anzahlung und den Geschäftsbrief GB-2026-0002 über drei Seiten, und prüft nach dem Anlegen der Site, dass sie das Druckformat „Geschäftsbrief“ und seine Einträge im Menü hat. Gleiche Seitenzahl beider Generatoren verlangt er weiter für jeden gedruckten Fall; Abweichungen stehen mit Namen und genauen Seitenzahlen in `KNOWN_PAGE_DIFFERENCES`.
+
 ## [16.61.0-4] - 2026-11-26
 
 ### Geändert
