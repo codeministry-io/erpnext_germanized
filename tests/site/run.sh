@@ -165,6 +165,15 @@ for name in "${names[@]}"; do
 	fi
 done
 
+# Briefbote adds its print format Geschäftsbrief only where erpnext_germany brings the Business Letter, which the
+# image always does; its own check says whether the site holds every such optional part.
+if [[ " ${names[*]} " == *" briefbote "* ]] && in_bench test -f apps/briefbote/briefbote/tests/optional_parts.py; then
+	step "Briefbote: the print format Geschäftsbrief and its menu entries for the Business Letter of erpnext_germany"
+	optional=$(bench_output --site "$SITE" execute briefbote.tests.optional_parts.check --kwargs "{'expected': True}" 2>&1) ||
+		fail "the site lacks the optional parts of Briefbote for erpnext_germany: $optional"
+	echo "the site has the print format Geschäftsbrief and its menu entries"
+fi
+
 step "making $SITE the default site"
 in_bench bench use "$SITE"
 
@@ -301,8 +310,9 @@ fi
 if [[ " ${names[*]} " == *" briefbote "* ]]; then
 	documents=$(bench_output --site "$SITE" execute briefbote.tests.print_documents.run 2>&1) ||
 		fail "the documents of the proof of Briefbote could not be written: $documents"
-	# The documents of sales, dunning, payment and purchase, which Briefbote prints from v0.2.0 on.
-	for part in sales dunning payment purchase; do
+	# The documents of sales, dunning, payment and purchase, which Briefbote prints from v0.2.0 on, and of remittance,
+	# goods and business letters from v0.3.0 on.
+	for part in sales dunning payment purchase remittance goods letters; do
 		in_bench test -f "apps/briefbote/briefbote/tests/print_documents_$part.py" || continue
 		documents=$(bench_output --site "$SITE" execute "briefbote.tests.print_documents_$part.run" 2>&1) ||
 			fail "the documents of the proof of Briefbote for $part could not be written: $documents"
