@@ -4,10 +4,11 @@ name: Fork test image
 # linux/arm64, runs the site test and pushes the tested image as a single manifest (no index, no provenance), so a
 # vulnerability scanner sees exactly the image that runs. See FORK.md for why the fork exists and when it can go.
 #
-# The tag is <upstream version>-cm<n>: the version comes from fork/upstream-tag, which only the upstream sync pull
-# request writes; n counts the builds of that version. Every pushed image gets an annotated git tag cm/<tag> whose
+# The tag is <upstream version>-cm<n>: the version comes from fork/upstream-tag, which only the upstream sync
+# writes; n counts the builds of that version. Every pushed image gets an annotated git tag cm/<tag> whose
 # message names the run, created only after the push, so the git tags list exactly the published images.
-# A push to the branch fork builds; so does the weekly schedule, which rebuilds the same state as the next revision
+# A push to the branch fork builds, and so does a dispatch from upstream-sync.yml after it merged a new tag (a push
+# made with the workflow token starts no other workflow); so does the weekly schedule, which rebuilds the same state as the next revision
 # to pick up the packages the recipe installs.
 on:
   push:
@@ -51,6 +52,13 @@ jobs:
         id: plan
         run: |
           python -m germanized validate
+          # The apps the fork adds on top of upstream (fork/extra-apps.json, today Frappe Insights for
+          # cm-k8s-cluster spec 018). They are appended only here, in the runner's copy, after upstream's apps.json
+          # passed its own validation, so the committed apps.json stays upstream's and the daily sync never
+          # conflicts on it. Build and site test both read this copy.
+          jq -s '.[0] + .[1]' apps.json fork/extra-apps.json > apps.json.new
+          mv apps.json.new apps.json
+          jq -r '.[] | "app: \(.url) \(.branch)"' apps.json
           upstream=$(tr -d '[:space:]' < fork/upstream-tag)
           if [[ ! $upstream =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]; then
             echo "::error::fork/upstream-tag holds '$upstream', not a release tag like v16.60.0-7."
