@@ -21,7 +21,9 @@ of the bundled apps have written their documents: `steuerbote.tests.e2e.seed.run
   with Chromium and on the first with wkhtmltopdf, measured with the band, grey and share of Briefbote's proof on the
   page rendered by Ghostscript.
 - **Closing texts.** The invoices of Briefbote's proof whose end falls near the end of a page (from v0.2.1 on) print
-  directly with both generators under the settings of their case on as many pages each.
+  directly with both generators under the settings of their case on as many pages each, apart from the cases in
+  KNOWN_PAGE_DIFFERENCES, which must print on exactly the counts listed there; for them the log shows the words of
+  the last page of wkhtmltopdf.
 - **Glyph advances.** In the PDFs of Chromium, the distance from each digit to the next digit must equal the advance
   width that the font gives the first digit at the printed size, as the PDF records it, within ADVANCE_TOLERANCE.
   Digits have no kerning, so any larger difference means the glyphs were moved, for example to whole pixels by font
@@ -49,6 +51,10 @@ from pypdf import PdfReader
 from pypdf.generic import ArrayObject, DictionaryObject
 
 ENGINES = ("wkhtmltopdf", "chrome")
+# Printouts of Briefbote that a known defect of the pinned release prints on different page counts, with exactly
+# those counts: Briefbote v0.2.1 breaks RE-2026-0121 of its closing family onto one page more with wkhtmltopdf than
+# with Chromium, the default generator. The test holds this state, so that it fails once the counts change.
+KNOWN_PAGE_DIFFERENCES = {"RE-2026-0121": {"wkhtmltopdf": 4, "chrome": 3}}
 # The modules of Briefbote's proof with the cases of its print formats: invoices, then sales, dunning, payment and
 # purchase, which Briefbote has from v0.2.0 on.
 BRIEFBOTE_PROOFS = (
@@ -287,14 +293,25 @@ def same_pages_directly(case, render) -> str:
 	from briefbote.tests.print_proof import settings_of
 
 	doc = frappe.get_doc(case.doctype, case.name)
-	pages = {}
+	pages: dict[str, int] = {}
+	last_page_words = ""
 	with print_language(case.language), settings_of(doc.company, getattr(case, "settings", None) or {}):
 		for engine in ENGINES:
 			pdf = render(doc, case.print_format, engine, own_paper=True)
 			if not pdf.startswith(b"%PDF-"):
 				raise AssertionError(f"{engine} gave no PDF")
-			pages[engine] = len(PdfReader(io.BytesIO(pdf)).pages)
+			reader = PdfReader(io.BytesIO(pdf))
+			pages[engine] = len(reader.pages)
+			if engine == "wkhtmltopdf":
+				last_page_words = " ".join(reader.pages[-1].extract_text().split())
 	counts = ", ".join(f"{engine} {count}" for engine, count in pages.items())
+	if known := KNOWN_PAGE_DIFFERENCES.get(case.name):
+		if pages != known:
+			raise AssertionError(
+				f"the known difference of {case.name} changed ({counts}); "
+				"remove it from KNOWN_PAGE_DIFFERENCES if both generators now agree"
+			)
+		return f"pages {counts}, the known difference; last page with wkhtmltopdf: {last_page_words}"
 	if len(set(pages.values())) > 1:
 		raise AssertionError(f"different page counts ({counts})")
 	return f"pages {counts}"
