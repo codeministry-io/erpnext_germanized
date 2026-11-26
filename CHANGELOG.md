@@ -4,6 +4,10 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+### Behoben
+
+- Dependabot schlägt für den Hook shellcheck nicht mehr `v0.11.0.1` vor: Der Tag ist älter als das gepinnte `v0.11.0.1-1`, dessen Zusatz Dependabot als Vorabversion liest. Die Konfiguration nimmt genau diese Version aus; spätere Versionen kommen weiter als Vorschlag.
+
 ## [16.61.0-5] - 2026-11-26
 
 > **Warnung: Die Umsatzsteuer einer Anzahlung steht in ERPNext doppelt in den Büchern.** Das betrifft jede Site mit ERPNext 16.61, auch ohne Briefbote: Ein Zahlungseingang mit „Advance Taxes and Charges“ bucht die Umsatzsteuer der Anzahlung beim Eingang, die Ausgangsrechnung über die ganze Leistung bucht sie noch einmal, und das Zuordnen der Anzahlung bucht am Steuerkonto nichts um. Bis eine Korrektur gebucht ist, steht die Steuer der Anzahlung zweimal im Hauptbuch, und eine Umsatzsteuer-Voranmeldung aus dem Hauptbuch zählt sie doppelt. Wie zu korrigieren ist, klärt die Steuerberatung. Gefunden und beschrieben hat das Briefbote, siehe [Anzahlungsrechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.0/docs/anzahlungsrechnung.md).
