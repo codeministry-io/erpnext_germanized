@@ -290,6 +290,17 @@ def document(case):
 	return frappe.get_doc(case.doctype, case.name)
 
 
+def company_of(doc) -> str:
+	"""The company whose settings a printout of Briefbote takes, the way Briefbote's proof finds it
+	(proof_runner.company_of from v0.3.0 on, which knows documents without a company of their own, such as a packing
+	slip), else the company of the document."""
+	from briefbote.tests import proof_runner
+
+	if hasattr(proof_runner, "company_of"):
+		return proof_runner.company_of(doc)
+	return doc.company
+
+
 def printed_name(case, doc) -> str | None:
 	"""What the printout names the document by: the number of the case where it has one, as a Proforma Invoice; a
 	business letter by its running title, which the test does not know, so None."""
@@ -302,7 +313,7 @@ def printed_alike(case, render, printing, theme) -> str:
 	"""A case printed directly with both generators: each PDF names its document and embeds its fonts, Chromium keeps
 	the glyph advances, and both have as many pages, apart from KNOWN_PAGE_DIFFERENCES."""
 	doc = document(case)
-	inter = theme.embeds(printing.settings(doc.company).get("font"))
+	inter = theme.embeds(printing.settings(company_of(doc)).get("font"))
 	lines, pages = [], {}
 	with print_language(case.language):
 		for engine in ENGINES:
@@ -364,7 +375,7 @@ def same_pages_directly(case, render) -> str:
 	doc = document(case)
 	pages: dict[str, int] = {}
 	last_page_words = ""
-	with print_language(case.language), settings_of(doc.company, getattr(case, "settings", None) or {}):
+	with print_language(case.language), settings_of(company_of(doc), getattr(case, "settings", None) or {}):
 		for engine in ENGINES:
 			pdf = render(doc, case.print_format, engine, own_paper=True)
 			if not pdf.startswith(b"%PDF-"):
@@ -446,7 +457,7 @@ def page_image(pdf: bytes, number: int) -> bytes:
 
 
 def company_font(case, printing) -> str | None:
-	return printing.settings(getattr(document(case), "company", None)).get("font")
+	return printing.settings(company_of(document(case))).get("font")
 
 
 def fonts_and_name(pdf: bytes, name: str | None, inter: bool) -> str:
