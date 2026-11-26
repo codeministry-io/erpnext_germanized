@@ -1,4 +1,4 @@
-# Fork codeministry/erpnext_germanized
+# Fork codeministry-io/erpnext_germanized
 
 Dieser Fork baut das Image von [encircle360-oss/erpnext_germanized](https://github.com/encircle360-oss/erpnext_germanized)
 mit zusätzlichen Apps, die upstream (noch) nicht enthält. Die Datei kennt upstream nicht; sie kollidiert deshalb bei
@@ -6,7 +6,7 @@ keinem Abgleich.
 
 > **Geschichte.** Vom 2026-11-23 bis zum 2026-11-24 brachte der Fork arm64 und die Kürzung von `node_modules`; beides hat
 > upstream übernommen (#33, #39), und der Fork war ab dem 2026-11-24 archiviert. Seit dem 2026-11-25 läuft er wieder,
-> diesmal für **Frappe Insights** (codeministry/cm-k8s-cluster, Spec 018), bis ein upstream-Release Insights enthält.
+> diesmal für **Frappe Insights** (codeministry-io/cm-k8s-cluster, Spec 018), bis ein upstream-Release Insights enthält.
 
 ## Warum es den Fork gibt
 
@@ -24,7 +24,7 @@ Der Default-Branch ist `fork`. `main` bleibt ein unveränderter Spiegel von upst
 | Workflow | Wann | Was |
 |---|---|---|
 | `upstream-sync.yml` | täglich 05:23 UTC und auf Knopfdruck | merged das neueste upstream-Tag **direkt** nach `fork`, ohne Pull Request, und startet `fork-image.yml` |
-| `fork-image.yml` | nach jedem Abgleich, bei jedem Push auf `fork` und montags | baut mit den zusätzlichen Apps, führt den Site-Test aus und veröffentlicht nur danach `ghcr.io/codeministry/erpnext_germanized:<version>-cm<n>` |
+| `fork-image.yml` | nach jedem Abgleich, bei jedem Push auf `fork` und montags | baut mit den zusätzlichen Apps, führt den Site-Test aus und veröffentlicht nur danach `ghcr.io/codeministry-io/erpnext_germanized:<version>-cm<n>` |
 
 - **Version und Revision:** `<version>` ist das upstream-Tag aus `fork/upstream-tag` ohne `v`, etwa `16.61.0-6`.
   `n` zählt die Builds dieser Version: 1 nach dem Abgleich, jede Woche eins mehr für den Neubau desselben Stands.

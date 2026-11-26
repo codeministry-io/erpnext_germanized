@@ -1,6 +1,6 @@
 name: Fork test image
 
-# Only in the fork codeministry/erpnext_germanized, never meant for upstream: builds the recipe natively for
+# Only in the fork codeministry-io/erpnext_germanized, never meant for upstream: builds the recipe natively for
 # linux/arm64, runs the site test and pushes the tested image as a single manifest (no index, no provenance), so a
 # vulnerability scanner sees exactly the image that runs. See FORK.md for why the fork exists and when it can go.
 #
@@ -26,13 +26,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE: ghcr.io/codeministry/erpnext_germanized
+  IMAGE: ghcr.io/codeministry-io/erpnext_germanized
   LOCAL_TAG: erpnext_germanized:ci
 
 jobs:
   image:
     name: Build, test and push (arm64)
-    if: github.repository == 'codeministry/erpnext_germanized'
+    if: github.repository == 'codeministry-io/erpnext_germanized'
     runs-on: ubuntu-26.04-arm
     timeout-minutes: 120
     permissions:
@@ -95,7 +95,7 @@ jobs:
             CACHE_BUST=${{ steps.plan.outputs.cache-bust }}
             VERSION=${{ steps.plan.outputs.version }}
           # The package is linked to this fork, not to upstream.
-          labels: org.opencontainers.image.source=https://github.com/codeministry/erpnext_germanized
+          labels: org.opencontainers.image.source=https://github.com/codeministry-io/erpnext_germanized
           provenance: false
           load: true
           tags: ${{ env.LOCAL_TAG }}

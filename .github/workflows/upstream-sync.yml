@@ -1,6 +1,6 @@
 name: Upstream sync
 
-# Only in the fork codeministry/erpnext_germanized, never meant for upstream. Every day (or on demand) it merges
+# Only in the fork codeministry-io/erpnext_germanized, never meant for upstream. Every day (or on demand) it merges
 # the newest release tag of encircle360-oss/erpnext_germanized straight into the branch fork, without a pull
 # request, and starts fork-image.yml, which builds and tests <version>-cm1. CHANGELOG.md and README.md always take
 # upstream's version: the fork keeps its own notes in FORK.md. Any other conflict fails the run, pushes nothing and
@@ -30,7 +30,7 @@ env:
 jobs:
   sync:
     name: Merge the newest upstream tag
-    if: github.repository == 'codeministry/erpnext_germanized'
+    if: github.repository == 'codeministry-io/erpnext_germanized'
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
@@ -137,7 +137,7 @@ jobs:
 
   exit-condition:
     name: Check whether the fork can go
-    if: github.repository == 'codeministry/erpnext_germanized'
+    if: github.repository == 'codeministry-io/erpnext_germanized'
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
