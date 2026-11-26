@@ -4,6 +4,18 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-4] - 2026-11-26
+
+### Geändert
+
+- [Briefbote v0.2.1](https://github.com/encircle360-oss/briefbote/releases/tag/v0.2.1): ein neuer Fuß mit bis zu vier Blöcken in gleich breiten Spalten auf fester Lage jeder Seite, die frühere Einstellung „Spalten des Fußes“ ist ausgeblendet und wirkt nicht mehr. Schlusstexte bleiben mit der letzten Position und den Summen zusammen, und beide Generatoren ergeben dieselbe Seitenzahl. Summen von Mahnung, Zahlungsbestätigung und Quittung stehen unter ihren Spalten; ohne gewähltes Bankkonto bitten Rechnung und Mahnung nicht um Überweisung, sondern zeigen einen Befund. Seitenleiste und Arbeitsbereich führen zu allen Belegen, die Einstellungen Geschäftspost haben die Schaltfläche „Einstellungen prüfen“ mit einer neuen Warnung zu Blöcken des Fußes mit mehr als vier Zeilen, und das README zeigt jedes Druckformat als Beispiel. Briefbote bleibt Alpha. Nach dem Update gilt der Abschnitt „Nach der Aktualisierung“ der Release-Notes: `bench migrate` und einmal „Einstellungen prüfen“.
+- [Steuerbote v0.15.3](https://github.com/encircle360-oss/steuerbote/releases/tag/v0.15.3): Kunden und Lieferanten stehen überall mit Name und ID, etwa „Muster GmbH (10042)“; die Listen der USt-IdNr.-Bestätigungen haben eine Spalte für den Namen und einen Filter „Partner“, und der Patch `fill_the_party_names_of_confirmations` gibt bestehenden Bestätigungen den Namen ihres Partners. Der Dialog „Vorgaben aktualisieren“ passt wieder in seine Breite. Nach `bench migrate` sind die Schritte der Liste „Nach `bench migrate`“ in den Release-Notes zu erledigen.
+- Der Site-Test druckt die acht Rechnungen aus dem Nachweis von Briefbote, deren Ende nahe am Seitenende liegt, direkt mit beiden Generatoren und verlangt gleich viele Seiten.
+
+### Bekannte Grenzen
+
+- Eine dieser Rechnungen, RE-2026-0121 aus dem Nachweis von Briefbote, braucht mit wkhtmltopdf eine Seite mehr als mit Chromium (4 statt 3 Seiten), auf `linux/amd64` wie auf `linux/arm64`; der Nachweis von Briefbote v0.2.1 zeigt dasselbe. Im Nachweis von Briefbote trägt die letzte Seite mit wkhtmltopdf die letzte Position, die Summen und die Zahlungsaufforderung, der Schlusstext steht also nicht allein. Chromium ist der vorgegebene Generator von Frappe 16 und dieses Images. Der Site-Test hält genau diese Seitenzahlen fest und schlägt fehl, sobald sie sich ändern; die Korrektur ist für Briefbote v0.2.2 vorgesehen.
+
 ## [16.61.0-3] - 2026-11-25
 
 ### Geändert

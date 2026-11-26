@@ -130,57 +130,58 @@ Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Op
 
 - **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `briefbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.2.0/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.2.1/docs) im Repository
 
 Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt, zehn in v0.2.0:
 
 | Druckformat | Beleg (DocType) | Wofür |
 |---|---|---|
-| [Rechnung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/rechnung.md) | Ausgangsrechnung (Sales Invoice) | Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift, je nach Beleg |
-| [Gutschrift](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/gutschrift.md) | Eingangsrechnung (Purchase Invoice) | Gutschrift im Gutschriftsverfahren |
-| [Leistungsnachweis](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/leistungsnachweis.md) | Ausgangsrechnung (Sales Invoice) | die Stunden einer Rechnung aus ihren Stundenzetteln |
-| [Angebot](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/angebot.md) | Angebot (Quotation) | Angebot mit „Gültig bis“ und Alternativpositionen |
-| [Auftragsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/auftragsbestaetigung.md) | Kundenauftrag (Sales Order) | Bestätigung mit Liefertermin und Zahlungsbedingungen |
-| [Lieferschein](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/lieferschein.md) | Lieferschein (Delivery Note) | an die Lieferanschrift, mit Empfangsbestätigung, Preise nur nach Einstellung |
-| [Mahnung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/mahnung.md) | Mahnung (Dunning) | Zahlungserinnerung und Mahnung nach Mahnstufe, Verzugszinsen und Pauschale nur, wo sie rechtmäßig sind |
-| [Zahlungsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Bestätigung eines gebuchten Zahlungseingangs |
-| [Quittung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Quittung nach § 368 BGB mit Linien für die Unterschrift |
-| [Bestellung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/bestellung.md) | Bestellung (Purchase Order) | Bestellschein mit Lieferterminen und Lieferanschrift |
+| [Rechnung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/rechnung.md) | Ausgangsrechnung (Sales Invoice) | Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift, je nach Beleg |
+| [Gutschrift](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/gutschrift.md) | Eingangsrechnung (Purchase Invoice) | Gutschrift im Gutschriftsverfahren |
+| [Leistungsnachweis](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/leistungsnachweis.md) | Ausgangsrechnung (Sales Invoice) | die Stunden einer Rechnung aus ihren Stundenzetteln |
+| [Angebot](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/angebot.md) | Angebot (Quotation) | Angebot mit „Gültig bis“ und Alternativpositionen |
+| [Auftragsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/auftragsbestaetigung.md) | Kundenauftrag (Sales Order) | Bestätigung mit Liefertermin und Zahlungsbedingungen |
+| [Lieferschein](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/lieferschein.md) | Lieferschein (Delivery Note) | an die Lieferanschrift, mit Empfangsbestätigung, Preise nur nach Einstellung |
+| [Mahnung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/mahnung.md) | Mahnung (Dunning) | Zahlungserinnerung und Mahnung nach Mahnstufe, Verzugszinsen und Pauschale nur, wo sie rechtmäßig sind |
+| [Zahlungsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Bestätigung eines gebuchten Zahlungseingangs |
+| [Quittung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Quittung nach § 368 BGB mit Linien für die Unterschrift |
+| [Bestellung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/bestellung.md) | Bestellung (Purchase Order) | Bestellschein mit Lieferterminen und Lieferanschrift |
 
 **Status: Alpha, in Entwicklung, noch nicht einsatzfähig.** Die rechtlichen Texte und Regeln von Mahnung, Zahlungsbestätigung und Quittung hat laut Briefbote noch keine Steuerberatung und keine Rechtsanwältin geprüft; diese Dokumente vor dem echten Einsatz prüfen lassen.
 
-Einrichtung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/einrichtung.md):
+Einrichtung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/einrichtung.md):
 
-- Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten, Steuerfällen, Basiszinssätzen, Mahnstufen und den Einstellungen des Lieferscheins.
+- Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten, Steuerfällen, Basiszinssätzen, Mahnstufen und den Einstellungen des Lieferscheins. Die Schaltfläche „Einstellungen prüfen“ sagt, was fehlt, etwa ein Bankkonto oder ein Block des Fußes, der mehr als vier Zeilen bräuchte.
+- **Fuß.** Seit v0.2.1 ordnet der Fuß seine bis zu vier Blöcke selbst in gleich breiten Spalten, je höchstens vier Zeilen; die frühere Einstellung „Spalten des Fußes“ ist ausgeblendet und wirkt nicht mehr. Ohne gewähltes Bankkonto bitten Rechnung und Mahnung nicht um Überweisung, sondern zeigen oben einen Befund.
 - **Standard-Druckformate setzt die App nicht.** Wer die Formate von Briefbote als Standard will, setzt sie je DocType über „Customize Form“ (Feld Default Print Format).
 - **Mahnarten ohne Zinsen und Gebühr.** Briefbote empfiehlt, in jeder Mahnart (Dunning Type) Zinssatz und Mahngebühr auf 0 zu setzen. Dann bucht ERPNext keine Zinsen ab Fälligkeit, und jede Mahnung erinnert an die offenen Rechnungen; Verzugszinsen und die Pauschale von 40 Euro druckt die Mahnung nur, wo sie rechtmäßig sind.
 - **Basiszinssätze.** Ein Patch trägt bei `bench migrate` die Basiszinssätze der Bundesbank in bestehende Einstellungen ein; zum 1. Januar und 1. Juli kommt der neue Satz von Hand dazu.
 
 Im Image:
 
-- **PDF-Generatoren.** Die Formate legen keinen Generator fest; es gilt der Generator der Druckeinstellungen. Beide drucken dieselben Seiten, mit einer bekannten Ausnahme: Mit Chromium kann der Schlusssatz eines Dokuments allein auf einer letzten Seite stehen, wo wkhtmltopdf ihn noch unter den Summen unterbringt. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden Generatoren und prüft das Zeichen eines Entwurfs nach der Wandlung.
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest; es gilt der Generator der Druckeinstellungen. Beide drucken gleich viele Seiten, und Schlusstexte bleiben mit der letzten Position und den Summen zusammen; wkhtmltopdf kann den Umbruch innerhalb der Positionen vereinzelt um eine Zeile verschieben. Bekannte Grenze von v0.2.1: Eine der Rechnungen aus dem Nachweis von Briefbote, deren Ende nahe am Seitenende liegt (RE-2026-0121), braucht mit wkhtmltopdf eine Seite mehr als mit Chromium, 4 statt 3. Chromium ist der vorgegebene Generator. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden Generatoren, dazu die Rechnungen aus dem Nachweis von Briefbote, deren Ende nahe am Seitenende liegt, verlangt jeweils gleich viele Seiten, für RE-2026-0121 genau 4 mit wkhtmltopdf und 3 mit Chromium, und prüft das Zeichen eines Entwurfs nach der Wandlung.
 - **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
 
-Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.2.0/docs/haftungsausschluss.md).
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.2.1/docs/haftungsausschluss.md).
 
 ## Steuerbote
 
 - **Repository:** [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `steuerbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/steuerbote/tree/v0.15.2/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/steuerbote/tree/v0.15.3/docs) im Repository
 
 Steuerbote bringt Steuermeldungen aus ERPNext an ELSTER: die Umsatzsteuer-Voranmeldung, die Dauerfristverlängerung mit Sondervorauszahlung und die Zusammenfassende Meldung, dazu die Jahresmeldungen, also Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung und E-Bilanz, und den Jahresabschluss mit der XBRL-Datei für die Offenlegung im Unternehmensregister. Prüfen, Testsenden und Senden über ERiC gehen nur mit `linux/amd64`, siehe unten. Die Voranmeldung rechnet es aus dem Hauptbuch und vergleicht Beleg für Beleg die gebuchte Steuer mit der Steuer, die sich aus der Bemessungsgrundlage ergibt. Die Vorgaben für SKR03 und SKR04 enthalten auch die Kontonummern der SKR-Vorlagen von ERPNext.
 
-**Status: in Entwicklung, nicht einsatzfähig.** Ohne eigene Hersteller-ID läuft jede Übermittlung über ERiC nur als Simulation. Bis dahin geht die Voranmeldung als XML-Datei und die Zusammenfassende Meldung als CSV-Datei über den Import in Mein ELSTER, siehe [Abgabe über Mein ELSTER](https://github.com/encircle360-oss/steuerbote/blob/v0.15.2/docs/abgabe-mein-elster.md) und [Zusammenfassende Meldung](https://github.com/encircle360-oss/steuerbote/blob/v0.15.2/docs/zm.md). Den Vordruck USt 1 H und die Erklärungen trägt man nach dem Druckformat in Mein ELSTER von Hand ein; eine E-Bilanz nimmt Mein ELSTER nicht an, ihre XBRL-Datei geht an die Steuerberatung.
+**Status: in Entwicklung, nicht einsatzfähig.** Ohne eigene Hersteller-ID läuft jede Übermittlung über ERiC nur als Simulation. Bis dahin geht die Voranmeldung als XML-Datei und die Zusammenfassende Meldung als CSV-Datei über den Import in Mein ELSTER, siehe [Abgabe über Mein ELSTER](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/docs/abgabe-mein-elster.md) und [Zusammenfassende Meldung](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/docs/zm.md). Den Vordruck USt 1 H und die Erklärungen trägt man nach dem Druckformat in Mein ELSTER von Hand ein; eine E-Bilanz nimmt Mein ELSTER nicht an, ihre XBRL-Datei geht an die Steuerberatung.
 
 Im Image:
 
-- **ERiC ist nicht dabei.** ERiC, die Bibliothek der Finanzverwaltung für die Übermittlung, darf nur als Teil des eigenen Produkts weitergegeben werden. Jeder Betreiber lädt ERiC für Linux x86_64 selbst aus dem ELSTER-Entwicklerbereich und richtet es in den ERiC-Einstellungen ein, siehe [ERiC](https://github.com/encircle360-oss/steuerbote/blob/v0.15.2/docs/eric.md).
+- **ERiC ist nicht dabei.** ERiC, die Bibliothek der Finanzverwaltung für die Übermittlung, darf nur als Teil des eigenen Produkts weitergegeben werden. Jeder Betreiber lädt ERiC für Linux x86_64 selbst aus dem ELSTER-Entwicklerbereich und richtet es in den ERiC-Einstellungen ein, siehe [ERiC](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/docs/eric.md).
 - **Plattform.** ERiC braucht Linux x86_64 mit glibc ab 2.28 und mindestens 5 GiB freien Speicher. Das Image für `linux/amd64` ist auf Debian trixie gebaut, das glibc 2.41 mitbringt. Im Image für `linux/arm64` ist Steuerbote installiert, ERiC läuft dort aber nicht; was ERiC braucht, also Prüfen, Testsenden und Senden an ELSTER, geht nur mit `linux/amd64`. Wer ERiC nutzt, betreibt deshalb alle Dienste aus dem Image auf `linux/amd64`, in einem Kubernetes-Cluster mit Knoten beider Plattformen per `kubernetes.io/arch: amd64` im `nodeSelector` jedes Dienstes und Jobs des Charts. Die Abgabe als XML-Datei über Mein ELSTER braucht ERiC nicht und geht auf beiden Plattformen.
 - **Ablage.** Die eingerichtete Laufzeit liegt außerhalb jeder Site in `sites/eric` der Bench, im Container also im Volume `sites`. Sie bleibt bei einem Wechsel des Images erhalten, `bench backup` sichert sie aber nicht. `steuerbote_eric_root` in `common_site_config.json` legt ein anderes Verzeichnis fest.
 - **Worker.** Die Einrichtung von ERiC sowie Prüfen, Testsenden und Senden laufen als Hintergrundjobs in der Queue `long`, im Beispiel also im Dienst `queue-long`. Das Archiv von ERiC muss deshalb in diesem Container liegen; am einfachsten im Volume `sites`, das alle Dienste teilen.
 
-Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/v0.15.2/README.md#haftungsausschluss).
+Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/README.md#haftungsausschluss).
 
 ## Zusammenspiel der Apps
 
