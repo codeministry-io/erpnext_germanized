@@ -4,6 +4,12 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-6] - 2026-11-26
+
+### Geändert
+
+- [Briefbote v0.3.1](https://github.com/encircle360-oss/briefbote/releases/tag/v0.3.1): Die beiden Falzmarken und die Lochmarke stehen auf jeder Seite eines Ausdrucks statt nur auf der ersten, auch auf Folgeseiten einer Positionstabelle, den Seiten eines Leistungsnachweises und den Folgeseiten eines Geschäftsbriefs, mit beiden PDF-Generatoren. Seitenzahlen und die Lage der Wörter ändern sich nicht. Ist „Falz- und Lochmarken drucken“ aus, trägt keine Seite Marken. Nach dem Update genügt `bench migrate`.
+
 ### Behoben
 
 - Dependabot schlägt für den Hook shellcheck nicht mehr `v0.11.0.1` vor: Der Tag ist älter als das gepinnte `v0.11.0.1-1`, dessen Zusatz Dependabot als Vorabversion liest. Die Konfiguration nimmt genau diese Version aus; spätere Versionen kommen weiter als Vorschlag.
