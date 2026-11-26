@@ -58,3 +58,21 @@ def test_frappe_is_linked_to_the_repository_the_image_is_built_from():
 
 def test_a_build_without_tags_is_not_pushed():
 	assert markdown(APPS, PINS, ()).endswith("### Image tags\n\nNone: this build is not pushed.\n")
+
+
+def test_the_summary_notes_a_fork_and_a_branch():
+	apps = (
+		App("https://github.com/frappe/erpnext", "v16.60.0"),
+		App("https://github.com/encircle360-oss/erpnext_germany", "v16.2.2-encircle360.4"),
+		App("https://github.com/encircle360-oss/briefbote", "main"),
+	)
+	summary = markdown(apps, PINS, TAGS)
+	assert (
+		"| [briefbote](https://github.com/encircle360-oss/briefbote) | `main` |\n"
+		"\n"
+		"- erpnext_germany: v16.2.2-encircle360.4 of the fork encircle360-oss/erpnext_germany, "
+		"based on v16.2.2 of alyf-de/erpnext_germany\n"
+		"- briefbote: the branch main, not a release\n"
+		"\n"
+		"### Build arguments\n"
+	) in summary

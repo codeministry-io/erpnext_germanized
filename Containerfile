@@ -15,6 +15,8 @@
 # - the wkhtmltopdf package of each architecture is checked against its SHA-256 from
 #   WKHTMLTOPDF_SHA256_AMD64 or WKHTMLTOPDF_SHA256_ARM64
 # - OCI labels
+# - a RUN of its own in the base stage starts Chromium without font hinting: the binary moves aside for a script that
+#   adds --font-render-hinting=none and the parent-death signal
 # - a RUN of its own in the builder stage removes the Node.js packages that nothing loads after the build: the
 #   node_modules of the frontends inside the apps and the build tools in node_modules of each app, among them
 #   the esbuild binaries; Socket.IO with what it requires, the libraries the browser loads from
@@ -25,7 +27,7 @@
 # The recipe itself, the repository erpnext_germanized, is Apache-2.0, apart from this Containerfile, which
 # stays MIT like its upstream. The label org.opencontainers.image.licenses joins that license with those of
 # the software in the image: Frappe (MIT), ERPNext, HRMS, erpnext_germany, erpnext_datev and banking
-# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later) and Steuerbote
+# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later), Steuerbote and Briefbote
 # (AGPL-3.0-or-later). The Python, Node.js and Debian packages underneath keep their own licenses.
 
 # The stages switch to the frappe user (uid 1000, gid 0) by name like the frappe images do, so the image
@@ -143,6 +145,21 @@ RUN useradd -u 1000 -g 0 -d /home/frappe -ms /bin/bash frappe \
     && chmod 755 /usr/local/bin/nginx-entrypoint.sh \
     && chmod 644 /templates/nginx/frappe.conf.template
 
+# Not in frappe_docker: headless Chromium lays text out with font hinting unless told otherwise, which moves every
+# glyph of an embedded web font such as Inter to whole pixels and spaces the letters of a PDF unevenly. Frappe starts
+# the binary of chromium_path with flags of its own and takes no others, so the binary moves aside (dpkg-divert) for
+# a script at its path that adds --font-render-hinting=none. setpriv gives Chromium the parent-death signal: Frappe
+# finds the Chromium of a dead worker by the path of chromium_path, which now names the script.
+# hadolint ignore=SC2016
+RUN if [ -e /usr/lib/chromium/chromium-headless-shell ]; then \
+      dpkg-divert --quiet --local --rename --add \
+        --divert /usr/lib/chromium/chromium-headless-shell.real /usr/lib/chromium/chromium-headless-shell \
+      && printf '%s\n' '#!/bin/sh' \
+        'exec setpriv --pdeathsig KILL /usr/lib/chromium/chromium-headless-shell.real --font-render-hinting=none "$@"' \
+        > /usr/lib/chromium/chromium-headless-shell \
+      && chmod 755 /usr/lib/chromium/chromium-headless-shell; \
+    fi
+
 
 FROM base AS builder
 
@@ -181,7 +198,7 @@ RUN apt-get update \
 
 USER frappe
 
-ARG FRAPPE_BRANCH=v16.60.2
+ARG FRAPPE_BRANCH=v16.61.0
 ARG FRAPPE_PATH=https://github.com/frappe/frappe
 ARG CACHE_BUST=""
 
@@ -255,6 +272,10 @@ ARG VERSION=dev
 LABEL org.opencontainers.image.title="erpnext_germanized" \
   org.opencontainers.image.description="ERPNext 16 for German companies, with HRMS and German apps for accounting, e-invoicing, banking and ELSTER" \
   org.opencontainers.image.source="https://github.com/encircle360-oss/erpnext_germanized" \
+  org.opencontainers.image.url="https://github.com/encircle360-oss/erpnext_germanized" \
+  org.opencontainers.image.documentation="https://github.com/encircle360-oss/erpnext_germanized#readme" \
+  org.opencontainers.image.vendor="encircle360 GmbH" \
+  org.opencontainers.image.authors="encircle360 GmbH and contributors <oss@encircle360.com>" \
   org.opencontainers.image.licenses="Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later" \
   org.opencontainers.image.version="${VERSION}" \
   org.opencontainers.image.base.name="docker.io/library/python:${PYTHON_VERSION}-slim-${DEBIAN_BASE}"

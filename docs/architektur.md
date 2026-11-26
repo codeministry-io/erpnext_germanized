@@ -43,6 +43,10 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 | Label | Inhalt |
 |---|---|
 | `org.opencontainers.image.source` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.url` | `https://github.com/encircle360-oss/erpnext_germanized` |
+| `org.opencontainers.image.documentation` | `https://github.com/encircle360-oss/erpnext_germanized#readme` |
+| `org.opencontainers.image.vendor` | `encircle360 GmbH` |
+| `org.opencontainers.image.authors` | `encircle360 GmbH and contributors <oss@encircle360.com>` |
 | `org.opencontainers.image.title` | `erpnext_germanized` |
 | `org.opencontainers.image.description` | eine Zeile auf Englisch |
 | `org.opencontainers.image.licenses` | `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`: das Rezept (Apache-2.0, das `Containerfile` MIT) und die Apps im Image; Einzelheiten nennt das [README](../README.md#lizenz) |
@@ -78,7 +82,9 @@ eu_einvoice wandelt ein PDF in PDF/A-3 um, bevor es die XML einer ZUGFeRD-Rechnu
 
 ### Chromium
 
-`INSTALL_CHROMIUM=true` installiert `chromium-headless-shell` aus Debian. Frappe nutzt Chromium, wenn ein Druckformat oder die Druckeinstellungen den PDF-Generator „chrome“ wählen. Den Pfad liest Frappe aus `chromium_path` in `common_site_config.json`. Fehlt der Eintrag, lädt Frappe beim ersten Gebrauch selbst ein Chromium in das Verzeichnis `chromium` der Bench (`find_or_download_chromium_executable` in `frappe/utils/print_utils.py`). Im Container liegt dieses Verzeichnis nicht in einem Volume, und der Download braucht Internetzugang. Das Beispiel für docker compose setzt `chromium_path` deshalb auf `/usr/lib/chromium/chromium-headless-shell`. Der Site-Test setzt den Eintrag genauso und erzeugt mit beiden Generatoren je ein PDF: mit wkhtmltopdf über `frappe.utils.pdf.get_pdf`, Seitenzahlen im Footer eingeschlossen, und mit Chromium über `frappe.get_print`, den Weg des Druck-Knopfs.
+`INSTALL_CHROMIUM=true` installiert `chromium-headless-shell` aus Debian. Frappe nutzt Chromium, wenn ein Druckformat oder die Druckeinstellungen den PDF-Generator „chrome“ wählen. Den Pfad liest Frappe aus `chromium_path` in `common_site_config.json`. Fehlt der Eintrag, lädt Frappe beim ersten Gebrauch selbst ein Chromium in das Verzeichnis `chromium` der Bench (`find_or_download_chromium_executable` in `frappe/utils/print_utils.py`). Im Container liegt dieses Verzeichnis nicht in einem Volume, und der Download braucht Internetzugang. Das Beispiel für docker compose setzt `chromium_path` deshalb auf `/usr/lib/chromium/chromium-headless-shell`. Der Site-Test setzt den Eintrag genauso und erzeugt mit beiden Generatoren je ein PDF: mit wkhtmltopdf über `frappe.utils.pdf.get_pdf`, Seitenzahlen im Footer eingeschlossen, und mit Chromium über `frappe.get_print`, den Weg des Druck-Knopfs. Dazu druckt er die Formate von ERPNext, Briefbote und Steuerbote, siehe [Entwicklung](entwicklung.md#lokaler-build-und-site-test).
+
+**Ohne Font-Hinting.** `chromium-headless-shell` setzt Text mit Font-Hinting, solange man es nicht abschaltet: Es rundet die Breite jedes Zeichens einer Webschrift wie Inter auf ganze Pixel, und im PDF stehen die Buchstaben dann ungleichmäßig weit auseinander, bei Briefbote um bis zu rund 5 % je Ziffer. Eine Einstellung in fontconfig ändert daran nichts, nur der Schalter `--font-render-hinting=none`. Frappe startet das Programm aus `chromium_path` mit festen Schaltern und nimmt keine weiteren an. Deshalb verlegt das Image das Programm mit `dpkg-divert` nach `/usr/lib/chromium/chromium-headless-shell.real` und legt an seinen Pfad ein Skript, das es mit `--font-render-hinting=none` startet. `chromium_path` bleibt `/usr/lib/chromium/chromium-headless-shell`, bestehende Einstellungen gelten weiter. Frappe räumt das Chromium eines beendeten Workers nur auf, wenn der Prozess das Programm aus `chromium_path` ist; das ist er nun nicht mehr. Das Skript startet Chromium deshalb über `setpriv --pdeathsig KILL`, so dass der Kernel es beendet, wenn sein Worker endet. wkhtmltopdf ist davon nicht berührt.
 
 ## Node.js-Pakete nach dem Build
 
@@ -109,7 +115,7 @@ Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` de
 
 erpnext_germanized übersetzt nichts selbst und ändert keine App. Die deutschen Teile kommen aus Frappe, ERPNext und den Apps:
 
-- **Oberfläche.** Frappe, ERPNext und HRMS bringen ihre deutsche Übersetzung als `locale/de.po` mit. Sie entsteht in der Community über [Crowdin](https://crowdin.com/project/frappe). Die Apps von ALYF haben eigene Dateien `locale/de.po`, Steuerbote `steuerbote/translations/de.csv`. Die Sprache gilt für die ganze Site in den Systemeinstellungen und kann je Benutzer abweichen.
+- **Oberfläche.** Frappe, ERPNext und HRMS bringen ihre deutsche Übersetzung als `locale/de.po` mit. Sie entsteht in der Community über [Crowdin](https://crowdin.com/project/frappe). Die Apps von ALYF haben eigene Dateien `locale/de.po`, Steuerbote `steuerbote/translations/de.csv` und Briefbote `briefbote/translations/de.csv`. Die Sprache gilt für die ganze Site in den Systemeinstellungen und kann je Benutzer abweichen.
 - **Formate.** Wählt man im Einrichtungsassistenten das Land Deutschland, übernimmt Frappe dessen Vorgaben: Datum `dd.mm.yyyy`, Uhrzeit `HH:mm`, Zahlen `#.###,##`, Währung EUR und Zeitzone Europe/Berlin (`frappe/geo/country_info.json`).
 - **Kontenrahmen und Steuervorlagen.** ERPNext bringt die Vorlagen „SKR03 mit Kontonummern“ und „SKR04 mit Kontonummern“ mit und legt beim Anlegen einer Firma mit dem Land Deutschland passende Steuervorlagen an, siehe [Apps](apps.md#erpnext).
-- **Deutsche Funktionen.** Registerangaben, USt-IdNr.-Prüfung, Summen- und Saldenliste, DATEV, E-Rechnungen, EBICS und ELSTER kommen aus den Apps erpnext_germany, erpnext_datev, eu_einvoice, banking und Steuerbote, siehe [Apps](apps.md).
+- **Deutsche Funktionen.** Registerangaben, USt-IdNr.-Prüfung, Summen- und Saldenliste, DATEV, E-Rechnungen, EBICS, ELSTER und Druckformate nach DIN 5008 kommen aus den Apps erpnext_germany, erpnext_datev, eu_einvoice, banking, Steuerbote und Briefbote, siehe [Apps](apps.md).

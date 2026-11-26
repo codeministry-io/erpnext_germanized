@@ -44,7 +44,7 @@ Auch eine neue Revision kann neue Versionen von Frappe und den Apps mitbringen u
 
 Eine neue Revision entsteht, wenn sich bei gleicher ERPNext-Version etwas anderes im Image ändert:
 
-- eine neue Version von Frappe, HRMS, einer App von ALYF oder Steuerbote,
+- eine neue Version von Frappe, HRMS, einer App von ALYF, Steuerbote oder Briefbote,
 - ein neues Basis-Image, etwa mit Sicherheitskorrekturen aus Debian, oder eine neue Version von Python, Node.js oder wkhtmltopdf,
 - eine Änderung am Rezept, etwa ein zusätzliches Systempaket.
 
@@ -89,7 +89,7 @@ Es gibt Images nur für die aktuelle Hauptversion von Frappe und ERPNext, derzei
    python -m germanized readme --write    # sets the Version cells of the README table
    ```
 
-   `bump` hebt jede App nur innerhalb ihrer Hauptversion an, Steuerbote mit seinen eigenen Versionsnummern also innerhalb der Hauptversion 0: Ein neueres Release `v0.x.y` schlägt der Workflow vor wie bei jeder anderen App, den Wechsel auf Version 1 entscheidet ein Maintainer. `check-versions` und `bump` lesen dafür die Releases auf GitHub; Entwürfe und Vorabversionen zählen nicht.
+   `bump` hebt jede App nur innerhalb ihrer Hauptversion an, Steuerbote und Briefbote mit ihren eigenen Versionsnummern also innerhalb der Hauptversion 0: Ein neueres Release `v0.x.y` schlägt der Workflow vor wie bei jeder anderen App, den Wechsel auf Version 1 entscheidet ein Maintainer. `check-versions` und `bump` lesen dafür die Releases auf GitHub; Entwürfe und Vorabversionen zählen nicht. Eine App, die vor ihrem ersten Release auf einen Branch zeigt, setzt `bump` auf ihr neuestes Release; solange sie auf den Branch zeigt, lehnt `release-check` jedes Release ab. Einen Fork wie erpnext_germany lässt `bump` stehen und sagt das; `check-versions` zeigt daneben das neueste Release des Originals. Zurück zum Original geht es von Hand, sobald ein Release die Korrektur enthält: `url` und `branch` in `apps.json` und die Zeile im README.
 
 2. **Prüfen.** Vor dem Merge die Release-Notes von ERPNext und jeder geänderten App lesen, besonders auf Patches der Datenbank und geänderte Abhängigkeiten. Die CI baut das Image und installiert alle Apps auf einer frischen Site. Die Checks eines Pull Requests, den der Workflow geöffnet hat, starten erst, wenn ein Maintainer sie mit „Approve workflows to run“ freigibt oder den Pull Request schließt und wieder öffnet.
 

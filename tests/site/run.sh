@@ -165,6 +165,15 @@ for name in "${names[@]}"; do
 	fi
 done
 
+# Briefbote adds its print format Geschäftsbrief only where erpnext_germany brings the Business Letter, which the
+# image always does; its own check says whether the site holds every such optional part.
+if [[ " ${names[*]} " == *" briefbote "* ]] && in_bench test -f apps/briefbote/briefbote/tests/optional_parts.py; then
+	step "Briefbote: the print format Geschäftsbrief and its menu entries for the Business Letter of erpnext_germany"
+	optional=$(bench_output --site "$SITE" execute briefbote.tests.optional_parts.check --kwargs "{'expected': True}" 2>&1) ||
+		fail "the site lacks the optional parts of Briefbote for erpnext_germany: $optional"
+	echo "the site has the print format Geschäftsbrief and its menu entries"
+fi
+
 step "making $SITE the default site"
 in_bench bench use "$SITE"
 
@@ -252,6 +261,24 @@ for directory in "${directories[@]}"; do
 	echo "the image has $directory"
 done
 
+# The desk loads the icons of every app and shows its logo on the apps screen from the paths the hooks of the app
+# name, such as /assets/briefbote/images/briefbote-logo.svg; each has to answer through nginx.
+step "frontend: the icons and logos the hooks of the apps name"
+hook_values() {
+	bench_output --site "$SITE" execute frappe.get_hooks --args "[\"$1\"]" | sed -n '/^\[/p' | tail -n 1
+}
+mapfile -t images < <(
+	hook_values app_include_icons | jq -r '.[]'
+	hook_values add_to_apps_screen | jq -r '.[].logo // empty'
+)
+mapfile -t images < <(printf '%s\n' "${images[@]}" | grep '^/assets/' | sort -u)
+[[ ${#images[@]} -gt 0 ]] || fail "the hooks of the apps name no icon or logo under /assets; the search has gone stale"
+for image in "${images[@]}"; do
+	"${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$image" ||
+		fail "nginx does not serve $image"
+	echo "nginx serves $image"
+done
+
 # Saving a Website Theme compiles its SCSS with node generate_bootstrap_theme.js, which needs sass and the
 # packages the SCSS of the apps imports, such as Bootstrap; the build stage keeps them for this. The custom SCSS
 # uses $primary, a variable of Bootstrap, so the stylesheet only compiles when the import of Bootstrap works.
@@ -267,3 +294,31 @@ stylesheet=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" "http:/
 	fail "nginx does not serve $theme_url"
 [[ "$stylesheet" == *".site-test{color:"* ]] || fail "the stylesheet $theme_url lacks the rule of the custom SCSS"
 echo "nginx serves $theme_url with the custom SCSS compiled against Bootstrap"
+
+# What users print: ERPNext's own format of the Sales Invoice and every format of Briefbote and Steuerbote, downloaded
+# through nginx with both generators, the way the print view does it; the formats of Briefbote also directly, with
+# their fonts and the glyph advances of Chromium measured (tests/site/site_test_printouts.py). The seeds of the apps
+# write the documents; the step comes last because they complete the setup of the site. The service site is nginx
+# under the name of the site on port 80, which wkhtmltopdf in the backend loads the print stylesheet from.
+step "printouts: ERPNext, Briefbote and Steuerbote as PDF with wkhtmltopdf and Chromium"
+"${compose[@]}" up --detach --no-deps site
+wait_for site http://localhost:80/api/method/ping -H "Host: $SITE" >/dev/null
+if [[ " ${names[*]} " == *" steuerbote "* ]]; then
+	seed=$(bench_output --site "$SITE" execute steuerbote.tests.e2e.seed.run 2>&1) ||
+		fail "the seed of Steuerbote could not be written: $seed"
+fi
+if [[ " ${names[*]} " == *" briefbote "* ]]; then
+	documents=$(bench_output --site "$SITE" execute briefbote.tests.print_documents.run 2>&1) ||
+		fail "the documents of the proof of Briefbote could not be written: $documents"
+	# The documents of sales, dunning, payment and purchase, which Briefbote prints from v0.2.0 on, and of remittance,
+	# goods and business letters from v0.3.0 on.
+	for part in sales dunning payment purchase remittance goods letters; do
+		in_bench test -f "apps/briefbote/briefbote/tests/print_documents_$part.py" || continue
+		documents=$(bench_output --site "$SITE" execute "briefbote.tests.print_documents_$part.run" 2>&1) ||
+			fail "the documents of the proof of Briefbote for $part could not be written: $documents"
+	done
+fi
+"${compose[@]}" run --rm --no-deps --quiet-pull -T --entrypoint /home/frappe/frappe-bench/env/bin/python \
+	--workdir /home/frappe/frappe-bench/sites --volume "$here:/opt/site-test:ro" \
+	--env PYTHONPATH=/opt/site-test --env PYTHONDONTWRITEBYTECODE=1 \
+	bench -m site_test_printouts "$SITE" "http://$SITE" || fail "a printout failed"

@@ -81,6 +81,7 @@ jobs:
       - eu_einvoice
       - pdf_on_submit
       - banking
+      - briefbote
       - steuerbote
 ```
 
@@ -154,7 +155,7 @@ Ein Update ist ein Wechsel des Image-Tags. Die Daten bleiben in den Volumes, `be
 
 1. **Lesen**, was sich ändert: den Abschnitt im [Changelog](../CHANGELOG.md), die Release-Notes des Releases und bei neuen Versionen von ERPNext oder den Apps deren Release-Notes.
 2. **Sichern:** `docker compose exec backend bench --site <site> backup --with-files` und die Sicherung aus dem Volume kopieren, siehe oben.
-3. **Wartungsmodus einschalten:** `docker compose exec backend bench --site <site> set-maintenance-mode on`. Die Site nimmt dann keine Anfragen an, und der Scheduler lässt sie aus.
+3. **Wartungsmodus einschalten:** `docker compose exec backend bench --site <site> set-maintenance-mode on`. Die Site lässt dann nur noch Lesen zu und lehnt Änderungen ab, und der Scheduler lässt sie aus. Soll sie gar keine Anfragen annehmen wie vor Frappe v16.61.0, setzt `bench --site <site> set-config -p allow_reads_during_maintenance 0` das (`frappe/app.py`).
 4. **Neues Tag eintragen** unter `x-erpnext` in `compose.yaml`, dann:
 
    ```bash
@@ -163,13 +164,14 @@ Ein Update ist ein Wechsel des Image-Tags. Die Daten bleiben in den Volumes, `be
    ```
 
 5. **Migrieren:** `docker compose exec backend bench --site <site> migrate`, bei mehreren Sites `--site all`.
-6. **Wartungsmodus ausschalten:** `docker compose exec backend bench --site <site> set-maintenance-mode off`.
+6. **Cache leeren:** `docker compose exec backend bench --site <site> clear-cache`, sobald alle Dienste aus dem neuen Image laufen. Der Cache in Redis, den alle Dienste teilen, kann noch die Namen der Asset-Bündel des alten Images enthalten. Der PDF-Generator auf Chromium-Basis meldet dann „Attempted Unauthorized File Access in PDF Generator“, und dem PDF fehlt das Druck-Stylesheet von Frappe.
+7. **Wartungsmodus ausschalten:** `docker compose exec backend bench --site <site> set-maintenance-mode off`.
 
 Schlägt die Migration fehl, bleibt der Wartungsmodus an. Das Log von `bench migrate` nennt den Patch, der gescheitert ist.
 
 **Zurück zur vorigen Version** geht es nur mit der Sicherung aus Schritt 2. `bench migrate` ändert die Datenbank, und die Patches von Frappe und den Apps laufen nur vorwärts: Das vorige Tag allein läuft nicht sicher auf einer migrierten Datenbank. Also das vorige Tag eintragen, `docker compose up -d` und die Site aus der Sicherung wiederherstellen.
 
-Auf Kubernetes gilt dieselbe Reihenfolge: Sicherung über `jobs.backup`, neues `image.tag`, dann `jobs.migrate`. Anders als oben bleibt der Wartungsmodus nach einer fehlgeschlagenen Migration nicht an: `jobs.migrate` schaltet ihn in jedem Fall aus, und nur das Log des Jobs zeigt, ob `bench migrate` durchgelaufen ist, siehe [Auf Kubernetes](#auf-kubernetes).
+Auf Kubernetes gilt dieselbe Reihenfolge: Sicherung über `jobs.backup`, neues `image.tag`, dann `jobs.migrate`. Während der Rollout Pods beider Images gleichzeitig laufen lässt, zeigen die Namen der Asset-Bündel im gemeinsamen Cache auf die Dateien des einen oder des anderen Images; in dieser Zeit keine Belege anlegen oder drucken. Laufen alle Pods aus dem neuen Image, einmal `bench --site <site> clear-cache` in einem davon ausführen, etwa `kubectl --namespace erpnext exec deploy/frappe-bench-erpnext-gunicorn -- bench --site <site> clear-cache`. Anders als oben bleibt der Wartungsmodus nach einer fehlgeschlagenen Migration nicht an: `jobs.migrate` schaltet ihn in jedem Fall aus, und nur das Log des Jobs zeigt, ob `bench migrate` durchgelaufen ist, siehe [Auf Kubernetes](#auf-kubernetes).
 
 ## Scheduler und Worker
 

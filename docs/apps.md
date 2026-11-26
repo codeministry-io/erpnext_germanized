@@ -26,7 +26,7 @@ Einrichtung:
 - **Repository:** [frappe/erpnext](https://github.com/frappe/erpnext), Lizenz GPL-3.0
 - **Dokumentation:** [docs.frappe.io/erpnext](https://docs.frappe.io/erpnext/)
 
-ERPNext ist das ERP-System: Buchhaltung von der Buchung bis zu den Berichten, Auftragsabwicklung mit Verkauf, Einkauf und Lager, Fertigung, Anlagenverwaltung und Projekte mit Aufgaben und Zeiterfassung. ERPNext ist eine Marke der Frappe Technologies Pvt. Ltd., siehe deren [Logo and Trademark Policy](https://github.com/frappe/erpnext/blob/v16.60.0/TRADEMARK_POLICY.md).
+ERPNext ist das ERP-System: Buchhaltung von der Buchung bis zu den Berichten, Auftragsabwicklung mit Verkauf, Einkauf und Lager, Fertigung, Anlagenverwaltung und Projekte mit Aufgaben und Zeiterfassung. ERPNext ist eine Marke der Frappe Technologies Pvt. Ltd., siehe deren [Logo and Trademark Policy](https://github.com/frappe/erpnext/blob/v16.61.0/TRADEMARK_POLICY.md).
 
 Für Deutschland:
 
@@ -49,7 +49,7 @@ Für Deutschland bringt HRMS keinen eigenen Teil mit; `hrms/regional` enthält n
 
 ## erpnext_germany
 
-- **Repository:** [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) von der ALYF GmbH, Lizenz GPL-3.0
+- **Repository:** [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) von der ALYF GmbH, Lizenz GPL-3.0; im Image vorübergehend aus dem Fork [encircle360-oss/erpnext_germany](https://github.com/encircle360-oss/erpnext_germany), siehe unten
 - **Name in bench:** `erpnext_germany`
 
 Die App sammelt regionale Anpassungen für Deutschland:
@@ -65,6 +65,8 @@ Die App sammelt regionale Anpassungen für Deutschland:
 - **GDPdU-Export** für die Übergabe von Daten an das Finanzamt nach § 147 Abs. 6 AO und den GoBD: je DocType eine CSV-Datei, auf Wunsch mit den Anhängen, dazu `index.xml` und die DTD, als ZIP-Datei am Export. Welche DocTypes dazugehören, entscheidet die App nicht, das klärt die Firma mit ihrer Steuerberatung.
 
 Die DTD `gdpdu-01-03-2019.dtd` gehört nicht zur App, sie ist von der CaseWare Germany GmbH und liegt unverändert bei. Mehr steht im [README von erpnext_germany](https://github.com/alyf-de/erpnext_germany/blob/v16.2.2/README.md).
+
+**Fork.** In v16.2.2 kommt der geplante Job der Prüfung der USt-IdNr. nicht mehr voran, sobald ein Kunde oder Lieferant eine USt-IdNr. hat, die sich nicht lesen lässt: Er bricht ab und fragt alle paar Minuten dieselben Partner erneut ab. Die Korrektur steht als [alyf-de/erpnext_germany#148](https://github.com/alyf-de/erpnext_germany/pull/148) beim Projekt. Bis ein Release sie enthält, baut das Image die App aus dem Tag `v16.2.2-encircle360.5` des Forks: v16.2.2 mit dieser Korrektur und sonst unverändert. Sobald ein Release die Korrektur enthält, zeigt `apps.json` wieder auf alyf-de/erpnext_germany mit dessen Release-Tag.
 
 ## erpnext_datev
 
@@ -107,41 +109,91 @@ Die App [Compendium](https://github.com/alyf-de/compendium), die die Dokumentati
 
 Die App erzeugt beim Buchen eines Belegs ein PDF und hängt es an den Beleg. Das geht für jeden DocType, der sich drucken und buchen lässt.
 
-Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für“ steht eine Zeile je DocType, auf Wunsch mit eigenem Druckformat, Briefkopf, Muster für den Dateinamen und Filtern, etwa für eigene PDFs von Gutschriften. „PDF im Hintergrund erstellen“ ist vorgegeben an: Das PDF entsteht dann in einem Hintergrundjob, also nur mit laufenden Workern. Das PDF entsteht in der Sprache aus dem Feld Sprache des Belegs; an Kunden und Lieferanten lässt sich dafür eine eigene Drucksprache (Print Language) wählen.
+Einrichtung in den PDF-on-Submit-Einstellungen: In der Tabelle „Aktiviert für“ steht eine Zeile je DocType, auf Wunsch mit eigenem Druckformat, Briefkopf, Muster für den Dateinamen und Filtern, etwa für eigene PDFs von Gutschriften. „PDF im Hintergrund erstellen“ ist vorgegeben an: Das PDF entsteht dann in einem Hintergrundjob, also nur mit laufenden Workern. Das PDF entsteht in der Sprache aus dem Feld Sprache des Belegs; an Kunden und Lieferanten lässt sich dafür eine eigene Drucksprache (Print Language) wählen. Seit v16.4.0 kann eine Zeile mit „Attach To Field“ das PDF zusätzlich in ein gewähltes Anhangfeld des Belegs schreiben, und die App bettet die XML der E-Rechnung in die PDFs aller Belegarten ein, die das unterstützen, nicht mehr nur der Ausgangsrechnung ([Release-Notes](https://github.com/alyf-de/erpnext_pdf-on-submit/releases/tag/v16.4.0)).
 
 ## banking
 
 - **Repository:** [alyf-de/banking](https://github.com/alyf-de/banking) (ALYF Banking) von der ALYF GmbH, Lizenz GPL-3.0
 - **Name in bench:** `banking`
-- **Dokumentation:** [Banking Wiki](https://github.com/alyf-de/banking/wiki) und [banking/docs](https://github.com/alyf-de/banking/tree/v16.7.0/banking/docs/en/banking) im Repository
+- **Dokumentation:** [Banking Wiki](https://github.com/alyf-de/banking/wiki) und [banking/docs](https://github.com/alyf-de/banking/tree/v16.8.0/banking/docs/en/banking) im Repository
 
 Die App holt Kontoauszüge als Banktransaktionen (Bank Transaction) in ERPNext und hilft, sie mit Belegen abzugleichen.
 
 - **Abgleich** im Bankabgleich Beta (Bank Reconciliation Tool Beta): Banktransaktionen gegen Zahlungen und Buchungssätze oder gegen offene Ausgangs- und Eingangsrechnungen, für die der Abgleich die Zahlung selbst anlegt, mit HRMS auch gegen Spesenabrechnungen. Der Abgleich ist kostenlos und arbeitet auch mit Umsätzen aus anderen Quellen.
 - **Import von Hand:** CAMT-Dateien (camt.052, camt.053) und MT940-Dateien, hochgeladen im Bankabgleich Beta.
 - **EBICS:** Abruf der Umsätze direkt bei der Bank, für Banken in Deutschland, Österreich, Frankreich und der Schweiz. EBICS braucht ein kostenpflichtiges Abonnement bei ALYF ([banking.alyf.de](https://banking.alyf.de/banking-pricing)) und einen EBICS-Zugang der Bank. Für diesen Zugang empfiehlt die Dokumentation die Signaturklasse T: Damit ruft ERPNext Umsätze ab, kann aber keine Zahlungen auslösen.
-- **SEPA-Zahlungsaufträge** (SEPA Payment Order) im Format pain.001 für Zahlungen an Lieferanten und Mitarbeiter, aus Eingangsrechnungen und mit HRMS aus Spesenabrechnungen. Einen gebuchten Auftrag lädt man unter „Aktionen“ mit „Als XML herunterladen“ herunter und dann selbst bei der Bank hoch. Das Senden per EBICS ist in banking v16.7.0 abgeschaltet, siehe [SEPA Payment Order](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/sepa-payment-order.md#send-via-ebics-currently-disabled).
+- **SEPA-Zahlungsaufträge** (SEPA Payment Order) im Format pain.001 für Zahlungen an Lieferanten und Mitarbeiter, aus Eingangsrechnungen und mit HRMS aus Spesenabrechnungen. Einen gebuchten Auftrag lädt man unter „Aktionen“ mit „Als XML herunterladen“ herunter und dann selbst bei der Bank hoch. Das Senden per EBICS ist in banking v16.8.0 abgeschaltet, siehe [SEPA Payment Order](https://github.com/alyf-de/banking/blob/v16.8.0/banking/docs/en/banking/sepa-payment-order.md#send-via-ebics-currently-disabled).
 
-Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.7.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
+Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.8.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
+
+## Briefbote
+
+- **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
+- **Name in bench:** `briefbote`
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/briefbote/tree/v0.3.1/docs) im Repository
+
+Briefbote bringt Druckformate für die Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Angaben, die das Gesetz verlangt, siebzehn in v0.3.1, darunter die Schlussrechnung als Variante der „Rechnung“:
+
+| Druckformat | Beleg (DocType) | Wofür |
+|---|---|---|
+| [Rechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/rechnung.md) | Ausgangsrechnung (Sales Invoice) | Rechnung, Rechnungskorrektur, Stornorechnung oder kaufmännische Gutschrift, je nach Beleg |
+| [Gutschrift](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/gutschrift.md) | Eingangsrechnung (Purchase Invoice) | Gutschrift im Gutschriftsverfahren |
+| [Leistungsnachweis](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/leistungsnachweis.md) | Ausgangsrechnung (Sales Invoice) | die Stunden einer Rechnung aus ihren Stundenzetteln |
+| [Angebot](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/angebot.md) | Angebot (Quotation) | Angebot mit „Gültig bis“ und Alternativpositionen |
+| [Auftragsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/auftragsbestaetigung.md) | Kundenauftrag (Sales Order) | Bestätigung mit Liefertermin und Zahlungsbedingungen |
+| [Lieferschein](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/lieferschein.md) | Lieferschein (Delivery Note) | an die Lieferanschrift, mit Empfangsbestätigung, Preise nur nach Einstellung |
+| [Mahnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/mahnung.md) | Mahnung (Dunning) | Zahlungserinnerung und Mahnung nach Mahnstufe, Verzugszinsen und Pauschale nur, wo sie rechtmäßig sind |
+| [Zahlungsbestätigung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Bestätigung eines gebuchten Zahlungseingangs |
+| [Quittung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/zahlungsbestaetigung.md) | Zahlungseingang (Payment Entry) | Quittung nach § 368 BGB mit Linien für die Unterschrift |
+| [Bestellung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/bestellung.md) | Bestellung (Purchase Order) | Bestellschein mit Lieferterminen und Lieferanschrift |
+| [Anfrage](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/anfrage.md) | Anfrage (Request for Quotation) | Anfrage an Lieferanten ohne Preise, mit Bedarfsterminen |
+| [Lieferantenrücksendung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/lieferantenruecksendung.md) | Rücksendung eines Wareneingangs (Purchase Receipt) | Rücksendung an den Lieferanten mit der zurückgehenden Menge |
+| [Packliste](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/packliste.md) | Packliste (Packing Slip) | Packstücke eines Lieferscheins mit Gewichten |
+| [Zahlungsavis](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/zahlungsavis.md) | Zahlungsausgang (Payment Entry, Pay) | Ankündigung einer Überweisung an einen Lieferanten mit seinen Rechnungen |
+| [Anzahlungsrechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/anzahlungsrechnung.md) | Proforma-Rechnung (Proforma Invoice) zum Kundenauftrag | Rechnung über eine Anzahlung vor der Leistung (§ 14 Abs. 5 UStG) |
+| [Proforma-Rechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/proforma-rechnung.md) | Proforma-Rechnung (Proforma Invoice) zum Kundenauftrag | Proforma-Rechnung, ausdrücklich keine Rechnung im Sinne des § 14 UStG |
+| [Schlussrechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/rechnung.md#anzahlungen-und-schlussrechnung) | Ausgangsrechnung (Sales Invoice) | Variante der „Rechnung“, die erhaltene Anzahlungen abzieht |
+| [Geschäftsbrief](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/geschaeftsbrief-format.md) | Geschäftsbrief (Business Letter) von erpnext_germany | freier Brief; Briefbote legt das Format nur an, wo erpnext_germany installiert ist, im Image also immer |
+
+**Status: Alpha, in Entwicklung, noch nicht einsatzfähig.** Die rechtlichen Texte und Regeln der Dokumente hat noch keine Steuerberatung und keine Rechtsanwältin geprüft; jede Seite der Dokumentation von Briefbote führt unter „Offen für die fachliche Prüfung“, was vor dem echten Einsatz zu klären ist.
+
+> **Warnung: Die Umsatzsteuer einer Anzahlung steht in ERPNext doppelt in den Büchern.** Das gilt für jede Site mit ERPNext 16.61, auch ohne Briefbote. Ein Zahlungseingang mit „Advance Taxes and Charges“ bucht die Umsatzsteuer der Anzahlung beim Eingang, die Ausgangsrechnung über die ganze Leistung bucht sie noch einmal, und das Zuordnen der Anzahlung bucht am Steuerkonto nichts um. Bis eine Korrektur gebucht ist, steht die Umsatzsteuer der Anzahlung zweimal im Hauptbuch, ERPNext führt die Schlussrechnung um sie zu hoch offen, und eine Umsatzsteuer-Voranmeldung aus dem Hauptbuch zählt sie doppelt. Briefbote druckt den Restbetrag nach § 14 Abs. 5 UStG und korrigiert die Bücher nicht; wie zu korrigieren ist, klärt die Steuerberatung. Einzelheiten stehen in der Dokumentation [Anzahlungsrechnung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/anzahlungsrechnung.md).
+
+Einrichtung, siehe [Einrichtung](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/einrichtung.md):
+
+- Nach der Installation steht in der Leiste von ERPNext „Geschäftspost“. Dort gibt es je Unternehmen die Einstellungen Geschäftspost (Business Document Settings) mit Briefform, Papier, Logo, Angaben für den Fuß, Bankkonten, Steuerfällen, Basiszinssätzen, Mahnstufen und den Einstellungen des Lieferscheins. Die Schaltfläche „Einstellungen prüfen“ sagt, was fehlt, etwa ein Bankkonto oder ein Block des Fußes, der mehr als vier Zeilen bräuchte.
+- **Fuß.** Seit v0.2.1 ordnet der Fuß seine bis zu vier Blöcke selbst in gleich breiten Spalten, je höchstens vier Zeilen; die frühere Einstellung „Spalten des Fußes“ ist ausgeblendet und wirkt nicht mehr. Ohne gewähltes Bankkonto bitten Rechnung und Mahnung nicht um Überweisung, sondern zeigen oben einen Befund.
+- **Standard-Druckformate setzt die App nicht.** Wer die Formate von Briefbote als Standard will, setzt sie je DocType über „Customize Form“ (Feld Default Print Format), seit v0.3.0 auch für Geschäftsbrief, Anfrage, Packzettel und Zahlungsausgang.
+- **Anzahlungs- und Proforma-Rechnungen.** Vor dem Einsatz die Warnung oben und die Grenzen auf der Seite „Anzahlungsrechnung“ lesen, dann in den Selling Settings „Enable Proforma Invoice“ einschalten und für Anzahlungsrechnungen einen eigenen Nummernkreis anlegen. Die Anzahlungsrechnung ist ein PDF, keine E-Rechnung.
+- **Geschäftsbrief.** Das Druckformat und seine Einträge im Menü legt Briefbote nur an, wo erpnext_germany installiert ist; im Image ist das immer so, und `bench migrate` legt sie auf bestehenden Sites an.
+- **Mahnarten ohne Zinsen und Gebühr.** Briefbote empfiehlt, in jeder Mahnart (Dunning Type) Zinssatz und Mahngebühr auf 0 zu setzen. Dann bucht ERPNext keine Zinsen ab Fälligkeit, und jede Mahnung erinnert an die offenen Rechnungen; Verzugszinsen und die Pauschale von 40 Euro druckt die Mahnung nur, wo sie rechtmäßig sind.
+- **Basiszinssätze.** Ein Patch trägt bei `bench migrate` die Basiszinssätze der Bundesbank in bestehende Einstellungen ein; zum 1. Januar und 1. Juli kommt der neue Satz von Hand dazu.
+
+Im Image:
+
+- **PDF-Generatoren.** Die Formate legen keinen Generator fest; es gilt der Generator der Druckeinstellungen. Falz- und Lochmarken stehen seit v0.3.1 auf jeder Seite eines Ausdrucks, mit beiden Generatoren, vorher nur auf der ersten. Schlusstexte bleiben mit der letzten Position und den Summen zusammen. Gleich viele Seiten mit beiden Generatoren sagt Briefbote seit v0.3.0 nicht mehr zu: wkhtmltopdf 0.12.6 lässt nach einem Seitenumbruch Leerraum unter der ersten Zeile einer Tabelle, so dass ein Dokument mit wkhtmltopdf eine Seite mehr brauchen kann, etwa die Rechnung RE-2026-0121 aus dem Nachweis von Briefbote (4 statt 3 Seiten). Chromium ist der vorgegebene Generator. Entwürfe und stornierte Belege tragen „ENTWURF“ oder „STORNIERT“ mit Chromium schräg über jeder Seite, mit wkhtmltopdf über der ersten, auch nach der Wandlung in PDF/A durch eu_einvoice. Der Site-Test druckt jedes Format mit beiden Generatoren, dazu die Schlussrechnung mit ihrer Anzahlung, einen Geschäftsbrief über drei Seiten und die Rechnungen, deren Ende nahe am Seitenende liegt. Er verlangt jeweils gleich viele Seiten, außer bei den Fällen, die er mit ihren genauen Seitenzahlen als bekannte Abweichung führt, und prüft das Zeichen eines Entwurfs nach der Wandlung.
+- **Schrift.** Die Formate setzen Inter und betten die Schrift als Data-URL ein, so dass ein Ausdruck nicht von den Schriften des Images abhängt und nichts aus dem Netz lädt. Der Site-Test prüft, dass die PDFs nur eingebettete Schriften enthalten, Inter, wo die Einstellungen die eingebettete Schrift wählen.
+
+Für Ausdrucke gilt der [Haftungsausschluss von Briefbote](https://github.com/encircle360-oss/briefbote/blob/v0.3.1/docs/haftungsausschluss.md).
 
 ## Steuerbote
 
 - **Repository:** [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote), Lizenz AGPL-3.0-or-later
 - **Name in bench:** `steuerbote`
-- **Dokumentation:** [docs](https://github.com/encircle360-oss/steuerbote/tree/v0.13.0/docs) im Repository
+- **Dokumentation:** [docs](https://github.com/encircle360-oss/steuerbote/tree/v0.15.3/docs) im Repository
 
 Steuerbote bringt Steuermeldungen aus ERPNext an ELSTER: die Umsatzsteuer-Voranmeldung, die Dauerfristverlängerung mit Sondervorauszahlung und die Zusammenfassende Meldung, dazu die Jahresmeldungen, also Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung und E-Bilanz, und den Jahresabschluss mit der XBRL-Datei für die Offenlegung im Unternehmensregister. Prüfen, Testsenden und Senden über ERiC gehen nur mit `linux/amd64`, siehe unten. Die Voranmeldung rechnet es aus dem Hauptbuch und vergleicht Beleg für Beleg die gebuchte Steuer mit der Steuer, die sich aus der Bemessungsgrundlage ergibt. Die Vorgaben für SKR03 und SKR04 enthalten auch die Kontonummern der SKR-Vorlagen von ERPNext.
 
-**Status: in Entwicklung, nicht einsatzfähig.** Ohne eigene Hersteller-ID läuft jede Übermittlung über ERiC nur als Simulation. Bis dahin geht die Voranmeldung als XML-Datei und die Zusammenfassende Meldung als CSV-Datei über den Import in Mein ELSTER, siehe [Abgabe über Mein ELSTER](https://github.com/encircle360-oss/steuerbote/blob/v0.13.0/docs/abgabe-mein-elster.md) und [Zusammenfassende Meldung](https://github.com/encircle360-oss/steuerbote/blob/v0.13.0/docs/zm.md). Den Vordruck USt 1 H und die Erklärungen trägt man nach dem Druckformat in Mein ELSTER von Hand ein; eine E-Bilanz nimmt Mein ELSTER nicht an, ihre XBRL-Datei geht an die Steuerberatung.
+**Status: in Entwicklung, nicht einsatzfähig.** Ohne eigene Hersteller-ID läuft jede Übermittlung über ERiC nur als Simulation. Bis dahin geht die Voranmeldung als XML-Datei und die Zusammenfassende Meldung als CSV-Datei über den Import in Mein ELSTER, siehe [Abgabe über Mein ELSTER](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/docs/abgabe-mein-elster.md) und [Zusammenfassende Meldung](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/docs/zm.md). Den Vordruck USt 1 H und die Erklärungen trägt man nach dem Druckformat in Mein ELSTER von Hand ein; eine E-Bilanz nimmt Mein ELSTER nicht an, ihre XBRL-Datei geht an die Steuerberatung.
 
 Im Image:
 
-- **ERiC ist nicht dabei.** ERiC, die Bibliothek der Finanzverwaltung für die Übermittlung, darf nur als Teil des eigenen Produkts weitergegeben werden. Jeder Betreiber lädt ERiC für Linux x86_64 selbst aus dem ELSTER-Entwicklerbereich und richtet es in den ERiC-Einstellungen ein, siehe [ERiC](https://github.com/encircle360-oss/steuerbote/blob/v0.13.0/docs/eric.md).
+- **ERiC ist nicht dabei.** ERiC, die Bibliothek der Finanzverwaltung für die Übermittlung, darf nur als Teil des eigenen Produkts weitergegeben werden. Jeder Betreiber lädt ERiC für Linux x86_64 selbst aus dem ELSTER-Entwicklerbereich und richtet es in den ERiC-Einstellungen ein, siehe [ERiC](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/docs/eric.md).
 - **Plattform.** ERiC braucht Linux x86_64 mit glibc ab 2.28 und mindestens 5 GiB freien Speicher. Das Image für `linux/amd64` ist auf Debian trixie gebaut, das glibc 2.41 mitbringt. Im Image für `linux/arm64` ist Steuerbote installiert, ERiC läuft dort aber nicht; was ERiC braucht, also Prüfen, Testsenden und Senden an ELSTER, geht nur mit `linux/amd64`. Wer ERiC nutzt, betreibt deshalb alle Dienste aus dem Image auf `linux/amd64`, in einem Kubernetes-Cluster mit Knoten beider Plattformen per `kubernetes.io/arch: amd64` im `nodeSelector` jedes Dienstes und Jobs des Charts. Die Abgabe als XML-Datei über Mein ELSTER braucht ERiC nicht und geht auf beiden Plattformen.
 - **Ablage.** Die eingerichtete Laufzeit liegt außerhalb jeder Site in `sites/eric` der Bench, im Container also im Volume `sites`. Sie bleibt bei einem Wechsel des Images erhalten, `bench backup` sichert sie aber nicht. `steuerbote_eric_root` in `common_site_config.json` legt ein anderes Verzeichnis fest.
 - **Worker.** Die Einrichtung von ERiC sowie Prüfen, Testsenden und Senden laufen als Hintergrundjobs in der Queue `long`, im Beispiel also im Dienst `queue-long`. Das Archiv von ERiC muss deshalb in diesem Container liegen; am einfachsten im Volume `sites`, das alle Dienste teilen.
 
-Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/v0.13.0/README.md#haftungsausschluss).
+Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github.com/encircle360-oss/steuerbote/blob/v0.15.3/README.md#haftungsausschluss).
 
 ## Zusammenspiel der Apps
 
@@ -150,6 +202,8 @@ Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github
 - **banking und erpnext_germany:** erpnext_germany ergänzt die Eingangsrechnung um „Dienstreise“, „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“. Das letzte Feld markiert eine Rechnung, die ein Mitarbeiter vorgestreckt hat, mit oder ohne Dienstreise. Sind „Dienstreise-Mitarbeiter“ und „An Mitarbeiter zahlen“ gesetzt, geht ein SEPA-Zahlungsauftrag dazu an den Mitarbeiter statt an den Lieferanten; banking zeigt dann statt „Lieferanten-Bankkonto“ das Feld „Mitarbeiter-Bankkonto“.
 - **banking und HRMS:** Banktransaktionen lassen sich gegen offene Spesenabrechnungen abgleichen, und aus einer genehmigten Spesenabrechnung entsteht direkt ein SEPA-Zahlungsauftrag.
 - **ERPNext und Steuerbote:** Die Vorgaben von Steuerbote für SKR03 und SKR04 kennen die Kontonummern der SKR-Vorlagen von ERPNext.
+- **Briefbote und erpnext_germany:** Briefbote nimmt die Registerangaben des Unternehmens aus erpnext_germany, wenn die Einstellungen Geschäftspost keine haben, und den Grund einer Steuerbefreiung aus dem Feld `tax_exemption_reason` der Ausgangsrechnung, wenn der Steuerfall keinen nennt.
+- **Briefbote, eu_einvoice und erpnext_pdf-on-submit:** eu_einvoice bettet sein XML auch in das PDF eines Druckformats von Briefbote ein, wenn es über den PDF-Download entsteht. PDF on Submit hängt beim Buchen ein PDF mit dem Druckformat seiner Einstellungen an; mit „Rechnung“ entsteht so das PDF, das aufbewahrt wird.
 
 ## Nicht im Image
 

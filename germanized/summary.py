@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping, Sequence
 
-from germanized.apps import App
+from germanized.apps import App, pin_note
 
 
 def markdown(apps: Sequence[App], pins: Mapping[str, str], tags: Sequence[str]) -> str:
@@ -10,6 +10,8 @@ def markdown(apps: Sequence[App], pins: Mapping[str, str], tags: Sequence[str]) 
 	frappe = App(pins["FRAPPE_PATH"], pins["FRAPPE_BRANCH"])
 	lines = ["### Apps", "", "| App | Version |", "| --- | --- |"]
 	lines += [f"| [{app.name}]({app.url}) | `{app.tag}` |" for app in (frappe, *apps)]
+	if notes := [note for app in apps if (note := pin_note(app))]:
+		lines += ["", *(f"- {note}" for note in notes)]
 	lines += ["", "### Build arguments", "", "| Argument | Value |", "| --- | --- |"]
 	lines += [f"| `{name}` | `{value}` |" for name, value in pins.items()]
 	lines += ["", "### Image tags", ""]

@@ -261,3 +261,39 @@ def test_update_keeps_the_line_endings():
 def test_update_needs_the_table():
 	with pytest.raises(ValueError, match=re.escape("README.md has no section '## Enthaltene Apps'")):
 		update("# erpnext_germanized\n", APPS, FRAPPE_TAG)
+
+
+FORK_APPS = (
+	App("https://github.com/frappe/erpnext", "v16.60.0"),
+	App("https://github.com/encircle360-oss/erpnext_germany", "v16.2.2-encircle360.4"),
+)
+FORK_ROW = (
+	"| [erpnext_germany](https://github.com/encircle360-oss/erpnext_germany) | v16.2.2-encircle360.4 | "
+	"Fork von [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) mit "
+	"[#148](https://github.com/alyf-de/erpnext_germany/pull/148) | GPL-3.0 |"
+)
+
+
+def test_the_row_of_a_fork_has_its_tag_and_links_its_upstream_repository():
+	assert check(readme(FRAPPE_ROW, ERPNEXT_ROW, FORK_ROW), FORK_APPS, FRAPPE_TAG) == []
+
+
+def test_a_link_into_the_upstream_repository_names_it_as_well():
+	row = FORK_ROW.replace("[alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) mit ", "")
+	assert check(readme(FRAPPE_ROW, ERPNEXT_ROW, row), FORK_APPS, FRAPPE_TAG) == []
+
+
+def test_the_row_of_a_fork_must_link_its_upstream_repository():
+	row = (
+		"| [erpnext_germany](https://github.com/encircle360-oss/erpnext_germany) | v16.2.2-encircle360.4 | "
+		"Deutsche Anpassungen, siehe [alyf-de/erpnext_germany_x](https://github.com/alyf-de/erpnext_germany_x) | GPL-3.0 |"
+	)
+	assert check(readme(FRAPPE_ROW, ERPNEXT_ROW, row), FORK_APPS, FRAPPE_TAG) == [
+		"README.md line 11: erpnext_germany is pinned to the fork https://github.com/encircle360-oss/erpnext_germany, "
+		"so its row must link the upstream repository https://github.com/alyf-de/erpnext_germany"
+	]
+
+
+def test_update_sets_the_tag_of_a_fork():
+	text = readme(FRAPPE_ROW, ERPNEXT_ROW, FORK_ROW.replace("v16.2.2-encircle360.4", "v16.2.2"))
+	assert update(text, FORK_APPS, FRAPPE_TAG) == readme(FRAPPE_ROW, ERPNEXT_ROW, FORK_ROW)

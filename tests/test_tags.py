@@ -155,3 +155,16 @@ def test_a_malformed_release_tag_is_refused():
 
 def test_a_release_needs_erpnext_in_apps_json():
 	assert release_check("v16.60.0-1", APPS[1:]) == ["apps.json has no app https://github.com/frappe/erpnext"]
+
+
+def test_a_release_takes_a_fork_tag():
+	fork = App("https://github.com/encircle360-oss/erpnext_germany", "v16.2.2-encircle360.4")
+	assert release_check("v16.60.0-1", (*APPS, fork)) == []
+
+
+def test_a_release_refuses_an_app_on_a_branch():
+	branch = App("https://github.com/encircle360-oss/briefbote", "main")
+	assert release_check("v16.60.0-1", (*APPS, branch)) == [
+		"briefbote is pinned to the branch main, not to a release; "
+		"python -m germanized bump --write moves it to its newest release"
+	]

@@ -4,9 +4,9 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 
 ## Stand
 
-- **Rezept:** `Containerfile` aus frappe_docker v4.2.0 mit Ghostscript, gepinnten Vorgaben, darunter Frappe in `FRAPPE_BRANCH`, und OCI-Labels; `apps.json` mit ERPNext, HRMS, den fünf Apps von ALYF und Steuerbote. Die Versionen nennt die Tabelle im [README](../README.md#enthaltene-apps), den Aufbau [Architektur](architektur.md).
+- **Rezept:** `Containerfile` aus frappe_docker v4.2.0 mit Ghostscript, gepinnten Vorgaben, darunter Frappe in `FRAPPE_BRANCH`, und OCI-Labels; `apps.json` mit ERPNext, HRMS, den fünf Apps von ALYF, Briefbote und Steuerbote; erpnext_germany vorübergehend aus einem Fork, siehe [Apps](apps.md#erpnext_germany). Die Versionen nennt die Tabelle im [README](../README.md#enthaltene-apps), den Aufbau [Architektur](architektur.md).
 - **Werkzeuge:** `python -m germanized` prüft `apps.json`, leitet die Image-Tags ab, prüft Release-Tags, hebt Versionen an und hält die Tabelle im README aktuell, mit 100 % Testabdeckung, siehe [Entwicklung](entwicklung.md#werkzeuge).
-- **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site, erzeugt PDFs mit wkhtmltopdf und Chromium und prüft Backend und nginx.
+- **Site-Test:** `tests/site/run.sh` installiert alle Apps auf einer frischen Site, erzeugt PDFs mit wkhtmltopdf und Chromium, druckt jedes Druckformat von Briefbote mit beiden und prüft Backend und nginx.
 - **CI:** Tests, Linters, Security, Image, Release und App versions, siehe [Entwicklung](entwicklung.md#ci).
 - **Beispiel** für docker compose und Hinweise für den Betrieb auf Kubernetes mit dem Helm-Chart von Frappe, siehe [Betrieb](betrieb.md).
 - **`linux/arm64`:** Releases nach 16.60.0-12 und `main` gibt es für `linux/amd64` und `linux/arm64` unter denselben Tags, beide nativ gebaut und mit Site-Test, siehe [Entwicklung](entwicklung.md#ci). ERiC für Steuerbote gibt es nur für Linux x86_64.
@@ -25,8 +25,8 @@ erpnext_germanized soll ein Image sein, das deutsche Unternehmen ohne eigenen Bu
 
 ## Grundsätze
 
-- **Upstream zuerst.** Das Image ändert keine App. Fehler in Frappe, ERPNext oder einer App werden beim jeweiligen Projekt gemeldet und dort behoben; ins Image kommt die Korrektur mit dessen nächstem Release.
-- **Alles gepinnt.** Apps auf Release-Tags, Frappe, Python, Node.js und wkhtmltopdf über die Vorgaben im `Containerfile`, Images per Tag, Actions per Commit-SHA. Was nicht gepinnt ist, steht mit Begründung im `Containerfile`.
+- **Upstream zuerst.** Das Image ändert keine App. Fehler in Frappe, ERPNext oder einer App werden beim jeweiligen Projekt gemeldet und dort behoben; ins Image kommt die Korrektur mit dessen nächstem Release. Wiegt ein Fehler im Betrieb schwer, baut das Image die App vorübergehend aus einem Fork mit genau der Korrektur, die beim Projekt als Pull Request liegt, bis ein Release sie enthält; derzeit erpnext_germany mit [alyf-de/erpnext_germany#148](https://github.com/alyf-de/erpnext_germany/pull/148).
+- **Alles gepinnt.** Apps auf Release-Tags, ein Fork auf ein Tag des Forks, Frappe, Python, Node.js und wkhtmltopdf über die Vorgaben im `Containerfile`, Images per Tag, Actions per Commit-SHA. Was nicht gepinnt ist, steht mit Begründung im `Containerfile`.
 - **Nur die aktuelle Hauptversion** von Frappe und ERPNext, derzeit 16. Ältere Hauptversionen werden nicht weitergebaut.
 - **Erst testen, dann veröffentlichen.** Kein Image ohne grünen Site-Test, keine Änderung an den Werkzeugen ohne Test, der vorher fehlschlägt.
 - **Nachvollziehbar.** Jedes Release nennt alle Versionen und bringt eine SBOM und eine Herkunftsangabe mit.

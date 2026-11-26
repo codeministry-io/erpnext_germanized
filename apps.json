@@ -1,15 +1,15 @@
 [
   {
     "url": "https://github.com/frappe/erpnext",
-    "branch": "v16.60.0"
+    "branch": "v16.61.0"
   },
   {
     "url": "https://github.com/frappe/hrms",
     "branch": "v16.60.0"
   },
   {
-    "url": "https://github.com/alyf-de/erpnext_germany",
-    "branch": "v16.2.2"
+    "url": "https://github.com/encircle360-oss/erpnext_germany",
+    "branch": "v16.2.2-encircle360.5"
   },
   {
     "url": "https://github.com/alyf-de/erpnext_datev",
@@ -21,14 +21,18 @@
   },
   {
     "url": "https://github.com/alyf-de/erpnext_pdf-on-submit",
-    "branch": "v16.3.1"
+    "branch": "v16.4.0"
   },
   {
     "url": "https://github.com/alyf-de/banking",
-    "branch": "v16.7.0"
+    "branch": "v16.8.0"
+  },
+  {
+    "url": "https://github.com/encircle360-oss/briefbote",
+    "branch": "v0.3.1"
   },
   {
     "url": "https://github.com/encircle360-oss/steuerbote",
-    "branch": "v0.13.0"
+    "branch": "v0.15.3"
   }
 ]
