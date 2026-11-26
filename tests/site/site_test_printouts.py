@@ -63,7 +63,13 @@ BRIEFBOTE_PROOFS = (
 	"print_proof_dunning",
 	"print_proof_payment",
 	"print_proof_purchase",
+	"print_proof_remittance",
+	"print_proof_goods",
+	"print_proof_letters",
 )
+# Cases of Briefbote's proof printed beyond the first of each format: the final invoice with its advance (v0.3.0) and
+# the business letter of three pages (v0.3.0).
+EXTRA_CASES = ("RE-2026-0401", "GB-2026-0002")
 # The apps whose print formats promise the same pages with both generators.
 SAME_PAGES = frozenset({"briefbote", "steuerbote"})
 EMBEDDED_FONT = "Inter"
@@ -145,8 +151,12 @@ def samples() -> list[Sample]:
 	standard = frappe.db.get_value("DocType", "Sales Invoice", "default_print_format") or "Standard"
 	found.append(Sample("erpnext", "Sales Invoice", invoice[0], standard))
 	if "briefbote" in installed:
+		# A Proforma Invoice prints through the copy of its Sales Order (document_of), which only the direct printout
+		# below reproduces.
 		found += [
-			Sample("briefbote", case.doctype, case.name, case.print_format) for case in briefbote_cases()
+			Sample("briefbote", case.doctype, case.name, case.print_format)
+			for case in briefbote_cases()
+			if case.doctype != "Proforma Invoice"
 		]
 	if "steuerbote" in installed:
 		from steuerbote.tests.print_proof import FORMATS, sample
@@ -213,8 +223,8 @@ def briefbote_cases() -> list:
 
 
 def briefbote_checks() -> Iterator[tuple[str, object]]:
-	"""Each format of Briefbote printed directly with both generators, and, with Chromium, a printout in the font of
-	the system as well, for the glyph advances."""
+	"""Each format of Briefbote printed directly with both generators, with the extra cases of EXTRA_CASES and, for the
+	glyph advances, a printout in the font of the system as well."""
 	from briefbote.briefbote import printing
 	from briefbote.layout import theme
 	from briefbote.tests.print_proof import render
@@ -227,20 +237,28 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 		),
 		None,
 	)
-	for case in [*briefbote_cases(), *([system_font] if system_font else [])]:
-		for engine in ENGINES:
-
-			def check(case=case, engine=engine) -> str:
-				doc = frappe.get_doc(case.doctype, case.name)
-				inter = theme.embeds(printing.settings(doc.company).get("font"))
-				with print_language(case.language):
-					pdf = render(doc, case.print_format, engine, own_paper=True)
-				line = fonts_and_name(pdf, doc.name, inter)
-				if engine == "chrome":
-					line += ", " + advances(pdf)
-				return line
-
-			yield f"briefbote: {case.print_format}, {case.name}, {engine}", check
+	extra = [
+		case
+		for name in EXTRA_CASES
+		if (
+			case := next(
+				(
+					case
+					for case in briefbote_proof_cases()
+					if case.name == name
+					and case.language == "de"
+					and getattr(case, "docstatus", None) is None
+					and not getattr(case, "variant", "")
+				),
+				None,
+			)
+		)
+	]
+	for case in [*briefbote_cases(), *extra, *([system_font] if system_font else [])]:
+		yield (
+			f"briefbote: {case.print_format}, {case.name}, both generators",
+			lambda case=case: printed_alike(case, render, printing, theme),
+		)
 	for case in closing_cases():
 		yield (
 			f"briefbote: {case.print_format}, {case.name}, end near the end of a page, both generators",
@@ -260,6 +278,57 @@ def briefbote_checks() -> Iterator[tuple[str, object]]:
 				f"briefbote: {draft.print_format}, {draft.name} as draft, {engine}, PDF/A",
 				lambda engine=engine: draft_mark(draft, engine, render),
 			)
+
+
+def document(case):
+	"""The document a case of Briefbote's proof prints: for a Proforma Invoice the copy of its Sales Order that
+	ERPNext prints (print_proof.document_of from v0.3.0 on), else the document itself."""
+	from briefbote.tests import print_proof
+
+	if hasattr(print_proof, "document_of"):
+		return print_proof.document_of(case)
+	return frappe.get_doc(case.doctype, case.name)
+
+
+def printed_name(case, doc) -> str | None:
+	"""What the printout names the document by: the number of the case where it has one, as a Proforma Invoice; a
+	business letter by its running title, which the test does not know, so None."""
+	if case.doctype == "Business Letter":
+		return None
+	return getattr(case, "number", "") or doc.name
+
+
+def printed_alike(case, render, printing, theme) -> str:
+	"""A case printed directly with both generators: each PDF names its document and embeds its fonts, Chromium keeps
+	the glyph advances, and both have as many pages, apart from KNOWN_PAGE_DIFFERENCES."""
+	doc = document(case)
+	inter = theme.embeds(printing.settings(doc.company).get("font"))
+	lines, pages = [], {}
+	with print_language(case.language):
+		for engine in ENGINES:
+			pdf = render(doc, case.print_format, engine, own_paper=True)
+			line = fonts_and_name(pdf, printed_name(case, doc), inter)
+			if engine == "chrome":
+				line += ", " + advances(pdf)
+			pages[engine] = len(PdfReader(io.BytesIO(pdf)).pages)
+			lines.append(f"{engine}: {line}")
+	compare_pages(case.name, pages)
+	return "; ".join(lines)
+
+
+def compare_pages(name: str, pages: dict[str, int]) -> str:
+	"""The page counts of the generators agree, or equal exactly the known difference of the case."""
+	counts = ", ".join(f"{engine} {count}" for engine, count in pages.items())
+	if known := KNOWN_PAGE_DIFFERENCES.get(name):
+		if pages != known:
+			raise AssertionError(
+				f"the known difference of {name} changed ({counts}); "
+				"remove it from KNOWN_PAGE_DIFFERENCES if both generators now agree"
+			)
+		return f"pages {counts}, the known difference"
+	if len(set(pages.values())) > 1:
+		raise AssertionError(f"different page counts ({counts})")
+	return f"pages {counts}"
 
 
 def briefbote_proof_cases() -> list:
@@ -292,7 +361,7 @@ def same_pages_directly(case, render) -> str:
 	"""A case printed directly with both generators, under the settings of the case, on as many pages each."""
 	from briefbote.tests.print_proof import settings_of
 
-	doc = frappe.get_doc(case.doctype, case.name)
+	doc = document(case)
 	pages: dict[str, int] = {}
 	last_page_words = ""
 	with print_language(case.language), settings_of(doc.company, getattr(case, "settings", None) or {}):
@@ -304,17 +373,10 @@ def same_pages_directly(case, render) -> str:
 			pages[engine] = len(reader.pages)
 			if engine == "wkhtmltopdf":
 				last_page_words = " ".join(reader.pages[-1].extract_text().split())
-	counts = ", ".join(f"{engine} {count}" for engine, count in pages.items())
-	if known := KNOWN_PAGE_DIFFERENCES.get(case.name):
-		if pages != known:
-			raise AssertionError(
-				f"the known difference of {case.name} changed ({counts}); "
-				"remove it from KNOWN_PAGE_DIFFERENCES if both generators now agree"
-			)
-		return f"pages {counts}, the known difference; last page with wkhtmltopdf: {last_page_words}"
-	if len(set(pages.values())) > 1:
-		raise AssertionError(f"different page counts ({counts})")
-	return f"pages {counts}"
+	line = compare_pages(case.name, pages)
+	if case.name in KNOWN_PAGE_DIFFERENCES:
+		line += f"; last page with wkhtmltopdf: {last_page_words}"
+	return line
 
 
 def plain(case) -> bool:
@@ -384,16 +446,17 @@ def page_image(pdf: bytes, number: int) -> bytes:
 
 
 def company_font(case, printing) -> str | None:
-	return printing.settings(frappe.db.get_value(case.doctype, case.name, "company")).get("font")
+	return printing.settings(getattr(document(case), "company", None)).get("font")
 
 
-def fonts_and_name(pdf: bytes, name: str, inter: bool) -> str:
-	"""Pages and fonts of a printout; raises when it lacks its document or a font is missing or foreign."""
+def fonts_and_name(pdf: bytes, name: str | None, inter: bool) -> str:
+	"""Pages and fonts of a printout; raises when it lacks its document (where its name is known) or a font is
+	missing or foreign."""
 	if not pdf.startswith(b"%PDF-"):
 		raise AssertionError(f"the printout of {name} is no PDF")
 	reader = PdfReader(io.BytesIO(pdf))
 	text = " ".join(page.extract_text() for page in reader.pages)
-	if name not in text:
+	if name and name not in text:
 		raise AssertionError(f"the printout of {name} does not name its document")
 	fonts: dict[str, bool] = {}
 	for page in reader.pages:
