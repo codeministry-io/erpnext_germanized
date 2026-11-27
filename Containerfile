@@ -27,8 +27,9 @@
 # The recipe itself, the repository erpnext_germanized, is Apache-2.0, apart from this Containerfile, which
 # stays MIT like its upstream. The label org.opencontainers.image.licenses joins that license with those of
 # the software in the image: Frappe (MIT), ERPNext, HRMS, erpnext_germany, erpnext_datev and banking
-# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later), Steuerbote and Briefbote
-# (AGPL-3.0-or-later). The Python, Node.js and Debian packages underneath keep their own licenses.
+# (GPL-3.0-only), eu_einvoice and erpnext_pdf-on-submit (GPL-3.0-or-later), Insights and CRM (AGPL-3.0-only),
+# Steuerbote and Briefbote (AGPL-3.0-or-later). The Python, Node.js and Debian packages underneath keep their own
+# licenses.
 
 # The stages switch to the frappe user (uid 1000, gid 0) by name like the frappe images do, so the image
 # behaves the same under their compose files and Helm chart.
@@ -276,7 +277,7 @@ LABEL org.opencontainers.image.title="erpnext_germanized" \
   org.opencontainers.image.documentation="https://github.com/encircle360-oss/erpnext_germanized#readme" \
   org.opencontainers.image.vendor="encircle360 GmbH" \
   org.opencontainers.image.authors="encircle360 GmbH and contributors <oss@encircle360.com>" \
-  org.opencontainers.image.licenses="Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later" \
+  org.opencontainers.image.licenses="Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-only AND AGPL-3.0-or-later" \
   org.opencontainers.image.version="${VERSION}" \
   org.opencontainers.image.base.name="docker.io/library/python:${PYTHON_VERSION}-slim-${DEBIAN_BASE}"
 

@@ -132,6 +132,14 @@ if [[ -z "$profiles" ]]; then
 	fail "Ghostscript has no srgb.icc profile, which eu_einvoice needs for PDF/A-3"
 fi
 
+# bench installs the Python packages of each app on top of those of the apps before it, so a later app can move a
+# package that an earlier one pinned, such as sqlglot, which Frappe pulls in through sql_metadata and Insights pins.
+step "Python environment: the installed packages agree with each other"
+docker run --rm --quiet --entrypoint env/bin/python "$image" -m pip check ||
+	fail "the Python packages of the image conflict with each other"
+docker run --rm --quiet --entrypoint env/bin/python "$image" -c \
+	'import importlib.metadata as m; print("sqlglot", m.version("sqlglot"))'
+
 step "starting MariaDB and Redis"
 "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true
 "${compose[@]}" up --detach --quiet-pull --wait --wait-timeout 180 db redis
@@ -172,6 +180,29 @@ if [[ " ${names[*]} " == *" briefbote "* ]] && in_bench test -f apps/briefbote/b
 	optional=$(bench_output --site "$SITE" execute briefbote.tests.optional_parts.check --kwargs "{'expected': True}" 2>&1) ||
 		fail "the site lacks the optional parts of Briefbote for erpnext_germany: $optional"
 	echo "the site has the print format Geschäftsbrief and its menu entries"
+fi
+
+# Insights imports the workbooks that the apps ship as <app>/<module>/insights_workbook/<name>/<name>.json, such as
+# the dashboards of ERPNext and HRMS, after its installation and after every migrate; a workbook that fails to import
+# only lands in the error log, so each one has to be on the site.
+if [[ " ${names[*]} " == *" insights "* ]]; then
+	step "Insights: the workbooks the apps ship are on $SITE"
+	# shellcheck disable=SC2016 # expanded by the shell inside the container
+	shipped=$(docker run --rm --quiet --entrypoint sh "$image" -c '
+		for file in apps/*/*/*/insights_workbook/*/*.json; do
+			[ -f "$file" ] || continue
+			stem=$(basename "$(dirname "$file")")
+			[ "$(basename "$file" .json)" = "$stem" ] && jq -r .name "$file"
+		done
+		true
+	' | jq -R . | jq -cs .)
+	[[ "$shipped" != "[]" ]] || fail "no app of the image ships an Insights workbook; the search has gone stale"
+	workbooks=$(bench_output --site "$SITE" execute frappe.get_all --args '["Insights Workbook"]' \
+		--kwargs '{"filters": {"is_standard": 1}, "pluck": "name"}' | tail -n 1)
+	missing=$(jq -c --argjson shipped "$shipped" '$shipped - .' <<<"$workbooks") ||
+		fail "the standard workbooks of Insights could not be read: $workbooks"
+	[[ "$missing" == "[]" ]] || fail "Insights did not import the shipped workbooks $missing"
+	echo "the site has the shipped workbooks $(jq -r 'join(" ")' <<<"$shipped")"
 fi
 
 step "making $SITE the default site"
@@ -232,6 +263,22 @@ handshake=$("${compose[@]}" exec -T frontend curl -fsS -H "Host: $SITE" \
 	"http://localhost:8080/socket.io/?EIO=4&transport=polling")
 [[ "$handshake" == '0{"sid":'* ]] || fail "nginx does not pass /socket.io/ to Socket.IO: $handshake"
 echo "nginx passes /socket.io/ to Socket.IO"
+
+# Insights draws its dashboards and charts on desk pages as islands, and the standard dashboards of ERPNext and HRMS
+# open in them. Its build skips the islands without failing when it does not find the island toolchain of Frappe, so
+# each has to be in assets.json and answer through nginx.
+if [[ " ${names[*]} " == *" insights "* ]]; then
+	step "frontend: the desk islands of Insights"
+	for island in insights.dashboard.island.js insights.chart.island.js; do
+		# shellcheck disable=SC2016 # $island is a variable of jq
+		path=$("${compose[@]}" exec -T frontend jq -r --arg island "$island" '.[$island] // empty' \
+			/home/frappe/frappe-bench/assets/assets.json)
+		[[ -n "$path" ]] || fail "assets.json has no $island; Insights was built without its desk islands"
+		"${compose[@]}" exec -T frontend curl -fsS -o /dev/null -H "Host: $SITE" "http://localhost:8080$path" ||
+			fail "nginx does not serve $island at $path"
+		echo "nginx serves $island at $path"
+	done
+fi
 
 # The desk loads some libraries at run time from node_modules, such as qz-tray for printing; the build stage
 # keeps exactly those, so every such path in the built bundles has to answer.

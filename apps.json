@@ -28,6 +28,14 @@
     "branch": "v16.8.0"
   },
   {
+    "url": "https://github.com/frappe/insights",
+    "branch": "v3.51.0"
+  },
+  {
+    "url": "https://github.com/frappe/crm",
+    "branch": "v16.5.0"
+  },
+  {
     "url": "https://github.com/encircle360-oss/briefbote",
     "branch": "v0.3.1"
   },

@@ -49,7 +49,7 @@ BuildKit nimmt den Inhalt eines Secrets nicht in den Schlüssel seines Caches au
 | `org.opencontainers.image.authors` | `encircle360 GmbH and contributors <oss@encircle360.com>` |
 | `org.opencontainers.image.title` | `erpnext_germanized` |
 | `org.opencontainers.image.description` | eine Zeile auf Englisch |
-| `org.opencontainers.image.licenses` | `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`: das Rezept (Apache-2.0, das `Containerfile` MIT) und die Apps im Image; Einzelheiten nennt das [README](../README.md#lizenz) |
+| `org.opencontainers.image.licenses` | `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-only AND AGPL-3.0-or-later`: das Rezept (Apache-2.0, das `Containerfile` MIT) und die Apps im Image; Einzelheiten nennt das [README](../README.md#lizenz) |
 | `org.opencontainers.image.version` | aus dem Build-Argument `VERSION`, Vorgabe `dev`; `build.sh` setzt es auf die Ausgabe von `git describe --tags --always --dirty`, die CI bei einem Release auf das Tag und sonst ebenfalls auf `git describe` |
 | `org.opencontainers.image.base.name` | das Basis-Image, `docker.io/library/python:3.14-slim-trixie` |
 
@@ -98,7 +98,7 @@ Der zweite `RUN` der Stufe `builder` ruft deshalb `python -m germanized prune-no
 
 Alles andere fällt weg: die `node_modules` der Oberflächen in den Apps ganz, aus jedem übrigen `node_modules` alle nicht behaltenen Pakete und jeder Eintrag mit Punkt am Anfang, also `.bin`, Caches wie `.cache` und Build-Ausgaben wie `.vite`. Ein verschachteltes `node_modules`, aus dem etwas behalten wird, etwa unter `<app>/realtime`, wird gekürzt statt gelöscht. Links namens `node_modules`, die danach ins Leere zeigen, entfernt der Schritt ebenfalls, etwa `apps/hrms/hrms/public/node_modules`, auf den `sites/assets/hrms` verweist.
 
-Der Schritt bricht den Build ab, statt ein unvollständiges Image zu bauen, wenn einem behaltenen Paket eine reguläre Abhängigkeit fehlt oder ein behaltenes Paket danach nicht mehr da ist. Er folgt keinem Link aus der Bench hinaus: Ist eine App oder ihr `node_modules` ein Link, bricht er ab, und das `node_modules` eines behaltenen Pakets bleibt unberührt, wenn eines von beiden ein Link ist. Abhängigkeiten eines Pakets, das selbst ein Link ist (etwa `link:` bei yarn), sucht er vom Link aus, nicht vom Ziel aus wie Node.js; keine der Apps im Image nutzt das.
+Der Schritt bricht den Build ab, statt ein unvollständiges Image zu bauen, wenn einem behaltenen Paket eine reguläre Abhängigkeit fehlt oder ein behaltenes Paket danach nicht mehr da ist. Er folgt keinem Link aus der Bench hinaus: Ist eine App oder ihr `node_modules` ein Link, bricht er ab, und das `node_modules` eines behaltenen Pakets bleibt unberührt, wenn eines von beiden ein Link ist. Abhängigkeiten eines Pakets, das selbst ein Link ist (etwa `link:` bei yarn), sucht er vom Link aus, nicht vom Ziel aus wie Node.js. Im Image nutzen das nur die Oberflächen von Insights und CRM, deren `node_modules` `@framework/ui` mit `link:../../frappe/ui` auf das Verzeichnis `ui` von Frappe verlinkt; dieses `node_modules` fällt ganz weg, der Link wird dabei entfernt, sein Ziel bleibt.
 
 Was dadurch nicht mehr geht:
 
@@ -107,7 +107,7 @@ Was dadurch nicht mehr geht:
 - **Bibliotheken unter `/assets/<app>/node_modules`, die nirgends wörtlich stehen.** Behalten wird nur, was die Assets oder Quellen einer App als Pfad nennen. Setzt eigener Code den Pfad erst zur Laufzeit zusammen oder steht er nur in der Datenbank, etwa in einem Client Script, einer Web Page oder einem Print Format, antwortet nginx darauf mit 404.
 - **Lizenz und Autor der JavaScript-Pakete in Frappe.** Die Seite `/attribution` und die SBOM, die Frappe in „Installed Applications“ mit „Generate SBOM“ erzeugt, lesen beides aus dem `package.json` eines Pakets unter `node_modules`. Für die entfernten Pakete nennen sie nur noch Name und Version aus `yarn.lock`.
 
-Ein Teil der entfernten Pakete steckt gebündelt in den Assets unter `<app>/<app>/public`, etwa Vue in den Bundles von Frappe unter `dist` und frappe-ui in `hrms/public/frontend`. Scanner und die SBOM des Images erkennen ein Paket an seinem `package.json` unter `node_modules`, diese Bibliotheken sehen sie danach nicht mehr. Eine Schwachstelle darin meldet der Scan des Images also nicht; behoben wird sie mit einer Version der App, deren Assets mit der korrigierten Bibliothek gebaut sind.
+Ein Teil der entfernten Pakete steckt gebündelt in den Assets unter `<app>/<app>/public`, etwa Vue in den Bundles von Frappe unter `dist` und frappe-ui in `hrms/public/frontend`, `insights/public/frontend` und `crm/public/frontend`. Scanner und die SBOM des Images erkennen ein Paket an seinem `package.json` unter `node_modules`, diese Bibliotheken sehen sie danach nicht mehr. Eine Schwachstelle darin meldet der Scan des Images also nicht; behoben wird sie mit einer Version der App, deren Assets mit der korrigierten Bibliothek gebaut sind.
 
 Der Site-Test startet den Socket.IO-Server, lädt jede `realtime/handlers.js` der Apps, ruft über nginx jede Bibliothek ab, die die gebauten Assets unter `node_modules` nennen, prüft jedes Verzeichnis unter `node_modules`, das sie nennen, und speichert ein eigenes Website Theme.
 

@@ -1,6 +1,6 @@
 # erpnext_germanized
 
-ERPNext für deutsche Unternehmen als fertiges Container-Image: Frappe, ERPNext und HRMS mit den deutschen Apps von ALYF, Steuerbote und Briefbote in einem versionierten Image für die GitHub Container Registry.
+ERPNext für deutsche Unternehmen als fertiges Container-Image: Frappe, ERPNext und HRMS mit den deutschen Apps von ALYF, Steuerbote und Briefbote, dazu Frappe Insights und Frappe CRM, in einem versionierten Image für die GitHub Container Registry.
 
 > **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.61.0-6` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
 
@@ -10,7 +10,7 @@ Druckformate für Geschäftsdokumente nach DIN 5008 bringt die enthaltene App [B
 
 ## Was erpnext_germanized ist
 
-- **Ein Image.** Frappe, ERPNext, HRMS, die Apps von ALYF, Steuerbote und Briefbote stecken zusammen in `ghcr.io/encircle360-oss/erpnext_germanized`. Backend, Frontend, Websocket, Worker und Scheduler starten aus demselben Image mit unterschiedlichen Befehlen, wie bei den Images von [frappe_docker](https://github.com/frappe/frappe_docker).
+- **Ein Image.** Frappe, ERPNext, HRMS, die Apps von ALYF, Steuerbote, Briefbote, Insights und CRM stecken zusammen in `ghcr.io/encircle360-oss/erpnext_germanized`. Backend, Frontend, Websocket, Worker und Scheduler starten aus demselben Image mit unterschiedlichen Befehlen, wie bei den Images von [frappe_docker](https://github.com/frappe/frappe_docker).
 - **Deutsche Apps.** Registerangaben, Prüfung der USt-IdNr., Summen- und Saldenliste, DATEV-Export, E-Rechnungen nach XRechnung und ZUGFeRD, Bankanbindung, die Steuermeldungen an ELSTER von der Umsatzsteuer-Voranmeldung bis zur E-Bilanz und Druckformate nach DIN 5008 kommen als eigene Apps dazu, siehe [Enthaltene Apps](#enthaltene-apps).
 - **Versionen aus `apps.json`.** Jede App ist auf ein Release-Tag gepinnt, nie auf einen Branch; erpnext_germany vorübergehend auf ein Tag eines Forks, siehe unten. `apps.json` ist die einzige Liste der Apps. Das Tag von Frappe steht als Vorgabe von `FRAPPE_BRANCH` im `Containerfile`.
 - **Updates durch Tag-Wechsel.** Ein Update ist ein anderes Image-Tag und danach `bench migrate`. Sites, Dateien und Datenbank liegen in Volumes und bleiben erhalten.
@@ -32,6 +32,8 @@ Frappe ist das Framework unter allen Apps. Die Apps stehen in der Reihenfolge vo
 | [eu_einvoice](https://github.com/alyf-de/eu_einvoice) | v16.4.0 | Erstellt und liest E-Rechnungen im Format UN/CEFACT CII in den Profilen BASIC, EN 16931, EXTENDED und XRECHNUNG, außer bei XRECHNUNG auch eingebettet in ein PDF (ZUGFeRD, Factur-X). | GPL-3.0-or-later |
 | [erpnext_pdf-on-submit](https://github.com/alyf-de/erpnext_pdf-on-submit) | v16.4.0 | Erzeugt beim Buchen eines Belegs ein PDF und hängt es an den Beleg. | GPL-3.0-or-later |
 | [banking](https://github.com/alyf-de/banking) | v16.8.0 | Holt Bankumsätze per EBICS in ERPNext und gleicht sie mit Belegen ab, wobei EBICS ein Abonnement bei ALYF braucht und der Abgleich nicht. | GPL-3.0 |
+| [insights](https://github.com/frappe/insights) | v3.51.0 | Auswertungen (Business Intelligence) mit Abfragen ohne SQL, Diagrammen und Dashboards; die Standard-Dashboards von ERPNext und HRMS öffnen in ihrer Fassung für Insights. | AGPL-3.0 |
+| [crm](https://github.com/frappe/crm) | v16.5.0 | CRM für Vertriebsteams mit Leads, Deals, Kanban-Ansicht und Telefonie über Twilio und Exotel; optional, die Beispiele installieren es nicht. | AGPL-3.0 |
 | [briefbote](https://github.com/encircle360-oss/briefbote) | v0.3.1 | Druckformate für Geschäftsdokumente deutscher Unternehmen nach DIN 5008 mit den Pflichtangaben: siebzehn Formate vom Angebot über Anzahlungs-, Schluss- und Proforma-Rechnung, Lieferschein, Packliste und Mahnung bis zu Anfrage, Bestellung, Zahlungsavis und Geschäftsbrief; Alpha, noch in Entwicklung und nicht einsatzfähig. | AGPL-3.0-or-later |
 | [steuerbote](https://github.com/encircle360-oss/steuerbote) | v0.15.3 | Steuermeldungen aus ERPNext an ELSTER: Umsatzsteuer-Voranmeldung, Dauerfristverlängerung, Zusammenfassende Meldung, Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung, E-Bilanz und Jahresabschluss mit Offenlegung für das Unternehmensregister; Übermittlung über ERiC nur mit `linux/amd64`, noch in Entwicklung und nicht einsatzfähig. | AGPL-3.0-or-later |
 
@@ -59,7 +61,7 @@ Du brauchst Docker mit dem Compose-Plugin auf einem Rechner mit `linux/amd64` od
    docker compose logs -f create-site
    ```
 
-   Der Dienst `create-site` legt beim ersten Start die Site `erp.localhost` an und installiert alle Apps in der Reihenfolge von `apps.json`. Das dauert einige Minuten, danach beendet sich der Dienst.
+   Der Dienst `create-site` legt beim ersten Start die Site `erp.localhost` an und installiert die Apps in der Reihenfolge von `apps.json`, alle außer Frappe CRM, das optional ist, siehe [Apps](docs/apps.md#crm). Das dauert einige Minuten, danach beendet sich der Dienst.
 
 4. Öffne <http://localhost:8080> und melde dich als `Administrator` mit dem Passwort aus Schritt 2 an.
 
@@ -155,7 +157,7 @@ Wer dauerhaft Verantwortung übernehmen möchte, zeigt das am einfachsten durch 
 - **Matrix:** [#oss:encircle360.com](https://matrix.to/#/#oss:encircle360.com) für den direkten Austausch mit Maintainern und Nutzern
 - **Issues:** [Fehler und Wünsche zu erpnext_germanized](https://github.com/encircle360-oss/erpnext_germanized/issues)
 - **Discussions:** [Fragen und Austausch](https://github.com/encircle360-oss/erpnext_germanized/discussions)
-- **Fehler in Frappe, ERPNext oder einer der Apps** bitte beim jeweiligen Projekt melden: [frappe/frappe](https://github.com/frappe/frappe/issues), [frappe/erpnext](https://github.com/frappe/erpnext/issues), [frappe/hrms](https://github.com/frappe/hrms/issues), [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany/issues), [alyf-de/erpnext_datev](https://github.com/alyf-de/erpnext_datev/issues), [alyf-de/eu_einvoice](https://github.com/alyf-de/eu_einvoice/issues), [alyf-de/erpnext_pdf-on-submit](https://github.com/alyf-de/erpnext_pdf-on-submit/issues), [alyf-de/banking](https://github.com/alyf-de/banking/issues), [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote/issues), [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote/issues). Fehler im Image, im Beispiel und in den Werkzeugen gehören in die Issues dieses Repositories.
+- **Fehler in Frappe, ERPNext oder einer der Apps** bitte beim jeweiligen Projekt melden: [frappe/frappe](https://github.com/frappe/frappe/issues), [frappe/erpnext](https://github.com/frappe/erpnext/issues), [frappe/hrms](https://github.com/frappe/hrms/issues), [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany/issues), [alyf-de/erpnext_datev](https://github.com/alyf-de/erpnext_datev/issues), [alyf-de/eu_einvoice](https://github.com/alyf-de/eu_einvoice/issues), [alyf-de/erpnext_pdf-on-submit](https://github.com/alyf-de/erpnext_pdf-on-submit/issues), [alyf-de/banking](https://github.com/alyf-de/banking/issues), [frappe/insights](https://github.com/frappe/insights/issues), [frappe/crm](https://github.com/frappe/crm/issues), [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote/issues), [encircle360-oss/steuerbote](https://github.com/encircle360-oss/steuerbote/issues). Fehler im Image, im Beispiel und in den Werkzeugen gehören in die Issues dieses Repositories.
 
 ### Professioneller Support
 
@@ -165,7 +167,7 @@ Für Einführung, Betrieb, Updates, Anpassungen oder Schulung rund um ERPNext un
 
 Rezept, Werkzeuge und Beispiele stehen unter der [Apache License 2.0](LICENSE) und werden ohne jede Gewährleistung bereitgestellt, „wie besehen“ (Abschnitt 7 der Lizenz). Die Maintainer, die encircle360 GmbH und alle Mitwirkenden haften nicht für Schäden aus der Nutzung, etwa Datenverlust, Ausfallzeiten, Steuernachzahlungen oder Bußgelder, soweit das Gesetz es erlaubt (Abschnitt 8 der Lizenz).
 
-- **Software Dritter.** Das Image enthält Frappe, ERPNext, HRMS, die Apps von ALYF, Steuerbote, Briefbote und ihre Pakete. Für sie gelten ihre eigenen Lizenzen, Gewährleistungsausschlüsse und Hinweise, siehe [Lizenz](#lizenz); für Steuerbote etwa dessen [Haftungsausschluss](https://github.com/encircle360-oss/steuerbote#haftungsausschluss), für Briefbote dessen [Haftungsausschluss](https://github.com/encircle360-oss/briefbote#haftungsausschluss).
+- **Software Dritter.** Das Image enthält Frappe, ERPNext, HRMS, die Apps von ALYF, Insights, CRM, Steuerbote, Briefbote und ihre Pakete. Für sie gelten ihre eigenen Lizenzen, Gewährleistungsausschlüsse und Hinweise, siehe [Lizenz](#lizenz); für Steuerbote etwa dessen [Haftungsausschluss](https://github.com/encircle360-oss/steuerbote#haftungsausschluss), für Briefbote dessen [Haftungsausschluss](https://github.com/encircle360-oss/briefbote#haftungsausschluss).
 - **Betrieb und Datenschutz.** Wer das Image betreibt, ist für Betrieb, Sicherungen, Updates, die Sicherheit der Installation und den Datenschutz verantwortlich.
 - **Keine Steuer- oder Rechtsberatung.** Ein grüner Site-Test zeigt, dass sich alle Apps installieren lassen, PDFs entstehen und das Backend antwortet, nicht, dass jede Funktion richtig rechnet. Lass Kontenrahmen, Steuereinstellungen und Abläufe von deiner Steuerberatung prüfen.
 
@@ -179,11 +181,11 @@ Für den Einsatz mit zugesichertem Support und Reaktionszeiten sprich uns an: **
 
 Dieses Repository steht unter der [Apache License 2.0](LICENSE) (Apache-2.0). Das `Containerfile` basiert auf `images/custom/Containerfile` aus [frappe_docker](https://github.com/frappe/frappe_docker) v4.2.0 und steht wie das Original unter der MIT-Lizenz (Copyright Frappe Technologies Pvt. Ltd.). Ihr Text liegt in [LICENSES/frappe_docker.MIT.txt](LICENSES/frappe_docker.MIT.txt).
 
-Das Image enthält Software unter eigenen Lizenzen. Frappe steht unter MIT, ERPNext und HRMS unter GPL-3.0, die Apps von ALYF unter GPL-3.0 oder GPL-3.0-or-later, Steuerbote und Briefbote unter AGPL-3.0-or-later, wie es die Tabelle unter [Enthaltene Apps](#enthaltene-apps) für jede App nennt. Dazu kommen die Python- und Node-Pakete der Apps und die Debian-Pakete des Basis-Images, jeweils unter ihrer eigenen Lizenz. Die SBOM eines Images listet diese Pakete auf. Den Quelltext von Frappe und jeder App gibt es öffentlich auf GitHub, jeweils zum gepinnten Tag.
+Das Image enthält Software unter eigenen Lizenzen. Frappe steht unter MIT, ERPNext und HRMS unter GPL-3.0, die Apps von ALYF unter GPL-3.0 oder GPL-3.0-or-later, Insights und CRM unter AGPL-3.0, Steuerbote und Briefbote unter AGPL-3.0-or-later, wie es die Tabelle unter [Enthaltene Apps](#enthaltene-apps) für jede App nennt. Dazu kommen die Python- und Node-Pakete der Apps und die Debian-Pakete des Basis-Images, jeweils unter ihrer eigenen Lizenz. Die SBOM eines Images listet diese Pakete auf. Den Quelltext von Frappe und jeder App gibt es öffentlich auf GitHub, jeweils zum gepinnten Tag.
 
 Eine Ausnahme ist das Python-Paket [fintech](https://www.joonis.de/fintech/), das die App banking voraussetzt. Es steht unter keiner Open-Source-Lizenz, PyPI führt es als „Free To Use But Restricted“. Für EBICS erwirbt ALYF mit dem Abonnement eine Lizenz dafür, siehe die [EBICS-Dokumentation von banking](https://github.com/alyf-de/banking/blob/v16.8.0/banking/docs/en/banking/ebics-integration.md).
 
-Das Label `org.opencontainers.image.licenses` des Images verbindet als SPDX-Ausdruck die Lizenz des Rezepts mit denen der Apps im Image: `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-or-later`. Das Rezept selbst bleibt unter Apache-2.0, das `Containerfile` unter MIT. Die Python-, Node- und Debian-Pakete darunter behalten ihre eigenen Lizenzen, siehe oben.
+Das Label `org.opencontainers.image.licenses` des Images verbindet als SPDX-Ausdruck die Lizenz des Rezepts mit denen der Apps im Image: `Apache-2.0 AND MIT AND GPL-3.0-only AND GPL-3.0-or-later AND AGPL-3.0-only AND AGPL-3.0-or-later`. Das Rezept selbst bleibt unter Apache-2.0, das `Containerfile` unter MIT. Die Python-, Node- und Debian-Pakete darunter behalten ihre eigenen Lizenzen, siehe oben.
 
 ## Maintainer
 
@@ -194,7 +196,7 @@ erpnext_germanized wird von der **[encircle360 GmbH](https://encircle360.com/?re
 Danke an alle, auf deren Arbeit dieses Image aufsetzt:
 
 - [frappe_docker](https://github.com/frappe/frappe_docker) für das Rezept des Images,
-- die Frappe Technologies Pvt. Ltd. für [Frappe](https://github.com/frappe/frappe), [ERPNext](https://github.com/frappe/erpnext) und [HRMS](https://github.com/frappe/hrms),
+- die Frappe Technologies Pvt. Ltd. für [Frappe](https://github.com/frappe/frappe), [ERPNext](https://github.com/frappe/erpnext), [HRMS](https://github.com/frappe/hrms), [Insights](https://github.com/frappe/insights) und [CRM](https://github.com/frappe/crm),
 - die [ALYF GmbH](https://github.com/alyf-de) für ihre Apps für Deutschland,
 - die ERPNext-Community. Die deutsche Übersetzung von Frappe, ERPNext und HRMS entsteht dort über [Crowdin](https://crowdin.com/project/frappe), nicht in diesem Repository.
 
