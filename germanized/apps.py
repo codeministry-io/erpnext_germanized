@@ -10,10 +10,15 @@ APPS_JSON = Path("apps.json")
 GITHUB = "https://github.com/"
 FRAPPE_URL = "https://github.com/frappe/frappe"
 ERPNEXT_URL = "https://github.com/frappe/erpnext"
-# Apps with a version line of their own instead of Frappe's major version. Before its first release, such an app
-# may be pinned to a branch; release-check refuses that and bump moves it to the first release.
+# Apps with a version line of their own instead of Frappe's major version, such as Insights 3 on Frappe 16. Before
+# its first release, such an app may be pinned to a branch; release-check refuses that and bump moves it to the
+# first release.
 INDEPENDENTLY_VERSIONED = frozenset(
-	{"https://github.com/encircle360-oss/steuerbote", "https://github.com/encircle360-oss/briefbote"}
+	{
+		"https://github.com/encircle360-oss/steuerbote",
+		"https://github.com/encircle360-oss/briefbote",
+		"https://github.com/frappe/insights",
+	}
 )
 # Forks the image is built from until a release of their upstream repository contains their fixes, each with its
 # upstream repository. A fork is pinned to a fork tag: the upstream release it builds on and a counter of the fork,

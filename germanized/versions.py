@@ -1,9 +1,9 @@
 """Compare the pinned versions with the releases on GitHub and move the pins to the newest release.
 
-Every pin stays on its major version: Frappe and the apps that follow it on Frappe's, Steuerbote and Briefbote on
-their own. Moving to a new major version is a decision for a person, not for a weekly job. A fork stays on its fork
-tag and is compared with the releases of its upstream repository; a branch, the pin of an app before its first
-release, moves to the newest release of any major version.
+Every pin stays on its major version: Frappe and the apps that follow it on Frappe's, the apps with a version line
+of their own, such as Steuerbote, Briefbote and Insights, on theirs. Moving to a new major version is a decision for
+a person, not for a weekly job. A fork stays on its fork tag and is compared with the releases of its upstream
+repository; a branch, the pin of an app before its first release, moves to the newest release of any major version.
 """
 
 import json

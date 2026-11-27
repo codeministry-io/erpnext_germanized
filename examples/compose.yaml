@@ -1,7 +1,7 @@
-# erpnext_germanized with docker compose: one site with every app of the image.
+# erpnext_germanized with docker compose: one site with the apps of the image.
 #
 # Based on pwd.yml of frappe_docker v4.2.0 (https://github.com/frappe/frappe_docker), with the image of
-# this repository, one place for the image and one for the site settings, and all apps on the new site.
+# this repository, one place for the image and one for the site settings, and the apps on the new site.
 #
 # Replace every CHANGE_ME under x-site before the first start. MariaDB keeps the root password of its
 # first start in the volume db-data, and create-site sets the Administrator password only once, so a
@@ -82,6 +82,8 @@ services:
     # The apps follow the order of apps.json, which is the order they install in. bench knows
     # erpnext_pdf-on-submit by its module name pdf_on_submit. Language and country are chosen in the
     # setup wizard after the first login, because bench new-site has no option for them.
+    # Frappe CRM is in the image but optional: for it, add "--install-app crm \" after the line of
+    # insights, or install it later with bench --site <site> install-app crm, see docs/apps.md.
     command:
       - >
         wait-for-it -t 120 db:3306;
@@ -113,6 +115,7 @@ services:
             --install-app eu_einvoice \
             --install-app pdf_on_submit \
             --install-app banking \
+            --install-app insights \
             --install-app briefbote \
             --install-app steuerbote \
             --set-default "$$SITE_NAME";
