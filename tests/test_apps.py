@@ -25,6 +25,8 @@ ERPNEXT = App("https://github.com/frappe/erpnext", "v16.60.0")
 HRMS = App("https://github.com/frappe/hrms", "v16.60.0")
 STEUERBOTE = App("https://github.com/encircle360-oss/steuerbote", "v0.1.1")
 BRIEFBOTE = App("https://github.com/encircle360-oss/briefbote", "v0.1.0")
+INSIGHTS = App("https://github.com/frappe/insights", "v3.51.0")
+CRM = App("https://github.com/frappe/crm", "v16.5.0")
 GERMANY_URL = "https://github.com/alyf-de/erpnext_germany"
 GERMANY_FORK = App("https://github.com/encircle360-oss/erpnext_germany", "v16.2.2-encircle360.4")
 
@@ -217,6 +219,19 @@ def test_steuerbote_keeps_its_own_version_numbers():
 def test_briefbote_keeps_its_own_version_numbers():
 	assert BRIEFBOTE.url in INDEPENDENTLY_VERSIONED
 	assert validate((ERPNEXT, BRIEFBOTE), "v16.60.2") == []
+
+
+def test_insights_keeps_its_own_version_numbers():
+	assert INSIGHTS.url in INDEPENDENTLY_VERSIONED
+	assert validate((ERPNEXT, INSIGHTS), "v16.61.0") == []
+
+
+def test_crm_follows_the_major_version_of_frappe():
+	assert CRM.url not in INDEPENDENTLY_VERSIONED
+	assert validate((ERPNEXT, CRM), "v16.61.0") == []
+	assert validate((ERPNEXT, App(CRM.url, "v15.1.0")), "v16.61.0") == [
+		"https://github.com/frappe/crm: v15.1.0 is not on major version 16 of Frappe"
+	]
 
 
 def test_an_app_with_its_own_version_numbers_may_be_pinned_to_a_branch_before_its_first_release():

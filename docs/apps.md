@@ -126,6 +126,48 @@ Die App holt Kontoauszüge als Banktransaktionen (Bank Transaction) in ERPNext u
 
 Für EBICS nutzt die App die Python-Bibliothek fintech, die nicht unter einer Open-Source-Lizenz steht, siehe [README](../README.md#lizenz). ALYF erwirbt dafür eine Lizenz und erhält und speichert dazu Host-ID, Partner-ID und User-ID des EBICS-Zugangs. Löscht man den EBICS-Benutzer, widerruft ALYF die Lizenz und löscht die Angaben ([EBICS-Dokumentation](https://github.com/alyf-de/banking/blob/v16.8.0/banking/docs/en/banking/ebics-integration.md)). Kundennummer und API-Token des Abonnements gehören in die Bankeneinstellungen (Banking Settings).
 
+## Insights
+
+- **Repository:** [frappe/insights](https://github.com/frappe/insights) (Frappe Insights), Lizenz AGPL-3.0: Das sagt die Lizenzdatei [license.txt](https://github.com/frappe/insights/blob/v3.51.0/license.txt) zum gepinnten Tag, und so führt GitHub das Repository. `app_license` in `insights/hooks.py` nennt dagegen „GNU GPLv3“; maßgeblich ist die Lizenzdatei.
+- **Name in bench:** `insights`
+- **Dokumentation:** [docs.frappe.io/insights](https://docs.frappe.io/insights)
+- **Versionen:** eine eigene Versionsreihe, im Image v3.51.0 aus der Reihe 3, freigegeben für Frappe ab 15 und vor 18 (`[tool.bench.frappe-dependencies]` in der `pyproject.toml`). Insights steht deshalb in `INDEPENDENTLY_VERSIONED`, und `bump` hebt es nur innerhalb der Hauptversion 3 an.
+
+Insights ist ein Werkzeug für Auswertungen (Business Intelligence), mit dem auch Benutzer ohne SQL Berichte und Dashboards bauen sollen. Nach seinem [README](https://github.com/frappe/insights/blob/v3.51.0/README.md) verbindet es Daten aus mehreren Datenbanken, Dateien und Tabellen, baut Abfragen Schritt für Schritt im Query Builder mit Tabellen, Joins, Filtern und Berechnungen, zeigt Ergebnisse als Diagramme und stellt sie per Drag-and-drop zu Dashboards mit Filtern zusammen. Die Oberfläche liegt unter `/insights`. Benachrichtigungen (Insights Alert) gehen per E-Mail, Telegram oder Webhook.
+
+- **Dashboards von ERPNext und HRMS.** ERPNext v16.61.0 bringt Arbeitsmappen für Insights mit, „Business Overview“, „Receivables“, „Assets“, „Buying“, „Selling“ und „Stock“, HRMS v16.60.0 „Attendance“, „Employee Lifecycle“, „Expense Claims“, „Recruitment“, „Human Resource“ und „Payroll“ (jeweils unter `<modul>/insights_workbook/`). Insights importiert die Arbeitsmappen, die die installierten Apps mitbringen, bei seiner Installation und nach jedem `bench migrate` (`insights/migrate.py`). Das Feld „Dashboards“ der Systemeinstellungen von Frappe v16.61.0, Insights oder Classic, vorgegeben Insights, legt fest, wie die Standard-Dashboards öffnen, die eine Fassung für Insights mitbringen; ohne die App Insights öffnen sie klassisch. Dafür ergänzt Insights Dashboard, Dashboard-Diagramm (Dashboard Chart) und Zahlenkarte (Number Card) um ein Feld, das auf ein Dashboard oder Diagramm von Insights zeigt, und Desk zeigt diese als Inseln (`insights/desk.py`).
+- **Datenbanken.** Die eigene Datenbank der Site ist als Datenquelle „Site DB“ dabei. Für weitere Quellen bringt Insights die Python-Bibliothek ibis mit den Treibern für DuckDB, MariaDB und MySQL, SQLite, ClickHouse und PostgreSQL mit. BigQuery, das das README nennt, und MSSQL stehen in der `pyproject.toml` von v3.51.0 auskommentiert; ihre Treiber sind nicht im Image.
+- **Datenspeicher.** Tabellen, die Insights in seinen eigenen Speicher importiert, legt es als DuckDB-Datei unter `private/files/insights_data_warehouse/insights.duckdb` der Site ab, im Container also im Volume `sites`. Sie ist eine Kopie der Quelldaten und kommt mit `bench backup --with-files` in die Sicherung.
+- **Telemetrie.** Insights meldet Ereignisse über die Telemetrie von Frappe ([docs/telemetry.md](https://github.com/frappe/insights/blob/v3.51.0/docs/telemetry.md)). Frappe v16.61.0 sendet nur, wenn `pulse_api_key` in der Konfiguration steht und in den Systemeinstellungen „Allow Sending Usage Data for Improving Applications“ an ist (`frappe/utils/telemetry/pulse/client.py`). Das Image und die Beispiele setzen `pulse_api_key` nicht.
+
+Im Image:
+
+- **Python-Pakete.** Insights legt einige Pakete eng fest, die auch andere Apps nutzen: `sqlglot~=30.22.0`, `SQLAlchemy==2.0.41`, `pandas~=2.3.3` und `duckdb~=1.4.3`, dazu `ibis-framework~=11.0.0`, `python-telegram-bot==21.4` und `psycopg[binary]` (`pyproject.toml`). sqlglot kommt sonst nur über sql_metadata, eine Abhängigkeit von Frappe, die `sqlglot>=30.12.0,<31.0.0` zulässt, ins Image; mit Insights gilt deshalb die Version aus der Reihe 30.22, nicht die neueste, die Frappe allein bekäme. Der Site-Test prüft mit `pip check`, dass sich alle Pakete des Images vertragen, und schreibt die Version von sqlglot ins Log.
+- **Oberfläche.** Die Oberfläche unter `/insights` und die Inseln für Desk baut der Build des Images aus `insights/frontend`. Der Site-Test prüft, dass beide Inseln in `assets.json` stehen und nginx sie ausliefert, und dass jede Arbeitsmappe, die eine App mitbringt, auf der Site steht.
+
+## CRM
+
+- **Repository:** [frappe/crm](https://github.com/frappe/crm) (Frappe CRM), Lizenz AGPL-3.0: Das sagt die Lizenzdatei [LICENSE](https://github.com/frappe/crm/blob/v16.5.0/LICENSE) zum gepinnten Tag, `app_license` in `crm/hooks.py` nennt „AGPLv3“.
+- **Name in bench:** `crm`
+- **Dokumentation:** [docs.frappe.io/crm](https://docs.frappe.io/crm)
+- **Versionen:** die Reihe v16 für Frappe 16 (`frappe >=16.0.0,<17.0.0`), im Image v16.5.0. Das „Latest release“ auf GitHub kann ein Release der Reihe v15 sein; `check-versions` und `bump` bleiben wie bei jeder App auf der Hauptversion von Frappe.
+- **Optional.** CRM ist im Image, aber die Beispiele installieren es nicht, siehe unten.
+
+Frappe CRM ist ein CRM für Vertriebsteams. Nach seinem [README](https://github.com/frappe/crm/blob/v16.5.0/README.md) bündelt es Leads und Deals mit Aktivitäten, Kommentaren, Notizen und Aufgaben auf einer Seite, zeigt sie in einer Kanban-Ansicht und in eigenen Ansichten mit Filtern, Sortierung und Spalten. Eingebaut sind Telefonie über Twilio und Exotel, auch mit Aufzeichnung der Gespräche; WhatsApp geht über die App Frappe WhatsApp, die nicht im Image ist. Die Oberfläche liegt unter `/crm`. CRM hat eigene DocTypes wie CRM Lead und CRM Deal, neben Lead und Chance (Opportunity) aus ERPNext.
+
+- **ERPNext.** Die Anbindung an ERPNext steht in den ERPNext CRM Settings und ist vorgegeben aus. Eingeschaltet arbeitet sie mit ERPNext auf derselben oder einer anderen Site, kann beim Wechsel eines Deals in einen gewählten Status einen Kunden anlegen und gleicht Artikel in beide Richtungen ab (`crm/fcrm/doctype/erpnext_crm_settings`).
+- **Anreicherung über die Website** (Domain Enrichment). CRM kann die öffentliche Website eines Leads, Deals oder einer Organisation abrufen und daraus Felder wie Name, Beschreibung, Logo, Branche, E-Mail-Adressen, Telefonnummern und Profile in sozialen Netzwerken füllen, ohne Dienste Dritter ([README der Anreicherung](https://github.com/frappe/crm/blob/v16.5.0/crm/domain_enrichment/README.md)). Für neue Datensätze geschieht das automatisch nur, wenn in den CRM Enrichment Settings „Auto-enrich new records“ an ist; vorgegeben ist es aus. Die Abrufe gehen vom Server der Site aus ins Internet.
+- **Eingriffe in Frappe.** CRM ersetzt die Klassen von Kontakt (Contact) und E-Mail-Vorlage (Email Template) durch eigene, erweitert Datenimport (Data Import) und Zuweisungsregel (Assignment Rule) und regelt, wer Datenimporte sieht (`override_doctype_class`, `extend_doctype_class` und `permission_query_conditions` in `crm/hooks.py`). Das gilt auf der ganzen Site, auch für ERPNext. Keine andere App im Image ersetzt diese Klassen.
+- **Python-Pakete.** CRM bringt `twilio==8.5.0`, den Client für Twilio, und `tldextract` mit (`pyproject.toml`).
+
+Installieren und entfernen: Wer CRM will, nimmt `--install-app crm` nach `insights` in `create-site` von [examples/compose.yaml](../examples/compose.yaml) oder `crm` in die Liste des Helm-Beispiels in [Betrieb](betrieb.md#auf-kubernetes) auf, oder installiert es auf einer bestehenden Site:
+
+```bash
+docker compose exec backend bench --site <site> install-app crm
+```
+
+Entfernen geht mit `bench --site <site> uninstall-app crm`. Das löscht alle Daten von CRM auf der Site, also vorher sichern, siehe [Sicherungen](betrieb.md#sicherungen).
+
 ## Briefbote
 
 - **Repository:** [encircle360-oss/briefbote](https://github.com/encircle360-oss/briefbote), Lizenz AGPL-3.0-or-later
@@ -203,6 +245,9 @@ Für Steuermeldungen gilt der [Haftungsausschluss von Steuerbote](https://github
 - **banking und HRMS:** Banktransaktionen lassen sich gegen offene Spesenabrechnungen abgleichen, und aus einer genehmigten Spesenabrechnung entsteht direkt ein SEPA-Zahlungsauftrag.
 - **ERPNext und Steuerbote:** Die Vorgaben von Steuerbote für SKR03 und SKR04 kennen die Kontonummern der SKR-Vorlagen von ERPNext.
 - **Briefbote und erpnext_germany:** Briefbote nimmt die Registerangaben des Unternehmens aus erpnext_germany, wenn die Einstellungen Geschäftspost keine haben, und den Grund einer Steuerbefreiung aus dem Feld `tax_exemption_reason` der Ausgangsrechnung, wenn der Steuerfall keinen nennt.
+- **Insights, ERPNext und HRMS:** Insights importiert die Arbeitsmappen, die ERPNext und HRMS mitbringen, und die Standard-Dashboards öffnen in ihrer Fassung für Insights, solange „Dashboards“ in den Systemeinstellungen auf Insights steht.
+- **CRM und Insights:** CRM v16.5.0 bringt selbst eine Arbeitsmappe „CRM“ für Insights mit (`crm/fcrm/insights_workbook`), die Insights bei der Installation von CRM importiert.
+- **CRM und ERPNext:** CRM legt auf Wunsch Kunden in ERPNext an und gleicht Artikel ab, siehe [CRM](#crm). Lead und Chance von ERPNext bleiben daneben bestehen; welches CRM eine Firma nutzt, entscheidet sie.
 - **Briefbote, eu_einvoice und erpnext_pdf-on-submit:** eu_einvoice bettet sein XML auch in das PDF eines Druckformats von Briefbote ein, wenn es über den PDF-Download entsteht. PDF on Submit hängt beim Buchen ein PDF mit dem Druckformat seiner Einstellungen an; mit „Rechnung“ entsteht so das PDF, das aufbewahrt wird.
 
 ## Nicht im Image

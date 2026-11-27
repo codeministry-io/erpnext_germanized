@@ -11,7 +11,7 @@ Alle Dienste mit Ausnahme von Datenbank und Redis laufen aus demselben Image, nu
 | Dienst | Aufgabe |
 |---|---|
 | `configurator` | läuft bei jedem `docker compose up` einmal und schreibt Datenbank, Redis, Port des Websockets und `chromium_path` in `sites/common_site_config.json` |
-| `create-site` | läuft bei jedem `docker compose up` einmal und legt die Site mit allen Apps an, wenn es sie noch nicht gibt |
+| `create-site` | läuft bei jedem `docker compose up` einmal und legt die Site mit allen Apps außer dem optionalen CRM an, wenn es sie noch nicht gibt |
 | `backend` | gunicorn auf Port 8000 |
 | `frontend` | nginx auf Port 8080, im Beispiel als Port 8080 des Rechners veröffentlicht |
 | `websocket` | socket.io auf Port 9000 für Benachrichtigungen und Aktualisierungen in Echtzeit |
@@ -42,7 +42,7 @@ Einstellungen im Beispiel:
 
 ## Auf Kubernetes
 
-Für Kubernetes gibt es das offizielle Helm-Chart [frappe/helm](https://github.com/frappe/helm), Chart `erpnext` aus dem Repository `https://helm.erpnext.com`. Das Chart ist für die Images aus frappe_docker gebaut und startet dieselben Befehle wie das Beispiel für docker compose: `nginx-entrypoint.sh`, gunicorn, `bench worker`, `bench schedule` und `socketio.js`. Dieses Image hat denselben Aufbau. Diese Werte reichen für eine Site mit allen Apps, hier für das Chart in Version 8.0.93:
+Für Kubernetes gibt es das offizielle Helm-Chart [frappe/helm](https://github.com/frappe/helm), Chart `erpnext` aus dem Repository `https://helm.erpnext.com`. Das Chart ist für die Images aus frappe_docker gebaut und startet dieselben Befehle wie das Beispiel für docker compose: `nginx-entrypoint.sh`, gunicorn, `bench worker`, `bench schedule` und `socketio.js`. Dieses Image hat denselben Aufbau. Diese Werte reichen für eine Site mit allen Apps außer dem optionalen CRM, hier für das Chart in Version 8.0.93:
 
 ```yaml
 # custom-values.yaml for the chart erpnext 8.0.93
@@ -81,6 +81,8 @@ jobs:
       - eu_einvoice
       - pdf_on_submit
       - banking
+      - insights
+      # - crm # optional, see docs/apps.md
       - briefbote
       - steuerbote
 ```
@@ -104,7 +106,7 @@ Geprüft ist das Beispiel gegen das Chart 8.0.93: `helm template` rendert es ohn
   dbExistingSecretPasswordKey: password
   ```
 
-- **Apps** stehen unter `jobs.createSite.installApps` in der Reihenfolge von `apps.json` und mit den Namen, die bench kennt, also `pdf_on_submit` statt `erpnext_pdf-on-submit`. Statt `adminPassword` kann `adminExistingSecret` auf ein vorhandenes Secret zeigen.
+- **Apps** stehen unter `jobs.createSite.installApps` in der Reihenfolge von `apps.json` und mit den Namen, die bench kennt, also `pdf_on_submit` statt `erpnext_pdf-on-submit`. Frappe CRM ist im Image, wird aber nur installiert, wo man es will: Dafür kommt `crm` an seiner Stelle nach `insights` in die Liste, oder man installiert es später, siehe [Apps](apps.md#crm). Statt `adminPassword` kann `adminExistingSecret` auf ein vorhandenes Secret zeigen.
 - **Chromium:** Anders als das Beispiel für docker compose setzt das Chart `chromium_path` nicht. Ohne den Eintrag lädt Frappe beim ersten PDF mit dem Generator „chrome“, der Vorgabe der Druckeinstellungen, in jedem Pod, der ein PDF erzeugt, ein eigenes Chromium aus dem Internet, siehe [Architektur](architektur.md#chromium). Weil `common_site_config.json` im Volume `sites` liegt, reicht es, den Eintrag einmal zu setzen: `kubectl --namespace erpnext exec deploy/frappe-bench-erpnext-gunicorn -- bench set-config -g chromium_path /usr/lib/chromium/chromium-headless-shell`.
 - **Migration und Sicherung** laufen als Jobs des Charts. `jobs.migrate` mit `siteName` schaltet den Wartungsmodus ein, führt `bench migrate` aus und schaltet ihn wieder aus, auch wenn die Migration fehlschlägt: Die drei Befehle stehen mit `;` hintereinander, und der Job endet mit dem Ergebnis des letzten. Ob die Migration gelungen ist, zeigt deshalb nur das Log des Jobs. `jobs.backup` mit `siteName` und `withFiles` legt eine Sicherung im Volume `sites` an.
 - Alle Werte nennt das [README des Charts](https://github.com/frappe/helm/blob/main/erpnext/README.md), ihre Vorgaben stehen in seiner [values.yaml](https://github.com/frappe/helm/blob/main/erpnext/values.yaml).
