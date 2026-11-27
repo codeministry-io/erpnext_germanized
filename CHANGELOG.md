@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 
 ## Unveröffentlicht
 
+## [16.61.0-7] - 2026-11-27
+
 ### Hinzugefügt
 
 - [Insights v3.51.0](https://github.com/frappe/insights/releases/tag/v3.51.0), neu im Image: Auswertungen (Business Intelligence) mit Abfragen ohne SQL, Diagrammen und Dashboards, Lizenz AGPL-3.0 laut der Lizenzdatei des Projekts. ERPNext und HRMS bringen für ihre Module Arbeitsmappen für Insights mit, die Insights importiert, und das Feld „Dashboards“ der Systemeinstellungen (vorgegeben Insights) öffnet die Standard-Dashboards dann in ihrer Fassung für Insights; ohne Insights öffnen sie klassisch. Insights hat eine eigene Versionsreihe und steht in `INDEPENDENTLY_VERSIONED`, so dass `bump` es innerhalb der Hauptversion 3 anhebt. Neue Sites bekommen es mit `--install-app insights` aus dem Beispiel, bestehende Sites mit `bench --site <site> install-app insights` nach dem Update. Insights legt Python-Pakete fest, die auch andere Apps nutzen, darunter `sqlglot~=30.22.0`; das Image hat damit sqlglot aus der Reihe 30.22 statt der neuesten Version, die Frappe über sql_metadata zulässt. Einzelheiten in [Apps](docs/apps.md#insights).
@@ -13,6 +15,7 @@ Alle nennenswerten Änderungen an erpnext_germanized stehen in dieser Datei. Das
 ### Geändert
 
 - Das Label `org.opencontainers.image.licenses` nennt zusätzlich `AGPL-3.0-only` für Insights und CRM.
+- [HRMS v16.60.1](https://github.com/frappe/hrms/releases/tag/v16.60.1): Korrekturen, unter anderem am nicht abgerechneten Betrag einer Spesenabrechnung gegen einen Vorschuss, an der Übernahme von Zeiterfassungen bei Schichten und an E-Mails stornierter Gehaltsabrechnungen in der Warteschlange.
 
 ## [16.61.0-6] - 2026-11-26
 

@@ -2,7 +2,7 @@
 
 ERPNext für deutsche Unternehmen als fertiges Container-Image: Frappe, ERPNext und HRMS mit den deutschen Apps von ALYF, Steuerbote und Briefbote, dazu Frappe Insights und Frappe CRM, in einem versionierten Image für die GitHub Container Registry.
 
-> **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.61.0-6` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
+> **Status: erstes Release, frühes Stadium.** Das Image `ghcr.io/encircle360-oss/erpnext_germanized:16.61.0-7` enthält alle Apps aus der Tabelle unten und besteht den Site-Test der CI. Es ist für Tests und erste Installationen gedacht; Rückmeldungen über Issues, Discussions oder Matrix sind willkommen, siehe [Roadmap](docs/roadmap.md).
 
 Steuermeldungen an ELSTER übernimmt die enthaltene App [Steuerbote](https://github.com/encircle360-oss/steuerbote): Umsatzsteuer-Voranmeldung, Dauerfristverlängerung und Zusammenfassende Meldung, Umsatzsteuer-, Körperschaftsteuer- und Gewerbesteuererklärung und E-Bilanz, dazu den Jahresabschluss mit der Offenlegung für das Unternehmensregister. Die Übermittlung über ERiC geht nur mit `linux/amd64`. Steuerbote verweist in seinem README umgekehrt auf dieses Image.
 
@@ -26,7 +26,7 @@ Frappe ist das Framework unter allen Apps. Die Apps stehen in der Reihenfolge vo
 |---|---|---|---|
 | [frappe](https://github.com/frappe/frappe) | v16.61.0 | Full-Stack-Webframework mit Python und MariaDB, auf dem ERPNext und alle anderen Apps laufen. | MIT |
 | [erpnext](https://github.com/frappe/erpnext) | v16.61.0 | ERP-System mit Buchhaltung, Auftragsabwicklung und Lager, Fertigung, Anlagenverwaltung und Projekten. | GPL-3.0 |
-| [hrms](https://github.com/frappe/hrms) | v16.60.0 | Personal und Lohn (Frappe HR) mit Mitarbeiterverwaltung, Urlaub und Anwesenheit, Spesen, Leistungsbeurteilung und Gehaltsabrechnung. | GPL-3.0 |
+| [hrms](https://github.com/frappe/hrms) | v16.60.1 | Personal und Lohn (Frappe HR) mit Mitarbeiterverwaltung, Urlaub und Anwesenheit, Spesen, Leistungsbeurteilung und Gehaltsabrechnung. | GPL-3.0 |
 | [erpnext_germany](https://github.com/encircle360-oss/erpnext_germany) | v16.2.2-encircle360.5 | Deutsche Anpassungen wie Summen- und Saldenliste, Zusammenfassende Meldung, Registerangaben, Prüfung der USt-IdNr., Geschäftsbriefe, Dienstreisen und GDPdU-Export; vorübergehend aus einem Fork: v16.2.2 von [alyf-de/erpnext_germany](https://github.com/alyf-de/erpnext_germany) mit der Korrektur aus [#148](https://github.com/alyf-de/erpnext_germany/pull/148). | GPL-3.0 |
 | [erpnext_datev](https://github.com/alyf-de/erpnext_datev) | v16.0.2 | Schickt Belege beim Buchen per E-Mail an DATEV Unternehmen Online und exportiert Buchungen im DATEV-CSV-Format. | GPL-3.0 |
 | [eu_einvoice](https://github.com/alyf-de/eu_einvoice) | v16.4.0 | Erstellt und liest E-Rechnungen im Format UN/CEFACT CII in den Profilen BASIC, EN 16931, EXTENDED und XRECHNUNG, außer bei XRECHNUNG auch eingebettet in ein PDF (ZUGFeRD, Factur-X). | GPL-3.0-or-later |
